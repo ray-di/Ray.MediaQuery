@@ -12,7 +12,7 @@ class SqlQueryTest extends TestCase
     /** @var SqlQuery */
     private $sqlQuery;
 
-    /** @var MediaQueryLog */
+    /** @var MediaQueryLogger */
     private $log;
 
     protected function setUp(): void
@@ -22,7 +22,7 @@ class SqlQueryTest extends TestCase
           id INTEGER,
           title TEXT
 )');
-        $this->log = new MediaQueryLog();
+        $this->log = new MediaQueryLogger();
         $this->sqlQuery = new SqlQuery($pdo, $this->log);
     }
 

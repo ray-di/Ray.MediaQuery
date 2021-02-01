@@ -20,9 +20,9 @@ use function trim;
 class SqlQuery implements SqlQueryInterface
 {
     private ExtendedPdoInterface $pdo;
-    private MediaQueryLogInterface $log;
+    private MediaQueryLoggerInterface $log;
 
-    public function __construct(ExtendedPdoInterface $pdo, MediaQueryLogInterface $log)
+    public function __construct(ExtendedPdoInterface $pdo, MediaQueryLoggerInterface $log)
     {
         $this->pdo = $pdo;
         $this->log = $log;
@@ -44,7 +44,10 @@ class SqlQuery implements SqlQueryInterface
 
         $lastQuery = trim((string) $pdoStatement->queryString);
         if (stripos($lastQuery, 'select') === 0) {
-            return (array) $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
+            $fetchResult = (array) $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
+            $isSingleRow = count($fetchResult) === 1;
+
+            return $isSingleRow ? array_pop($fetchResult) : $fetchResult;
         }
 
         return [];
