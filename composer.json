@@ -9,7 +9,9 @@
         }
     ],
     "require": {
-        "php": "^7.4 || ^8.0"
+        "php": "^7.4 || ^8.0",
+        "ray/aura-sql-module": "^1.10",
+        "doctrine/annotations": "^1.11"
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.4",

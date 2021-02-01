@@ -1,0 +1,9 @@
+{
+    "$schema": "media_query_schema.json",
+    "media": {
+        "web": [
+            {"id": "guest_list", "method": "GET", "url": "{domain}/users"},
+            {"id": "guest_item", "method": "GET", "url": "{domain}/users/{id}"}
+        ]
+    }
+}
