@@ -12,14 +12,23 @@ class SqlQueryTest extends TestCase
     /** @var SqlQuery */
     private $sqlQuery;
 
+    /** @var MediaQueryLog */
+    private $log;
+
     protected function setUp(): void
     {
-        $this->sqlQuery = new SqlQuery();
+        $pdo = new ExtendedPdo('sqlite::memory:');
+        $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS todo (
+          id INTEGER,
+          title TEXT
+)');
+        $this->log = new MediaQueryLog();
+        $this->sqlQuery = new SqlQuery($pdo, $this->log);
     }
 
     public function testInvoke(): void
     {
-        ($this->sqlQuery)(__DIR__ . '/sql/todo_add.sql', []);
-        $this->assertStringContainsString('request:user_add', (string) $log);
+        $result = ($this->sqlQuery)(__DIR__ . '/sql/todo_add.sql', ['id' => 'id1', 'title' => 'titile1']);
+        $this->assertSame([], $result);
     }
 }
