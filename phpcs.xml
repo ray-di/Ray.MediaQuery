@@ -2,7 +2,7 @@
 <ruleset
         name=""
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="./vendor/squizlabs/php_codesniffer/phpcs.xsd">
+        xsi:noNamespaceSchemaLocation="./vendor-bin/tools/vendor/squizlabs/php_codesniffer/phpcs.xsd">
 
     <arg name="basepath" value="."/>
     <arg name="extensions" value="php"/>
@@ -19,7 +19,6 @@
     <file>src</file>
     <file>tests</file>
     <exclude-pattern>*/tmp/*</exclude-pattern>
-    <exclude-pattern>*/Fake/*</exclude-pattern>
 
     <!-- PSR12 Coding Standard -->
     <rule ref="PSR12"/>
@@ -37,6 +36,8 @@
         <exclude name="SlevomatCodingStandard.Commenting.UselessInheritDocComment.UselessInheritDocComment"/>
         <exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingNativeTypeHint"/>
         <exclude name="SlevomatCodingStandard.ControlStructures.EarlyExit.EarlyExitNotUsed"/>
+        <exclude name="Squiz.WhiteSpace.FunctionSpacing.Before"/>
+        <exclude name="SlevomatCodingStandard.Namespaces.UnusedUses"/>
     </rule>
 
     <!-- Additional Rules -->
@@ -54,6 +55,11 @@
             <property name="minLinesCountBeforeWithComment" value="1"/>
             <property name="maxLinesCountBeforeWithComment" value="1"/>
             <property name="maxLinesCountBeforeWithoutComment" value="0"/>
+        </properties>
+    </rule>
+    <rule ref="SlevomatCodingStandard.Namespaces.UnusedUses">
+        <properties>
+            <property name="searchAnnotations" value="true"/>
         </properties>
     </rule>
 </ruleset>
