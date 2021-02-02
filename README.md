@@ -15,7 +15,7 @@
 
 ## Composer install
 
-    $ composer require ray/media-query
+    $ composer require ray/media-query 1.x-dev
 
 ## Usage
 
