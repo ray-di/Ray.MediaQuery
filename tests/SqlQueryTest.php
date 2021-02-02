@@ -6,6 +6,7 @@ namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdo;
 use PHPUnit\Framework\TestCase;
+
 use function dirname;
 
 class SqlQueryTest extends TestCase
