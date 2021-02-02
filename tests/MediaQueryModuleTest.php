@@ -44,8 +44,9 @@ class MediaQueryModuleTest extends TestCase
           title TEXT
 )');
         $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', ['id' => '1', 'title' => 'run']);
-        /** @var MediaQueryLoggerInterface logger */
-        $this->logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
+        /** @var MediaQueryLoggerInterface $logger */
+        $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
+        $this->logger = $logger;
     }
 
     public function testInsertItem(): void

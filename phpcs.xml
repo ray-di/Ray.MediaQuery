@@ -19,6 +19,7 @@
     <file>src</file>
     <file>tests</file>
     <exclude-pattern>*/tmp/*</exclude-pattern>
+    <exclude-pattern>*/tests/Fake/*</exclude-pattern>
 
     <!-- PSR12 Coding Standard -->
     <rule ref="PSR12"/>
@@ -38,6 +39,7 @@
         <exclude name="SlevomatCodingStandard.ControlStructures.EarlyExit.EarlyExitNotUsed"/>
         <exclude name="Squiz.WhiteSpace.FunctionSpacing.Before"/>
         <exclude name="SlevomatCodingStandard.Namespaces.UnusedUses"/>
+        <exclude name="SlevomatCodingStandard.PHP.RequireExplicitAssertion.RequiredExplicitAssertion"/>
     </rule>
 
     <!-- Additional Rules -->

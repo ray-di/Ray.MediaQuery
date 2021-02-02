@@ -10,6 +10,7 @@ use PDOStatement;
 use Ray\Di\Di\Named;
 
 use function array_pop;
+use function assert;
 use function count;
 use function explode;
 use function file_get_contents;
@@ -47,11 +48,17 @@ class SqlQuery implements SqlQueryInterface
         $this->sqlDir = $sqlDir;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function exec(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): void
     {
         $this->perform($sqlId, $params, $fetchMode);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getRow(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array
     {
         $rowList = $this->perform($sqlId, $params, $fetchMode);
@@ -61,6 +68,9 @@ class SqlQuery implements SqlQueryInterface
         return $row;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getRowList(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array
     {
         /** @var array<array<mixed>> $list */
@@ -91,10 +101,7 @@ class SqlQuery implements SqlQueryInterface
         assert($pdoStatement instanceof PDOStatement);
         $lastQuery = trim((string) $pdoStatement->queryString);
         if (stripos($lastQuery, 'select') === 0) {
-            $fetchedData = (array) $pdoStatement->fetchAll($fetchModode);
-
-            /** @var array<array<mixed>> */
-            return $fetchedData;
+            return (array) $pdoStatement->fetchAll($fetchModode);
         }
 
         return [];

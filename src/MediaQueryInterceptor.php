@@ -27,16 +27,17 @@ class MediaQueryInterceptor implements MethodInterceptor
 
     /** @var SqlQueryInterface */
     private $sqlQuery;
-    private MediaQueryLoggerInterface $logger;
 
     #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
-    public function __construct(string $sqlDir, SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger)
+    public function __construct(string $sqlDir, SqlQueryInterface $sqlQuery)
     {
         $this->sqlDir = $sqlDir;
         $this->sqlQuery = $sqlQuery;
-        $this->logger = $logger;
     }
 
+    /**
+     * @return mixed
+     */
     public function invoke(MethodInvocation $invocation)
     {
         $queryId = $this->getQueryId($invocation);

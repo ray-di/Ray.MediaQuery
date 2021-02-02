@@ -1,1 +1,1 @@
-INSERT INTO todo (id, title) VALUES (:id, :title)
+INSERT INTO todo (id, title) VALUES (:id, :title);

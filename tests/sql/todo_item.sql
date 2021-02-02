@@ -1,1 +1,2 @@
-SELECT * FROM todo WHERE id = :id
+SELECT * FROM todo WHERE id = :id;
+
