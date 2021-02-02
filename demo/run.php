@@ -1,8 +1,8 @@
 <?php
 
 /** @var ClassLoader $loader */
-$loader = require dirname(dirname(__DIR__, )) . '/vendor/autoload.php';
-$loader->add('', __DIR__);
+$loader = require dirname(__DIR__,) . '/vendor/autoload.php';
+$loader->add('', __DIR__ . '/src');
 
 use Aura\Sql\ExtendedPdoInterface;
 use Composer\Autoload\ClassLoader;
@@ -11,7 +11,7 @@ use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\MediaQueryModule;
 
-$sqlDir = dirname(__DIR__) . '/sql';
+$sqlDir = __DIR__ . '/sql';
 $dsn = 'sqlite::memory:';
 $injector = new Injector(new class($sqlDir, $dsn) extends AbstractModule {
 
