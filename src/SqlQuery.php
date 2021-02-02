@@ -6,6 +6,7 @@ namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
 use PDO;
+use PDOStatement;
 use Ray\Di\Di\Named;
 
 use function array_pop;
@@ -31,6 +32,9 @@ class SqlQuery implements SqlQueryInterface
 
     /** @var string */
     private $sqlDir;
+
+    /** @var PDOStatement */
+    private $pdoStatement;
 
     #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
     public function __construct(
@@ -101,4 +105,10 @@ class SqlQuery implements SqlQueryInterface
 
         return $sqls;
     }
+
+    public function getStatement(): PDOStatement
+    {
+        return $this->pdoStatement;
+    }
+
 }
