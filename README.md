@@ -66,6 +66,41 @@ assert($todoItem instanceof TodoItemInterface);
 print_r(($todoItem)(['id' => '1']));
 // ['id' => 1, 'title' => 'run']
 ```
+## Pagination
+
+The `#[Pager]` attribute allows you to paginate a SELECT query in a database.
+
+```php
+use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
+
+class TodoList implements TodoListInterface
+{
+    #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
+    public function __invoke(): AuraSqlPagerInterface
+    {
+    }
+}
+```
+
+Get the pager object (`AuraSqlPagerInterface`) and call the
+If you access the array by page number, the DB query will be done at that point and you will get the page object.
+
+```php
+use \Ray\AuraSqlModule\Pagerfanta\Page;
+
+$pager = ($todoList)();
+assert($pager instanceof AuraSqlPagerInterface);
+$page = $pager[2]; // array accessをした時にそのページのDBクエリーが行われます。
+assert($page instanceof Page);
+
+// $page->data // sliced data
+// $page->current;
+// $page->total
+// $page->hasNext
+// $page->hasPrevious
+// $page->maxPerPage;
+// (string) $page // pager html
+```
 
 ## SqlQuery
 

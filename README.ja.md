@@ -65,6 +65,42 @@ print_r(($todoItem)(['id' => '1']));
 // ['id' => 1, 'title' => 'run']
 ```
 
+## Pagination
+
+`#[Pager]`アノテーションで、データベースのSELECTクエリーをページングする事ができます。
+
+```php
+use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
+
+class TodoList implements TodoListInterface
+{
+    #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
+    public function __invoke(): AuraSqlPagerInterface
+    {
+    }
+}
+```
+
+ページャーオブジェクト(`AuraSqlPagerInterface`)を取得して、
+ページ番号で配列アクセスするとその時点でDBクエリーが行われページオブジェクトが取得できます。
+
+```php
+use \Ray\AuraSqlModule\Pagerfanta\Page;
+
+$pager = ($todoList)();
+assert($pager instanceof AuraSqlPagerInterface);
+$page = $pager[2]; // array accessをした時にそのページのDBクエリーが行われます。
+assert($page instanceof Page);
+
+// $page->data // sliced data
+// $page->current;
+// $page->total
+// $page->hasNext
+// $page->hasPrevious
+// $page->maxPerPage;
+// (string) $page // pager html
+```
+
 ## SqlQuery
 
 `#[DbQuery]`アトリビュートは少ない記述でSQL実行オブジェクトを生成できます。
@@ -87,6 +123,7 @@ class TodoItem implements TodoItemInterface
     }
 }
 ```
+
 ### SqlQuery API
 
 ```php
