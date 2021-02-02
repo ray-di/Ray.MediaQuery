@@ -110,5 +110,4 @@ class SqlQuery implements SqlQueryInterface
     {
         return $this->pdoStatement;
     }
-
 }

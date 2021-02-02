@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery;
+namespace Ray\MediaQuery\Aop;
 
-use Ray\MediaQuery\Annotation\QueryId;
+use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\TodoItemInterface;
 
 class TodoItem implements TodoItemInterface
 {
-    #[QueryId('todo_item')]
+    #[DbQuery]
     public function __invoke(string $id): array
     {
     }

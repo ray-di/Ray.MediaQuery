@@ -9,6 +9,8 @@ use Aura\Sql\ExtendedPdoInterface;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
+use Ray\MediaQuery\Aop\TodoAdd;
+use Ray\MediaQuery\Aop\TodoItem;
 
 use function assert;
 use function dirname;
@@ -17,6 +19,7 @@ class MediaQueryTest extends TestCase
 {
     /** @var AbstractModule */
     protected $module;
+
     /** @var MediaQueryLoggerInterface */
     private $logger;
 
@@ -50,7 +53,7 @@ class MediaQueryTest extends TestCase
         assert($todoAdd instanceof TodoAddInterface);
         $todoAdd('uuid1', 'title1');
         $log = (string) $this->logger;
-        $this->assertStringContainsString('media:todo_add', $log);
+        $this->assertStringContainsString('query:todo_add', $log);
     }
 
     public function testSelectItem(): void
@@ -60,7 +63,7 @@ class MediaQueryTest extends TestCase
         assert($todoItem instanceof TodoItemInterface);
         $item = $todoItem('1');
         $log = (string) $this->logger;
-        $this->assertStringContainsString('media:todo_item', $log);
+        $this->assertStringContainsString('query:todo_item', $log);
         $this->assertSame(['id' => '1', 'title' => 'run'], $item);
     }
 }

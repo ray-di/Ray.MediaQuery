@@ -6,6 +6,7 @@ namespace Ray\MediaQuery;
 
 use Ray\Di\AbstractModule;
 use Ray\Di\Scope;
+use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\QueryId;
 use Ray\MediaQuery\Annotation\SqlDir;
 
@@ -25,7 +26,7 @@ class MediaQueryModule extends AbstractModule
         $this->bind(MediaQueryLoggerInterface::class)->to(MediaQueryLogger::class)->in(Scope::SINGLETON);
         $this->bindInterceptor(
             $this->matcher->any(),
-            $this->matcher->annotatedWith(QueryId::class),
+            $this->matcher->annotatedWith(DbQuery::class),
             [MediaQueryInterceptor::class]
         );
         $this->bind()->annotatedWith(SqlDir::class)->toInstance($this->sqlDir);
