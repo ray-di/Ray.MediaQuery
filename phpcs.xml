@@ -40,6 +40,8 @@
         <exclude name="Squiz.WhiteSpace.FunctionSpacing.Before"/>
         <exclude name="SlevomatCodingStandard.Namespaces.UnusedUses"/>
         <exclude name="SlevomatCodingStandard.PHP.RequireExplicitAssertion.RequiredExplicitAssertion"/>
+        <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
     </rule>
 
     <!-- Additional Rules -->
