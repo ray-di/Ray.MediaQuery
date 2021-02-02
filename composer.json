@@ -10,6 +10,7 @@
     ],
     "require": {
         "php": "^7.4 || ^8.0",
+        "ext-pdo": "*",
         "ray/aura-sql-module": "^1.10",
         "doctrine/annotations": "^1.11"
     },
