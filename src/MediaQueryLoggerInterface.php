@@ -12,10 +12,12 @@ use const PHP_EOL;
 
 interface MediaQueryLoggerInterface
 {
+    public function start(): void;
+
     /**
      * @param array<string, string> $params
      */
-    public function log(QueryId $queryId, array $params): void;
+    public function log(string $queryId, array $params): void;
 
     public function __toString(): string;
 }
