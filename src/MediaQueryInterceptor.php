@@ -34,6 +34,9 @@ class MediaQueryInterceptor implements MethodInterceptor
     /** @var MediaQueryLoggerInterface */
     private $logger;
 
+    /**
+     * @Named("sqlDir=Ray\MediaQuery\Annotation\SqlDir")
+     */
     #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
     public function __construct(string $sqlDir, SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger)
     {

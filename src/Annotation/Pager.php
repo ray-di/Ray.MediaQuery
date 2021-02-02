@@ -7,6 +7,10 @@ namespace Ray\MediaQuery\Annotation;
 use Attribute;
 use Doctrine\Common\Annotations\NamedArgumentConstructorAnnotation;
 
+/**
+ * @Annotation
+ * @Target("METHOD")
+ */
 #[Attribute(Attribute::TARGET_METHOD)]
 final class Pager implements NamedArgumentConstructorAnnotation
 {

@@ -14,6 +14,7 @@ class MediaQueryModule extends AbstractModule
 {
     /** @var string */
     private $sqlDir;
+
     public function __construct(string $sqlDir, ?AbstractModule $module = null)
     {
         $this->sqlDir = $sqlDir;
