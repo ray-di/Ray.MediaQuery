@@ -1,4 +1,5 @@
 # Ray.MediaQuery
+![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/workflows/Continuous%20Integration/badge.svg)
 
 ## Overview
 
