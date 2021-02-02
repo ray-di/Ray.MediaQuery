@@ -7,10 +7,12 @@ namespace Ray\MediaQuery;
 use Aura\Sql\ExtendedPdoInterface;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\AuraSqlModule;
+use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\Aop\TodoAdd;
 use Ray\MediaQuery\Aop\TodoItem;
+use Ray\MediaQuery\Aop\TodoList;
 
 use function assert;
 use function dirname;
@@ -34,6 +36,7 @@ class MediaQueryModuleTest extends TestCase
             {
                 $this->bind(TodoAddInterface::class)->to(TodoAdd::class);
                 $this->bind(TodoItemInterface::class)->to(TodoItem::class);
+                $this->bind(TodoListInterface::class)->to(TodoList::class);
             }
         });
         $this->injector = new Injector($module);
@@ -73,5 +76,17 @@ class MediaQueryModuleTest extends TestCase
         $this->assertSame(['id' => '1', 'title' => 'run'], $item);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query:todo_item', $log);
+    }
+
+    public function testSelectPager(): void
+    {
+        $todoList = $this->injector->getInstance(TodoListInterface::class);
+        assert($todoList instanceof TodoListInterface);
+        $list = ($todoList)();
+        /** @var Page $page */
+        $page = $list[1];
+        $this->assertSame([['id' => '1', 'title' => 'run']], $page->data);
+        $log = (string) $this->logger;
+        $this->assertStringContainsString('query:todo_list', $log);
     }
 }

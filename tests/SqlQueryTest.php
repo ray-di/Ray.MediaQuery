@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdo;
+use Pagerfanta\View\DefaultView;
 use PHPUnit\Framework\TestCase;
+use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
+use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
+use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 
 use function dirname;
 
@@ -29,7 +33,8 @@ class SqlQueryTest extends TestCase
 )');
         $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', $this->insertData);
         $this->log = new MediaQueryLogger();
-        $this->sqlQuery = new SqlQuery($pdo, $this->log, dirname(__DIR__) . '/tests/sql');
+        $pagerFactory = new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), []));
+        $this->sqlQuery = new SqlQuery($pdo, $this->log, dirname(__DIR__) . '/tests/sql', $pagerFactory);
     }
 
     public function testExec(): void
@@ -54,5 +59,11 @@ class SqlQueryTest extends TestCase
     {
         $result = $this->sqlQuery->getRowList('todo_list', []);
         $this->assertSame([0 => $this->insertData], $result);
+    }
+
+    public function testPager(): void
+    {
+        $pager = $this->sqlQuery->getPage('todo_list', [], 1);
+        $this->assertInstanceOf(AuraSqlPagerInterface::class, $pager);
     }
 }

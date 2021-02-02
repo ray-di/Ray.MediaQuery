@@ -7,12 +7,17 @@ namespace Ray\MediaQuery;
 use Aura\Sql\ExtendedPdoInterface;
 use PDO;
 use PDOStatement;
+use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
+use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
+use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\Di\Named;
+use Ray\Di\InjectorInterface;
 
 use function array_pop;
 use function assert;
 use function count;
 use function explode;
+use function file;
 use function file_get_contents;
 use function is_array;
 use function sprintf;
@@ -37,15 +42,20 @@ class SqlQuery implements SqlQueryInterface
     /** @var ?PDOStatement */
     private $pdoStatement;
 
+    /** @var AuraSqlPagerFactoryInterface */
+    private $pagerFactory;
+
     #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
     public function __construct(
         ExtendedPdoInterface $pdo,
         MediaQueryLoggerInterface $logger,
-        string $sqlDir
+        string $sqlDir,
+        AuraSqlPagerFactoryInterface $pagerFactory
     ) {
         $this->pdo = $pdo;
         $this->logger = $logger;
         $this->sqlDir = $sqlDir;
+        $this->pagerFactory = $pagerFactory;
     }
 
     /**
@@ -126,5 +136,18 @@ class SqlQuery implements SqlQueryInterface
     public function getStatement(): ?PDOStatement
     {
         return $this->pdoStatement;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getPage(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): AuraSqlPagerInterface
+    {
+        $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
+        $file = file($sqlFile);
+        $sql = trim($file[0]); // @phpstan-ignore-line
+
+        /** @psalm-suppress MixedArgumentTypeCoercion */
+        return $this->pagerFactory->newInstance($this->pdo, $sql, $params, $perPage, $queryTemplate);
     }
 }
