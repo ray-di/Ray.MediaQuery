@@ -24,7 +24,6 @@ class MediaQueryModuleTest extends TestCase
 
     /** @var Injector */
     private $injector;
-    private $insertItem = ['id' => '1', 'title' => 'run'];
 
     protected function setUp(): void
     {

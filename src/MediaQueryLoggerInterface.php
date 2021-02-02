@@ -15,7 +15,7 @@ interface MediaQueryLoggerInterface
     public function start(): void;
 
     /**
-     * @param array<string, string> $params
+     * @param array<string, mixed> $params
      */
     public function log(string $queryId, array $params): void;
 

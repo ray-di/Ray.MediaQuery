@@ -9,21 +9,24 @@ use PDOStatement;
 
 interface SqlQueryInterface
 {
+    /**
+     * @param array<string, mixed> $params
+     */
     public function exec(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): void;
 
     /**
-     * @param array<string, string> $params
+     * @param array<string, mixed> $params
      *
-     * @return array<string>
+     * @return array<mixed>
      */
     public function getRow(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array;
 
     /**
-     * @param array<string, string> $params
+     * @param array<string, mixed> $params
      *
-     * @return array<array<string>>
+     * @return array<array<mixed>>
      */
     public function getRowList(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array;
 
-    public function getStatement(): PDOStatement;
+    public function getStatement(): ?PDOStatement;
 }

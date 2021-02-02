@@ -16,7 +16,7 @@ class SqlQueryTest extends TestCase
     /** @var MediaQueryLogger */
     private $log;
 
-    /** @var array */
+    /** @var array<string, mixed> */
     private $insertData = ['id' => '1', 'title' => 'run'];
 
     protected function setUp(): void
@@ -27,7 +27,6 @@ class SqlQueryTest extends TestCase
           title TEXT
 )');
         $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', $this->insertData);
-        $this->pdo = $pdo;
         $this->log = new MediaQueryLogger();
         $this->sqlQuery = new SqlQuery($pdo, $this->log, dirname(__DIR__) . '/tests/sql');
     }

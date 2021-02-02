@@ -33,7 +33,7 @@ class SqlQuery implements SqlQueryInterface
     /** @var string */
     private $sqlDir;
 
-    /** @var PDOStatement */
+    /** @var ?PDOStatement */
     private $pdoStatement;
 
     #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
@@ -55,18 +55,24 @@ class SqlQuery implements SqlQueryInterface
     public function getRow(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array
     {
         $rowList = $this->perform($sqlId, $params, $fetchMode);
-        $row = array_pop($rowList);
+        /** @var array<string, mixed> $row */
+        $row = (array) array_pop($rowList);
 
-        return (array) $row;
+        return $row;
     }
 
     public function getRowList(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array
     {
-        return $this->perform($sqlId, $params, $fetchMode);
+        /** @var array<array<mixed>> $list */
+        $list =  $this->perform($sqlId, $params, $fetchMode);
+
+        return $list;
     }
 
     /**
-     * @return array<string>
+     * @param array<string, mixed> $params
+     *
+     * @return array<mixed>
      */
     private function perform(string $sqlId, array $params, int $fetchModode): array
     {
@@ -81,10 +87,14 @@ class SqlQuery implements SqlQueryInterface
         }
 
         $this->logger->log($sqlId, $params);
-
+        assert(isset($pdoStatement)); // @phpstan-ignore-line
+        assert($pdoStatement instanceof PDOStatement);
         $lastQuery = trim((string) $pdoStatement->queryString);
         if (stripos($lastQuery, 'select') === 0) {
-            return (array) $pdoStatement->fetchAll($fetchModode);
+            $fetchedData = (array) $pdoStatement->fetchAll($fetchModode);
+
+            /** @var array<array<mixed>> */
+            return $fetchedData;
         }
 
         return [];
@@ -106,7 +116,7 @@ class SqlQuery implements SqlQueryInterface
         return $sqls;
     }
 
-    public function getStatement(): PDOStatement
+    public function getStatement(): ?PDOStatement
     {
         return $this->pdoStatement;
     }

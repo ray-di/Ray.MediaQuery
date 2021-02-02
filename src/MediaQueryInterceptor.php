@@ -42,6 +42,7 @@ class MediaQueryInterceptor implements MethodInterceptor
         $queryId = $this->getQueryId($invocation);
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $queryId);
         if (file_exists($sqlFile)) {
+            /** @var array<string, mixed> $params */
             $params = (array) $invocation->getNamedArguments();
 
             return $this->sqlQuery($queryId, $params);
@@ -49,7 +50,7 @@ class MediaQueryInterceptor implements MethodInterceptor
     }
 
     /**
-     * @param array<string, string> $params
+     * @param array<string, mixed> $params
      *
      * @return array<mixed>
      */
@@ -76,6 +77,6 @@ class MediaQueryInterceptor implements MethodInterceptor
         $name = $strPos ? substr($fullName, $strPos + 1) : $fullName;
 
         // @see https://qiita.com/okapon_pon/items/498b88c2f91d7c42e9e8
-        return ltrim(strtolower(preg_replace(/** @lang regex */'/[A-Z]/', /** @lang regex */'_\0', $name)), '_');
+        return ltrim(strtolower((string) preg_replace(/** @lang regex */'/[A-Z]/', /** @lang regex */'_\0', $name)), '_');
     }
 }
