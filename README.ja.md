@@ -2,23 +2,19 @@
 
 ## Overview
 
-`Ray.QueryModule` makes a query to an external media such as a database or Web API with a function object to be injected.
-
+`Ray.MediaQuery` makes a query to an external media such as a database or Web API with a function object to be injected.
 
 ## Motivation
-
 
  * You can have a clear boundary between domain layer (usage code) and infrastructure layer (injected function) in code.
  * Execution objects are generated automatically so you do not need to write procedural code for execution.
  * Since usage codes are indifferent to the actual state of external media, storage can be changed later. Easy parallel development and stabbing.
 
-## Installation
-
-### Composer install
+## Composer install
 
     $ composer require ray/media-query
 
-### Usage
+## Usage
 
 アプリケーションがメディアアクセスするインターフェイスを定義します。
 
@@ -37,7 +33,7 @@ interface TodoItemInterface
 }
 ```
 
-メソッドに`DbQuery`と属性をつけて実装を記述します。
+メソッドに`DbQuery`と属性をつけて、対象をSQL実行オブジェクトにします。
 
 ```php
 class TodoAdd implements TodoAddInterface
@@ -61,54 +57,22 @@ class TodoItem implements TodoItemInterface
  * SQL実行が返すの単一行なら`item`、複数行なら`list`のpostfixを付けます。
  * SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果として返ります。
 
-## インジェクター
-
-`AuraSqlModule`と`MediaQueryModule`をインストールしてインジェクターを生成します。
+SQL実行オブジェクトは、クエリーIDで指定されたSQLファイルを指定された引数でバインドして実行します。
 
 ```php
-$injector = new Injector(new class(string $sqlDir, string $dsn) extends AbstractModule {
-    private function __construct(
-        private string $sqlDir;
-        private string $dsn;
-    ){}
-    
-    protected function configure()
-    {
-        $this->install(MediaQueryModule($this->sqlDir);    
-        $this->install(AuraSqlModule($this->dsn);    
-        $this->bind(TodoAddInterface::class)->to(TodoAdd::class);
-        $this->bind(TodoItemInterface::class)->to(TodoItem::class);
-    }
-});
-$injector = new Injector($module);
+assert($todoItem instanceof TodoItemInterface);
+print_r(($todoItem)(['id' => '1']));
+// ['id' => 1, 'title' => 'run']
 ```
-
-下記のクラスはアプリケーションの例です。
-
-```php
-$foo = $injector->getInstance(Foo::class);
-
-class Foo
-{
-    public function __construct(
-        private TodoAddInterface $userAdd,
-        private TodoItemInterface $userItem
-    ) {}
-    
-    public function add(string $id, string $title): void
-    {
-        ($this->userAdd)('id1', 'run');
-    }
-    
-    public function get(string $id): array
-    {
-        return ($this->userItem)('id1');
-    }
-}
 
 ## SqlQuery
 
-`SqlQuery`はDAOの一種で、SQLの代わりにSQLファイルのIDを指定してSQLを実行します。
+`#[DbQuery]`アトリビュートは少ない記述でSQL実行オブジェクトを生成できます。
+一方、`SqlQuery`オブジェクトを使うと記述は増えますが、より多くの制御ができます。
+
+`SqlQuery`はDAOの一種です。SQLの代わりにSQLファイルのIDを指定してSQLを実行します。
+
+下記の例は上記アトリビュートの方法を`SqlQuery`で行った場合の例です。
 
 ```php
 class TodoItem implements TodoItemInterface
@@ -127,6 +91,7 @@ class TodoItem implements TodoItemInterface
     }
 }
 ```
+### SqlQuery API
 
 ```php
 $sqlQyery->exec($queryId, $params); // 返り値なし
@@ -134,4 +99,12 @@ $sqlQyery->getRow($queryId, $params); // 結果が単数行
 $sqlQyery->getRowList($queryId, $params); // 結果が複数行
 $statement = $sqlQyery->getStatement(); // PDO Statementを取得
 ```
+
+## Demo
+
+[demo](/demo)では上記２種類のやり方で、それぞれ`user_add`、`user_item`の実行オブジェクトを作成しています。
+インジェクター生成の例と合わせてご覧ください。
  
+```php
+php demo/run.php
+```
