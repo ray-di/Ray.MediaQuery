@@ -127,10 +127,10 @@ class TodoItem implements TodoItemInterface
 ### SqlQuery API
 
 ```php
-$sqlQyery->exec($queryId, $params); // 返り値なし
-$sqlQyery->getRow($queryId, $params); // 結果が単数行
-$sqlQyery->getRowList($queryId, $params); // 結果が複数行
-$statement = $sqlQyery->getStatement(); // PDO Statementを取得
+$sqlQuery->exec($queryId, $params); // 返り値なし
+$sqlQuery->getRow($queryId, $params); // 結果が単数行
+$sqlQuery->getRowList($queryId, $params); // 結果が複数行
+$statement = $sqlQuery->getStatement(); // PDO Statementを取得
 ```
 
 ## Demo
