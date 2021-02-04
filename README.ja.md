@@ -52,8 +52,8 @@ class TodoItem implements TodoItemInterface
     }
 }
 ```
-`TodoAdd:__invoke()`は`todo_add.sql`SQL文に`['id => $id, 'title' => $title]`をバインドして実行し、
-`TodoItem::__invoke()`は`todo_item.sql`SQL文に`['id => $id]`をバインドして実行した結果を返します。
+SQL実行オブジェクトは、クエリーIDで指定されたSQLファイルを指定された引数でバインドして実行します。
+例えば、`TodoItem::__invoke()`は`todo_item.sql`SQL文に`['id => $id]`をバインドして実行した結果を返します。
 
 ```php
 assert($todoItem instanceof TodoItemInterface);
@@ -64,9 +64,6 @@ print_r(($todoItem)(id: '1'));
  * `$sqlDir/`ディレクトリにそれぞれのSQLを用意します。クラスが`TodoAdd`なら`$sqlDir/todo_add.sql`です。
  * SQL実行が返すの単一行なら`item`、複数行なら`list`のpostfixを付けます。
  * SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果として返ります。
-
-SQL実行オブジェクトは、クエリーIDで指定されたSQLファイルを指定された引数でバインドして実行します。
-
 
 ## Pagination
 
