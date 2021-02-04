@@ -23,6 +23,9 @@ interface TodoAddInterface
 {
     public function __invoke(string $id, string $title): void;
 }
+```
+
+```php
 
 interface TodoItemInterface
 {
@@ -43,7 +46,9 @@ class TodoAdd implements TodoAddInterface
     {
     }
 }
+```
 
+```php
 class TodoItem implements TodoItemInterface
 {
     #[DbQuery]
