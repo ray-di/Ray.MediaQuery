@@ -57,7 +57,7 @@ class TodoItem implements TodoItemInterface
 
 ```php
 assert($todoItem instanceof TodoItemInterface);
-print_r(($todoItem)(id: '1');
+print_r(($todoItem)(id: '1'));
 // ['id' => 1, 'title' => 'run']
 ```
 
