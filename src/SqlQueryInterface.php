@@ -29,6 +29,11 @@ interface SqlQueryInterface
      */
     public function getRowList(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array;
 
+    /**
+     * @param array<string, mixed> $params
+     */
+    public function getCount(string $sqlId, array $params): int;
+
     public function getStatement(): ?PDOStatement;
 
     /**

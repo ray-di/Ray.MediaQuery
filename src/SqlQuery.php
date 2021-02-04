@@ -9,6 +9,7 @@ use PDO;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
+use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\Di\Named;
 use Ray\Di\InjectorInterface;
@@ -90,6 +91,14 @@ class SqlQuery implements SqlQueryInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function getCount(string $sqlId, array $params): int
+    {
+        return (new ExtendedPdoAdapter($this->pdo, $this->getSql($sqlId), $params))->getNbResults();
+    }
+
+    /**
      * @param array<string, mixed> $params
      *
      * @return array<mixed>
@@ -144,12 +153,17 @@ class SqlQuery implements SqlQueryInterface
      */
     public function getPages(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): Pages
     {
+        /** @psalm-suppress MixedArgumentTypeCoercion */
+        $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $params, $perPage, $queryTemplate);
+
+        return new Pages($pager, $this->pdo, $this->getSql($sqlId), $params);
+    }
+
+    private function getSql(string $sqlId): string
+    {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $file = file($sqlFile);
-        $sql = trim($file[0]); // @phpstan-ignore-line
-        /** @psalm-suppress MixedArgumentTypeCoercion */
-        $pager = $this->pagerFactory->newInstance($this->pdo, $sql, $params, $perPage, $queryTemplate);
 
-        return new Pages($pager, $this->pdo, $sql, $params);
+        return trim($file[0]); // @phpstan-ignore-line
     }
 }
