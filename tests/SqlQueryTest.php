@@ -63,7 +63,7 @@ class SqlQueryTest extends TestCase
 
     public function testPager(): void
     {
-        $pager = $this->sqlQuery->getPage('todo_list', [], 1);
-        $this->assertInstanceOf(AuraSqlPagerInterface::class, $pager);
+        $pager = $this->sqlQuery->getPages('todo_list', [], 1);
+        $this->assertInstanceOf(Pages::class, $pager);
     }
 }

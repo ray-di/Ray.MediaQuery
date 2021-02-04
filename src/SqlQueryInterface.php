@@ -7,7 +7,6 @@ namespace Ray\MediaQuery;
 use PDO;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
-use Ray\AuraSqlModule\Pagerfanta\Page;
 
 interface SqlQueryInterface
 {
@@ -35,5 +34,5 @@ interface SqlQueryInterface
     /**
      * @param array<string, mixed> $params
      */
-    public function getPage(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): AuraSqlPagerInterface;
+    public function getPages(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): Pages;
 }

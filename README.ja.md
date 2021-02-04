@@ -86,16 +86,18 @@ class TodoList implements TodoListInterface
 }
 ```
 
-ページャーオブジェクト(`AuraSqlPagerInterface`)を取得して、
-ページ番号で配列アクセスするとその時点でDBクエリーが行われページオブジェクトが取得できます。
+実行結果はSQLを遅延実行するリストオブジェクトです。
+ページ番号で配列アクセスするとページオブジェクトが取得でき、count()では件数が取得できます。
 
 ```php
-use \Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\Pages;
 
-$pager = ($todoList)();
-assert($pager instanceof AuraSqlPagerInterface);
-$page = $pager[2]; // array accessをした時にそのページのDBクエリーが行われます。
+$pages = ($todoList)();
+assert($pages instanceof Pages);
+$page = $pages[2]; // array accessをした時にそのページのDBクエリーが行われます。
 assert($page instanceof Page);
+echo count($pages); // countした時に"count SQL"が生成されクエリーが行われます。
 
 // $page->data // sliced data
 // $page->current;

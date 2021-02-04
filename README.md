@@ -83,16 +83,18 @@ class TodoList implements TodoListInterface
 }
 ```
 
-Get the pager object (`AuraSqlPagerInterface`) and call the
-If you access the array by page number, the DB query will be done at that point and you will get the page object.
+The result of the execution is a list object for lazy execution of SQL.
+The page object can be obtained by accessing the array by page number, and the number of pages can be obtained by count().
 
 ```php
-use \Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\Pages;
 
-$pager = ($todoList)();
-assert($pager instanceof AuraSqlPagerInterface);
-$page = $pager[2]; // array accessをした時にそのページのDBクエリーが行われます。
+$pages = ($todoList)();
+assert($pages instanceof Pages);
+$page = $pages[2]; // array accessをした時にそのページのDBクエリーが行われます。
 assert($page instanceof Page);
+echo count($pages); // countした時に"count SQL"が生成されクエリーが行われます。
 
 // $page->data // sliced data
 // $page->current;

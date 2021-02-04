@@ -8,5 +8,5 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 
 interface TodoListInterface
 {
-    public function __invoke(): AuraSqlPagerInterface;
+    public function __invoke(): Pages;
 }

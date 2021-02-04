@@ -21,6 +21,6 @@ class TodoList implements TodoListInterface
 
     public function __invoke(): AuraSqlPagerInterface
     {
-        return $this->sqlQuery->getPage('todo_list', [], 10);
+        return $this->sqlQuery->getPages('todo_list', [], 10);
     }
 }

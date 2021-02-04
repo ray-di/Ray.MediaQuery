@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use LogiceException;
+use LogicException;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
@@ -46,22 +48,24 @@ class MediaQueryInterceptor implements MethodInterceptor
     }
 
     /**
-     * @return mixed
+     * @return Pages|array<mixed>
      */
     public function invoke(MethodInvocation $invocation)
     {
         $queryId = $this->getQueryId($invocation);
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $queryId);
-        if (file_exists($sqlFile)) {
-            $pager = $invocation->getMethod()->getAnnotation(Pager::class);
-            /** @var array<string, mixed> $params */
-            $params = (array) $invocation->getNamedArguments();
-            if ($pager instanceof Pager) {
-                return $this->getPager($queryId, $params, $pager);
-            }
-
-            return $this->sqlQuery($queryId, $params);
+        if (! file_exists($sqlFile)) {
+            throw new LogicException($sqlFile);
         }
+
+        $pager = $invocation->getMethod()->getAnnotation(Pager::class);
+        /** @var array<string, mixed> $params */
+        $params = (array) $invocation->getNamedArguments();
+        if ($pager instanceof Pager) {
+            return $this->getPager($queryId, $params, $pager);
+        }
+
+        return $this->sqlQuery($queryId, $params);
     }
 
     /**
@@ -98,15 +102,15 @@ class MediaQueryInterceptor implements MethodInterceptor
     /**
      * @param array<string, mixed> $params
      */
-    private function getPage(string $queryId, array $params, Pager $pager): AuraSqlPagerInterface
+    private function getPage(string $queryId, array $params, Pager $pager): Pages
     {
-        return $this->sqlQuery->getPage($queryId, $params, $pager->perPage, $pager->template);
+        return $this->sqlQuery->getPages($queryId, $params, $pager->perPage, $pager->template);
     }
 
     /**
      * @param array<string, mixed> $params
      */
-    private function getPager(string $queryId, array $params, Pager $pager): AuraSqlPagerInterface
+    private function getPager(string $queryId, array $params, Pager $pager): Pages
     {
         $this->logger->start();
         $result = $this->getPage($queryId, $params, $pager);

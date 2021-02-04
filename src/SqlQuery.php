@@ -103,6 +103,7 @@ class SqlQuery implements SqlQueryInterface
         }
 
         foreach ($sqls as $sql) {
+            $prepare = $this->pdo->prepare($sql);
             $pdoStatement = $this->pdo->perform($sql, $params);
         }
 
@@ -141,13 +142,14 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getPage(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): AuraSqlPagerInterface
+    public function getPages(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): Pages
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $file = file($sqlFile);
         $sql = trim($file[0]); // @phpstan-ignore-line
-
         /** @psalm-suppress MixedArgumentTypeCoercion */
-        return $this->pagerFactory->newInstance($this->pdo, $sql, $params, $perPage, $queryTemplate);
+        $pager = $this->pagerFactory->newInstance($this->pdo, $sql, $params, $perPage, $queryTemplate);
+
+        return new Pages($pager, $this->pdo, $sql, $params);
     }
 }
