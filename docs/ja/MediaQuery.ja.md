@@ -4,6 +4,13 @@
 
 ## Getting Started
 
+SQLファイルを保存します。
+
+```sql
+INSERT INTO user (id, name) VALUES (:id, :name); # $sqlDir/user_add.sql
+SELECT * FROM user WHERE id = :id; # $sqlDir/user_item.sql
+```
+
 アプリケーションがメディアアクセスするインターフェイスを定義します。
 
 ```php
@@ -24,7 +31,7 @@ interface TodoItemInterface
 }
 ```
 
-メソッドに`DbQuery`と属性をつけて、メソッドをSQL実行メソッドにします。
+メソッドに`DbQuery`と属性をつけるて、メソッドをSQL実行にオーバーライドします。
 
 ```php
 class TodoAdd implements TodoAddInterface
@@ -46,7 +53,10 @@ class TodoItem implements TodoItemInterface
 }
 ```
 
-インスタンス取得
+＊ この時、メソッド内でFakeデータを返しても構いません。IDEは配列のキーを理解して補完をするようになります。
+AOPを使わない時には開発用のデータにもなります。
+
+## インスタンス取得
 
 ```
 $module = new MediaQueryModule(dirname(__DIR__) . '/tests/sql', new AuraSqlModule('sqlite::memory:'));
