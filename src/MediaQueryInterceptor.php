@@ -12,6 +12,7 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\Di\Named;
 use Ray\Di\InjectorInterface;
+use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Annotation\QueryId;
 use Ray\MediaQuery\Annotation\SqlDir;
@@ -52,9 +53,12 @@ class MediaQueryInterceptor implements MethodInterceptor
      */
     public function invoke(MethodInvocation $invocation)
     {
-        $queryId = $this->getQueryId($invocation);
+        /** @var DbQuery $dbQury */
+        $dbQury = $invocation->getMethod()->getAnnotation(DbQuery::class);
+        $queryId = $dbQury->id ? $dbQury->id :  $this->getQueryId($invocation);
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $queryId);
         if (! file_exists($sqlFile)) {
+
             throw new LogicException($sqlFile);
         }
 
