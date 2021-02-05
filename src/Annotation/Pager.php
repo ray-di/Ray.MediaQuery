@@ -23,10 +23,9 @@ final class Pager implements NamedArgumentConstructorAnnotation
     /** @var string */
     public $template;
 
-    public function __construct(string $queryKey = 'page', int $perPage = 10, string $template = '/{?page}')
+    public function __construct(int $perPage = 10, string $template = '/{?page}')
     {
         $this->perPage = $perPage;
-        $this->queryKey = $queryKey;
         $this->template = $template;
     }
 }

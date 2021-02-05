@@ -30,15 +30,12 @@ class MediaQueryModuleTest extends TestCase
 
     protected function setUp(): void
     {
-        $module = new MediaQueryModule(dirname(__DIR__) . '/tests/sql', new AuraSqlModule('sqlite::memory:'));
-        $module->install(new class extends AbstractModule{
-            protected function configure(): void
-            {
-                $this->bind(TodoAddInterface::class)->to(TodoAdd::class);
-                $this->bind(TodoItemInterface::class)->to(TodoItem::class);
-                $this->bind(TodoListInterface::class)->to(TodoList::class);
-            }
-        });
+        $mediaQueries = [
+            TodoAddInterface::class,
+            TodoItemInterface::class,
+            TodoListInterface::class,
+        ];
+        $module = new MediaQueryModule('sqlite::memory:', dirname(__DIR__) . '/tests/sql', $mediaQueries);
         $this->injector = new Injector($module);
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);

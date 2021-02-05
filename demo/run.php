@@ -1,8 +1,10 @@
 <?php
 
+namespace Demo;
+
 /** @var ClassLoader $loader */
 $loader = require dirname(__DIR__,) . '/vendor/autoload.php';
-$loader->add('', __DIR__ . '/src');
+$loader->addPsr4('Demo\\', __DIR__ . '/src');
 
 use Aura\Sql\ExtendedPdoInterface;
 use Composer\Autoload\ClassLoader;
@@ -22,10 +24,12 @@ $injector = new Injector(new class($sqlDir, $dsn) extends AbstractModule {
 
     protected function configure()
     {
-        $this->install(new MediaQueryModule($this->sqlDir));
+        $mediaQueries = [
+            UserAddInterface::class,
+            UserItemInterface::class
+        ];
+        $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
         $this->install(new AuraSqlModule($this->dsn));
-        $this->bind(UserAddInterface::class)->to(UserAdd::class);
-        $this->bind(UserItemInterface::class)->to(UserItem::class);
     }
 });
 /** @var ExtendedPdoInterface $pdo */

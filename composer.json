@@ -14,6 +14,7 @@
         "ext-pdo": "*",
         "aura/sql": "^3.0",
         "doctrine/annotations": "^1.11",
+        "koriym/null-object": "1.x-dev",
         "ray/aop": "^2.10",
         "ray/aura-sql-module": "^1.10",
         "ray/di": "^2.11"

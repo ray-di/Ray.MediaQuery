@@ -36,48 +36,45 @@ interface TodoItemInterface
 }
 ```
 
-Method with the attribute `DbQuery` to make the target an SQL execution object.
+There is no need to prepare an implementation class. It will be generated and injected.
 
 ```php
-class TodoAdd implements TodoAddInterface
+<?php
+class User
 {
-    #[DbQuery, Transactional]
-    public function __invoke(string $id, string $title): void
-    {
-    }
-}
+    public function __construct(
+        private UserAddInterface $userAdd,
+        private UserItemInterface $userItem
+    ) {}
 
-class TodoItem implements TodoItemInterface
-{
-    #[DbQuery]
-    public function __invoke(string $id): array
+    public function add(string $id, string $title): void
     {
+        ($this->userAdd)($id, $title);
+    }
+
+    public function get(string $id): array
+    {
+        return ($this->userItem)($id);
     }
 }
 ```
+
+The SQL execution object binds and executes the SQL file specified by the query ID with the specified arguments.
+For example, `TodoItem::__invoke()` will bind `todo_item.sql` SQL statement with `['id => $id]` and return the result of the execution.
 
 * Prepare the SQL for each in the `$sqlDir/` directory. If the class is `TodoAdd`, it will be `$sqlDir/todo_add.sql`.
 * Add a postfix of `item` if the SQL execution returns a single line, or `list` if it returns multiple lines.
 * The SQL file can contain multiple SQL statements. The SELECT of the last row will be returned as the execution result.
 
-The SQL execution object will bind and execute the SQL file specified by the query ID with the specified arguments.
-
-```php
-assert($todoItem instanceof TodoItemInterface);
-print_r(($todoItem)(['id' => '1']));
-// ['id' => 1, 'title' => 'run']
-```
 ## Pagination
 
 The `#[Pager]` attribute allows you to paginate a SELECT query in a database.
 
 ```php
-use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
-
-class TodoList implements TodoListInterface
+interface TodoList
 {
     #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
-    public function __invoke(): AuraSqlPagerInterface
+    public function __invoke(): Pages
     {
     }
 }
@@ -87,14 +84,9 @@ The result of the execution is a list object for lazy execution of SQL.
 The page object can be obtained by accessing the array by page number, and the number of pages can be obtained by count().
 
 ```php
-use Ray\AuraSqlModule\Pagerfanta\Page;
-use Ray\MediaQuery\Pages;
-
 $pages = ($todoList)();
-assert($pages instanceof Pages);
-$page = $pages[2]; // array accessをした時にそのページのDBクエリーが行われます。
-assert($page instanceof Page);
-echo count($pages); // countした時に"count SQL"が生成されクエリーが行われます。
+$cnt = count($page); // A count SQL will be generated and queried.
+$page = $pages[2]; // When an array access is made, a DB query is made for that page.
 
 // $page->data // sliced data
 // $page->current;
@@ -127,23 +119,14 @@ class TodoItem implements TodoItemInterface
     }
 }
 ```
-### SqlQuery API
+
+## Get* Method
+
+To retrieve the result of SELECT, Invoke `get*` according to the result to be retrieved.
 
 ```php
-$sqlQuery->exec($queryId, $params); // no return value
-$sqlQuery->getRow($queryId, $params); // result is single row
+$sqlQuery->getRow($queryId, $params); // result is a single row
 $sqlQuery->getRowList($queryId, $params); // result is multiple rows
 $statement = $sqlQuery->getStatement(); // Retrieve the PDO Statement
-$pages = $sqlQuery->getPages($sqlId, $params, $perPage, $queryTemplate = '/{?page}'); // Get the pager object
-$pages[$pageIndex]; // Sliced page data
-
-```
-
-## Demo
-
-In [demo](/demo), execution objects of `user_add` and `user_item` are created in the above two ways, respectively.
-See also the example of injector generation.
-
-```php
-php demo/run.php
+$pages = $sqlQuery->getPages(); // Get the pager
 ```
