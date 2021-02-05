@@ -138,6 +138,8 @@ $sqlQuery->exec($queryId, $params); // 返り値なし
 $sqlQuery->getRow($queryId, $params); // 結果が単数行
 $sqlQuery->getRowList($queryId, $params); // 結果が複数行
 $statement = $sqlQuery->getStatement(); // PDO Statementを取得
+$pages = $sqlQuery->getPages($sqlId, $params, $perPage, $queryTemplate = '/{?page}'); // ページャーを取得
+$pages[$pageIndex]; // スライスされたページ
 ```
 
 ## Demo

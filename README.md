@@ -134,6 +134,9 @@ $sqlQuery->exec($queryId, $params); // no return value
 $sqlQuery->getRow($queryId, $params); // result is single row
 $sqlQuery->getRowList($queryId, $params); // result is multiple rows
 $statement = $sqlQuery->getStatement(); // Retrieve the PDO Statement
+$pages = $sqlQuery->getPages($sqlId, $params, $perPage, $queryTemplate = '/{?page}'); // Get the pager object
+$pages[$pageIndex]; // Sliced page data
+
 ```
 
 ## Demo
