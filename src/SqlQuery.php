@@ -51,8 +51,8 @@ class SqlQuery implements SqlQueryInterface
     #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
     public function __construct(
         ExtendedPdoInterface $pdo,
-        MediaQueryLoggerInterface $logger,
         string $sqlDir,
+        MediaQueryLoggerInterface $logger,
         AuraSqlPagerFactoryInterface $pagerFactory
     ) {
         $this->pdo = $pdo;
