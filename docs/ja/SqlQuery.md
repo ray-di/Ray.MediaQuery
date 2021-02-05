@@ -29,4 +29,4 @@ $sqlQuery->getRowList($queryId, $params); // 結果が複数行
 $statement = $sqlQuery->getStatement(); // PDO Statementを取得
 $pages = $sqlQuery->getPages(); // ページャーを取得
 ```
-ページャー([Pages](Page.md))は、配列アクセスでページを取得したりcount()で全体の件数を取得することができます。
+ページャー([Pages](Pages.md))は、配列アクセスでページを取得したりcount()で全体の件数を取得することができます。

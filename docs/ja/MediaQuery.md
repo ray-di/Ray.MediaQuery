@@ -89,5 +89,5 @@ class TodoList implements TodoListInterface
     }
 }
 ```
-実行結果のページャー([Pages](Page.md))は、配列アクセスでページを取得したりcount()で全体の件数を取得することができます。
+実行結果のページャー([Pages](Pages.md))は、配列アクセスでページを取得したりcount()で全体の件数を取得することができます。
 
