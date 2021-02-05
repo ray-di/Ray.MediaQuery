@@ -10,7 +10,10 @@ use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
+use Ray\AuraSqlModule\Pagerfanta\Page;
 
+use function assert;
+use function count;
 use function dirname;
 
 class SqlQueryTest extends TestCase
@@ -61,9 +64,34 @@ class SqlQueryTest extends TestCase
         $this->assertSame([0 => $this->insertData], $result);
     }
 
-    public function testPager(): void
+    public function testPager(): Pages
     {
-        $pager = $this->sqlQuery->getPages('todo_list', [], 1);
-        $this->assertInstanceOf(Pages::class, $pager);
+        $walkTodo = ['id' => '2', 'title' => 'walk'];
+        $this->sqlQuery->exec('todo_add', $walkTodo);
+        $pages = $this->sqlQuery->getPages('todo_list', [], 1);
+        $this->assertInstanceOf(Pages::class, $pages);
+        $page = $pages[2];
+        $this->assertInstanceOf(Page::class, $page);
+        assert($page instanceof Page);
+        $this->assertSame(2, $page->current);
+        $this->assertFalse($page->hasNext);
+        $this->assertSame([$walkTodo], $page->data);
+
+        return $pages;
+    }
+
+    /**
+     * @depends testPager
+     */
+    public function testPagerCount(Pages $pages): void
+    {
+        $this->assertSame(2, count($pages));
+    }
+
+    public function testCount(): void
+    {
+        $this->sqlQuery->exec('todo_add', ['id' => '2', 'title' => 'walk']);
+        $count = $this->sqlQuery->getCount('todo_list', []);
+        $this->assertSame(2, $count);
     }
 }

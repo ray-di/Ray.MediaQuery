@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
+use LogicException;
 use PDO;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
@@ -21,6 +22,7 @@ use function explode;
 use function file;
 use function file_get_contents;
 use function is_array;
+use function is_bool;
 use function sprintf;
 use function stripos;
 use function strpos;
@@ -163,7 +165,12 @@ class SqlQuery implements SqlQueryInterface
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $file = file($sqlFile);
+        if (is_bool($file) || ! isset($file[0])) {
+            throw new LogicException($sqlId);
+        }
 
-        return trim($file[0]); // @phpstan-ignore-line
+        $firstRow = $file[0];
+
+        return trim($firstRow, "; \n\r\t\v\0");
     }
 }
