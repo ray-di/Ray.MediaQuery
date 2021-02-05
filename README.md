@@ -1,6 +1,8 @@
 # Ray.MediaQuery
 ![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/workflows/Continuous%20Integration/badge.svg)
 
+[日本語 (Japanese)](./README.ja.md)
+
 ## Overview
 
 `Ray.QueryModule` makes a query to an external media such as a database or Web API with a function object to be injected.
