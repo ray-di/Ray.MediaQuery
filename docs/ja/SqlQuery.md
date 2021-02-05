@@ -14,7 +14,7 @@ exec()で`user_add.sql`のSQLが実行されます。
 
 ```php
 $sqlQuery = SqlQueryFactory::getInstance($sqlDir, 'sqlite::memory:');
-\$sqlQuery->exec('user_add', ['id' => '1', 'name' => 'ray');
+$sqlQuery->exec('user_add', ['id' => '1', 'name' => 'ray');
 ```
 
 1つのファイルに複数のSQLを記述できます。`;`で区切ってください。
