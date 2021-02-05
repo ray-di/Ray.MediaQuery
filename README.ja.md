@@ -2,13 +2,13 @@
 
 ## Overview
 
-`Ray.MediaQuery` makes a query to an external media such as a database or Web API with a function object to be injected.
+`Ray.MediaQuery` 外部メディアのクエリーをシンプルにします。
 
 ## Motivation
 
-* You can have a clear boundary between domain layer (usage code) and infrastructure layer (injected function) in code.
-* Execution objects are generated automatically so you do not need to write procedural code for execution.
-* Since usage codes are indifferent to the actual state of external media, storage can be changed later. Easy parallel development and stabbing.
+* ドメイン層とインフラ層の境界をコードの中で明確に持つことができます。
+* 実行オブジェクトは自動的に生成されるので、実行のための手続き的なコードを書く必要はありません。
+* 利用コードは外部メディアの実態には無関係なので、後からストレージを変更することができ、並列開発やスタッビングが容易です。
 
 ## Composer install
 
@@ -16,11 +16,15 @@
 
 ## Componests
 
-* [SqlQuery](docs/ja/SqlQuery.md)
-* [MediaQuery](docs/ja/MediaQuery.ja.md)
+* SqlQuery
+* MediaQuery
 
 2つのコンポーネントが用意されています。
-1つはSQLの実行を文ではなくファイルIDで行うSqlQuery、もう1つはAOPを使いメソッドをSQL実行に置き換えるMediaQueryです。
+1つはSQLの実行を文ではなくファイルIDで行う**SqlQuery**、もう1つはAOPを使いメソッドをSQL実行に置き換える**MediaQuery**です。
+
+## Documentation
+
+This package is fully documented [here](./docs/index.md).
 
 ## Demo
 
