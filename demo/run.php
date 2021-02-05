@@ -28,8 +28,7 @@ $injector = new Injector(new class($sqlDir, $dsn) extends AbstractModule {
             UserAddInterface::class,
             UserItemInterface::class
         ];
-        $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
-        $this->install(new AuraSqlModule($this->dsn));
+        $this->install(new MediaQueryModule($this->dsn, $this->sqlDir, $mediaQueries));
     }
 });
 /** @var ExtendedPdoInterface $pdo */

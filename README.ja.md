@@ -12,17 +12,17 @@
 
 ## Composer install
 
-    $ composer require ray/media-query
+    $ composer require ray/media-query 1.x-dev
 
 ## Usage
 
 アプリケーションがメディアアクセスするインターフェイスを定義します。
-この時メソッドに`DbQuery`の属性をつけて、SQLのIDを指定します。
+メソッドに`DbQuery`の属性をつけて、SQLのIDを指定します。
 
 ```php
-interface TodoAddInterface
+use Ray\AuraSqlModule\Annotation\Transactional;interface TodoAddInterface
 {
-    #[DbQuery('user_add')]
+    #[DbQuery('user_add'), Transactional]
     public function __invoke(string $id, string $title): void;
 }
 ```
@@ -39,7 +39,7 @@ interface TodoItemInterface
 }
 ```
 
-上記、クエリーインターフェイスクラスを指定してモジュールをインストールします。
+クエリーインターフェイスを指定して、モジュールをインストールします。
 
 ```php
 protected function configure(): void
@@ -55,28 +55,32 @@ protected function configure(): void
 実装クラスを用意する必要はありません。生成され、インジェクトされます。
 
 ```php
+$todo = (new Injector($module))->getInstance(Todo::class);
+```
+
+```php
 <?php
-class User
+class Todo
 {
     public function __construct(
-        private UserAddInterface $userAdd,
-        private UserItemInterface $userItem
+        private TodoAddInterface $todoAdd,
+        private TodoItemInterface $todoItem
     ) {}
 
     public function add(string $id, string $title): void
     {
-        ($this->userAdd)($id, $title);
+        ($this->todoAdd)($id, $title);
     }
 
     public function get(string $id): array
     {
-        return ($this->userItem)($id);
+        return ($this->todoItem)($id);
     }
 }
 ```
 
 SQL実行オブジェクトは、クエリーIDで指定されたSQLファイルを指定された引数でバインドして実行します。
-例えば、`TodoItem::__invoke()`は`todo_item.sql`SQL文に`['id => $id]`をバインドして実行した結果を返します。
+例えば`todo_item`を指定すると`todo_item.sql`SQL文に`['id => $id]`をバインドして実行した結果を返します。
 
 * `$sqlDir/`ディレクトリにそれぞれのSQLを用意します。クラスが`TodoAdd`なら`$sqlDir/todo_add.sql`です。
 * SQL実行が返すの単一行なら`item`、複数行なら`list`のpostfixを付けます。
@@ -96,11 +100,11 @@ interface TodoList
 }
 ```
 
-ページ番号で配列アクセスするとその時点でDBクエリーが行われページオブジェクトが取得できます。
+`count()`で件数が取得でき、ページ番号で配列アクセスをするとページオブジェクトが取得できます。
 
 ```php
 $pages = ($todoList)();
-$cnt = count($page); // カウントSQLが生成されクエリーが行われます。
+$cnt = count($page); // count()をした時にカウントSQLが生成されクエリーが行われます。
 $page = $pages[2]; // 配列アクセスをした時にそのページのDBクエリーが行われます。
 
 // $page->data // sliced data
@@ -114,7 +118,6 @@ $page = $pages[2]; // 配列アクセスをした時にそのページのDBク�
 
 ## SqlQuery
 
-データの編集など、実装クラスを用意する場合は`SqlQuery`を使います。
 `SqlQuery`はSQLファイルのIDを指定してSQLを実行します。
 
 ```php
@@ -143,3 +146,15 @@ $pages = $sqlQuery->getPages(); // ページャーを取得
 ```
 
 動的なクエリーはAura.Sqlのクエリービルダーをお使いください。
+
+## プロファイラー/ロガー
+
+メディアアクセスはロガーで記録されます。標準ではテストに使うメモリロガーがバインドされています。
+
+```php
+public function testAdd(): void
+{
+    $this->sqlQuery->exec('todo_add', $todoRun);
+    $this->assertStringContainsString('query:todo_add({"id":"1","title":"run"})', (string) $this->log);
+}
+```
