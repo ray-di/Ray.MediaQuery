@@ -24,7 +24,7 @@
 
 ## Documentation
 
-This package is fully documented [here](./docs/index.md).
+This package is fully documented [here](./docs/ja/index.md).
 
 ## Demo
 
