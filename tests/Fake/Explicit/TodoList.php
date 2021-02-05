@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ray\MediaQuery\Explicit;
 
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
-use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\MediaQuery\SqlQueryInterface;
 use Ray\MediaQuery\TodoListInterface;
 

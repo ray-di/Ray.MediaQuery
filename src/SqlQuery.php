@@ -9,24 +9,18 @@ use LogicException;
 use PDO;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
-use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
-use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\Di\Named;
-use Ray\Di\InjectorInterface;
-
 use function array_pop;
 use function assert;
 use function count;
 use function explode;
 use function file;
 use function file_get_contents;
-use function is_array;
 use function is_bool;
 use function sprintf;
 use function stripos;
 use function strpos;
-use function strtolower;
 use function trim;
 
 class SqlQuery implements SqlQueryInterface

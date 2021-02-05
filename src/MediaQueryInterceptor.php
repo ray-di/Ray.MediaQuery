@@ -8,16 +8,10 @@ use LogiceException;
 use LogicException;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
-use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
-use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\Di\Named;
-use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Annotation\QueryId;
-use Ray\MediaQuery\Annotation\SqlDir;
-
-use function assert;
 use function file_exists;
 use function ltrim;
 use function preg_replace;

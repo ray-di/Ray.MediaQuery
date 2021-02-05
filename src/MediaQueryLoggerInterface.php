@@ -6,10 +6,6 @@ namespace Ray\MediaQuery;
 
 use Ray\MediaQuery\Annotation\QueryId;
 
-use function implode;
-
-use const PHP_EOL;
-
 interface MediaQueryLoggerInterface
 {
     public function start(): void;

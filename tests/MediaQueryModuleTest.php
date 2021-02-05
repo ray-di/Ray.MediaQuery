@@ -6,14 +6,12 @@ namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
 use PHPUnit\Framework\TestCase;
-use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\Aop\TodoAdd;
 use Ray\MediaQuery\Aop\TodoItem;
 use Ray\MediaQuery\Aop\TodoList;
-
 use function assert;
 use function dirname;
 

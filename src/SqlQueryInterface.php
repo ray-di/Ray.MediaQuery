@@ -6,7 +6,6 @@ namespace Ray\MediaQuery;
 
 use PDO;
 use PDOStatement;
-use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 
 interface SqlQueryInterface
 {

@@ -6,8 +6,6 @@ namespace Ray\MediaQuery;
 
 use ArrayAccess;
 use Countable;
-use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
-use Ray\AuraSqlModule\Pagerfanta\Page;
 
 /**
  * @extends ArrayAccess<int, Page>
