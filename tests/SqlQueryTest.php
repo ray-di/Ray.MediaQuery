@@ -9,6 +9,7 @@ use Pagerfanta\View\DefaultView;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
+use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 
@@ -38,6 +39,18 @@ class SqlQueryTest extends TestCase
         $this->log = new MediaQueryLogger();
         $pagerFactory = new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), []));
         $this->sqlQuery = new SqlQuery($pdo, $this->log, dirname(__DIR__) . '/tests/sql', $pagerFactory);
+    }
+
+    public function testNewInstance(): void
+    {
+        $sqlDir = __DIR__ . '/sql';
+        $sqlQuery = new SqlQuery(
+            new ExtendedPdo('sqlite::memory:'),
+            new MediaQueryLogger(),
+            $sqlDir,
+            new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), []))
+        );
+        $this->assertInstanceOf(SqlQueryInterface::class, $sqlQuery);
     }
 
     public function testExec(): void
