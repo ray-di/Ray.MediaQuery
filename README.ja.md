@@ -2,7 +2,7 @@
 
 ## Overview
 
-`Ray.MediaQuery` 外部メディアのクエリーのインターフェイスを、クエリー実行オブジェクトに変えインジェクトします。
+`Ray.MediaQuery` 外部メディアのクエリーのインターフェイスを実行オブジェクトに変えインジェクトします。
 
 ## Motivation
 
@@ -16,11 +16,11 @@
 
 ## Usage
 
-アプリケーションがメディアアクセスするインターフェイスを定義します。
+メディアアクセスするインターフェイスを定義します。
 メソッドに`DbQuery`の属性をつけて、SQLのIDを指定します。
 
 ```php
-use Ray\AuraSqlModule\Annotation\Transactional;interface TodoAddInterface
+interface TodoAddInterface
 {
     #[DbQuery('user_add'), Transactional]
     public function __invoke(string $id, string $title): void;
@@ -55,10 +55,6 @@ protected function configure(): void
 実装クラスを用意する必要はありません。生成され、インジェクトされます。
 
 ```php
-$todo = (new Injector($module))->getInstance(Todo::class);
-```
-
-```php
 <?php
 class Todo
 {
@@ -79,16 +75,16 @@ class Todo
 }
 ```
 
-SQL実行オブジェクトは、クエリーIDで指定されたSQLファイルを指定された引数でバインドして実行します。
-例えば`todo_item`を指定すると`todo_item.sql`SQL文に`['id => $id]`をバインドして実行した結果を返します。
+SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッドの引数でバインドして実行します。
+例えばIDが`todo_item`の指定では`todo_item.sql`SQL文に`['id => $id]`をバインドして実行します。
 
-* `$sqlDir/`ディレクトリにそれぞれのSQLを用意します。クラスが`TodoAdd`なら`$sqlDir/todo_add.sql`です。
+* `$sqlDir/`ディレクトリにそれぞれのSQLを用意します。IDが`todo_add`なら`$sqlDir/todo_add.sql`です。
 * SQL実行が返すの単一行なら`item`、複数行なら`list`のpostfixを付けます。
-* SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果として返ります。
+* SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果になります。
 
 ## Pagination
 
-`#[Pager]`アノテーションで、データベースのSELECTクエリーをページングする事ができます。
+`#[Pager]`アノテーションで、SELECTクエリーをページングする事ができます。
 
 ```php
 interface TodoList
@@ -101,6 +97,7 @@ interface TodoList
 ```
 
 `count()`で件数が取得でき、ページ番号で配列アクセスをするとページオブジェクトが取得できます。
+`Pages`はSQL遅延実行オブジェクトです。
 
 ```php
 $pages = ($todoList)();
@@ -119,6 +116,7 @@ $page = $pages[2]; // 配列アクセスをした時にそのページのDBク�
 ## SqlQuery
 
 `SqlQuery`はSQLファイルのIDを指定してSQLを実行します。
+実装クラスを用意して詳細な実装を行う時に使用します。
 
 ```php
 class TodoItem implements TodoItemInterface
@@ -145,9 +143,11 @@ $statement = $sqlQuery->getStatement(); // PDO Statementを取得
 $pages = $sqlQuery->getPages(); // ページャーを取得
 ```
 
-動的なクエリーはAura.Sqlのクエリービルダーをお使いください。
+Ray.MediaQueryは[Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule) を含んでいます。
+さらに低レイヤーの操作が必要な時はAura.Sqlの[Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) やPDOを拡張した[Aura.Sql](https://github.com/auraphp/Aura.Sql) のExtended PDOをお使いください。
+[doctrine/dbal](https://github.com/ray-di/Ray.DbalModule) も利用できます。
 
-## プロファイラー/ロガー
+## プロファイラー
 
 メディアアクセスはロガーで記録されます。標準ではテストに使うメモリロガーがバインドされています。
 
@@ -158,3 +158,6 @@ public function testAdd(): void
     $this->assertStringContainsString('query:todo_add({"id":"1","title":"run"})', (string) $this->log);
 }
 ```
+
+独自の[MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php)を実装して、
+各メディアクエリーのベンチマークを行ったり、インジェクトしたPSRロガーでログをする事もできます。

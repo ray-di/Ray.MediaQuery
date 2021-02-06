@@ -21,74 +21,92 @@
 
 ## Usage
 
-Defines the interface through which the application accesses media.
+Define an interface for media access by adding the attribute `DbQuery` to the method and specifying the SQL ID.
 
-```php
+````php
 interface TodoAddInterface
 {
+    #[DbQuery('user_add'), Transactional].
     public function __invoke(string $id, string $title): void;
 }
+````
+
+```php
 
 interface TodoItemInterface
 {
     /**
      * @return array{id: string, title: string}
-     */
+     */ [DbQuery('user_item')]]
+    #[DbQuery('user_item')]]
     public function __invoke(string $id): array;
 }
-```
+````
 
-There is no need to prepare an implementation class. It will be generated and injected.
+Specify the query interface and install the module.
+
+```php
+protected function configure(): void
+{
+    $mediaQueries = [
+        TodoAddInterface::class,
+        TodoItemInterface::class, TodoItemInterface::class,
+    ];
+    $this->install(new MediaQueryModule('sqlite::memory:', $sqlDir, $mediaQueries));
+}
+````
+
+You don't need to provide any implementation classes. It will be generated and injected.
 
 ```php
 <?php
-class User
+class Todo
 {
     public function __construct(
-        private UserAddInterface $userAdd,
-        private UserItemInterface $userItem
+        private TodoAddInterface $todoAdd,
+        private TodoItemInterface $todoItem
     ) {}
 
     public function add(string $id, string $title): void
     {
-        ($this->userAdd)($id, $title);
+        ($this->todoAdd)($id, $title);
     }
 
     public function get(string $id): array
     {
-        return ($this->userItem)($id);
+        return ($this->todoItem)($id);
     }
 }
-```
+````
 
-The SQL execution object binds and executes the SQL file specified by the query ID with the specified arguments.
-For example, `TodoItem::__invoke()` will bind `todo_item.sql` SQL statement with `['id => $id]` and return the result of the execution.
+SQL execution is mapped to a method, and the SQL specified by ID is bound to the method argument and executed.
+For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement will be executed with `['id => $id]` bound.
 
-* Prepare the SQL for each in the `$sqlDir/` directory. If the class is `TodoAdd`, it will be `$sqlDir/todo_add.sql`.
-* Add a postfix of `item` if the SQL execution returns a single line, or `list` if it returns multiple lines.
-* The SQL file can contain multiple SQL statements. The SELECT of the last row will be returned as the execution result.
+* Prepare each SQL in `$sqlDir/` directory, `$sqlDir/todo_add.sql` if ID is `todo_add`.
+  If the ID is `todo_add`, the file is `$sqlDir/todo_add.sql`. * Add a postfix of `item` if the SQL execution returns a single row, or `list` if it returns multiple rows.
+* The SQL file can contain multiple SQL statements. * The SQL file can contain multiple SQL statements, where the last line of the SELECT is the result of the execution.
 
 ## Pagination
 
-The `#[Pager]` attribute allows you to paginate a SELECT query in a database.
+The `#[Pager]` annotation allows you to paginate a SELECT query.
 
-```php
+The ````php
 interface TodoList
 {
-    #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
-    public function __invoke(): Pages
-    {
-    }
+#[DbQuery, Pager(perPage: 10, template: '/{?page}')]]
+public function __invoke(): Pages
+{
+}
 }
 ```
 
-The result of the execution is a list object for lazy execution of SQL.
-The page object can be obtained by accessing the array by page number, and the number of pages can be obtained by count().
+You can get the number of pages with `count()`, and you can get the page object with array access by page number.
+`Pages` is a SQL lazy execution object.
 
 ```php
 $pages = ($todoList)();
-$cnt = count($page); // A count SQL will be generated and queried.
-$page = $pages[2]; // When an array access is made, a DB query is made for that page.
+$cnt = count($page); // count SQL is generated and queried when count() is done.
+$page = $pages[2]; // When array access is done, DB query for that page is done.
 
 // $page->data // sliced data
 // $page->current;
@@ -101,12 +119,8 @@ $page = $pages[2]; // When an array access is made, a DB query is made for that 
 
 ## SqlQuery
 
-The `#[DbQuery]` attribute allows you to create a SQL execution object with less description.
-On the other hand, using the `SqlQuery` object requires more description, but gives you more control.
-
-A `SqlQuery` is a type of DAO that executes SQL by specifying the ID of the SQL file instead of SQL.
-
-The following example shows the above attribute method with `SqlQuery`.
+`SqlQuery` executes SQL by specifying the ID of an SQL file.
+It can be used to prepare implementation classes for detailed implementation.
 
 ```php
 class TodoItem implements TodoItemInterface
@@ -124,11 +138,30 @@ class TodoItem implements TodoItemInterface
 
 ## Get* Method
 
-To retrieve the result of SELECT, Invoke `get*` according to the result to be retrieved.
+To get the SELECT result, use `get*` depending on the result you want to get.
 
 ```php
-$sqlQuery->getRow($queryId, $params); // result is a single row
+$sqlQuery->getRow($queryId, $params); // Result is a single row
 $sqlQuery->getRowList($queryId, $params); // result is multiple rows
 $statement = $sqlQuery->getStatement(); // Retrieve the PDO Statement
 $pages = $sqlQuery->getPages(); // Get the pager
-```
+```.
+
+Ray.MediaQuery contains the [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule).
+If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://) which extends PDO. Sql]( github.com/auraphp/Aura.Sql).
+You can also use [doctrine/dbal](https://github.com/ray-di/Ray.DbalModule).
+
+## Profiler
+
+Media accesses are logged by a logger. By default, a memory logger is bound to be used for testing.
+
+```php
+public function testAdd(): void
+{
+    $this->sqlQuery->exec('todo_add', $todoRun);
+    $this->assertStringContainsString('query:todo_add({"id": "1", "title": "run"})', (string) $this->log);
+}
+````
+
+Implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) and run
+You can also implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) to benchmark each media query and log it with the injected PSR logger.
