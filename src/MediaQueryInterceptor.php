@@ -12,6 +12,7 @@ use Ray\Di\Di\Named;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Annotation\QueryId;
+
 use function file_exists;
 use function ltrim;
 use function preg_replace;
@@ -52,7 +53,6 @@ class MediaQueryInterceptor implements MethodInterceptor
         $queryId = $dbQury->id ? $dbQury->id :  $this->getQueryId($invocation);
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $queryId);
         if (! file_exists($sqlFile)) {
-
             throw new LogicException($sqlFile);
         }
 

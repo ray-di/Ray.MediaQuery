@@ -17,8 +17,6 @@ class MediaQueryModule extends AbstractModule
 
     /** @var array<class-string> */
     private $mediaQueries;
-
-    /** @var string */
     private string $dsn;
 
     /**

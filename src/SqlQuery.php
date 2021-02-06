@@ -11,6 +11,7 @@ use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\Di\Di\Named;
+
 use function array_pop;
 use function assert;
 use function count;

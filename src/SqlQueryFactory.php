@@ -12,6 +12,9 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 
 class SqlQueryFactory
 {
+    /**
+     * @param array<string, mixed> $options
+     */
     public static function getInstance(
         string $sqlDir,
         string $dsn,
@@ -20,8 +23,7 @@ class SqlQueryFactory
         array $options = [],
         ?MediaQueryLoggerInterface $logger = null,
         ?AuraSqlPagerFactoryInterface $pagerFactory = null
-    ): SqlQueryInterface
-    {
+    ): SqlQueryInterface {
         return new SqlQuery(
             new ExtendedPdo($dsn, $username, $password, $options),
             $sqlDir,
