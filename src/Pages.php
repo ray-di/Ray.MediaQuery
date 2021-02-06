@@ -7,6 +7,7 @@ namespace Ray\MediaQuery;
 use ArrayAccess;
 use Aura\Sql\ExtendedPdoInterface;
 use Countable;
+use LogicException;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
@@ -55,16 +56,26 @@ class Pages implements ArrayAccess, Countable
     /**
      * @param int   $offset
      * @param mixed $value
+     *
+     * @codeCoverageIgnore
      */
     public function offsetSet($offset, $value): void
     {
+        unset($offset, $value);
+
+        throw new LogicException('Read only');
     }
 
     /**
      * @param mixed $offset
+     *
+     * @codeCoverageIgnore
      */
     public function offsetUnset($offset): void
     {
+        unset($offset);
+
+        throw new LogicException('Read only');
     }
 
     public function count(): int
