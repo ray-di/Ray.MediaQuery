@@ -90,13 +90,13 @@ For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement wi
 
 The `#[Pager]` annotation allows you to paginate a SELECT query.
 
-The ````php
+```php
 interface TodoList
 {
-#[DbQuery, Pager(perPage: 10, template: '/{?page}')]]
-public function __invoke(): Pages
-{
-}
+    #[DbQuery, Pager(perPage: 10, template: '/{?page}')]]
+    public function __invoke(): Pages
+    {
+    }
 }
 ```
 
@@ -138,14 +138,14 @@ class TodoItem implements TodoItemInterface
 
 ## Get* Method
 
-To get the SELECT result, use `get*` depending on the result you want to get.
+To get the SELECT result, use `get*` method depending on the result you want to get.
 
 ```php
 $sqlQuery->getRow($queryId, $params); // Result is a single row
 $sqlQuery->getRowList($queryId, $params); // result is multiple rows
 $statement = $sqlQuery->getStatement(); // Retrieve the PDO Statement
 $pages = $sqlQuery->getPages(); // Get the pager
-```.
+```
 
 Ray.MediaQuery contains the [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule).
 If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://) which extends PDO. Sql]( github.com/auraphp/Aura.Sql).
@@ -161,7 +161,7 @@ public function testAdd(): void
     $this->sqlQuery->exec('todo_add', $todoRun);
     $this->assertStringContainsString('query:todo_add({"id": "1", "title": "run"})', (string) $this->log);
 }
-````
+```
 
 Implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) and run
 You can also implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) to benchmark each media query and log it with the injected PSR logger.
