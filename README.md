@@ -45,14 +45,15 @@ interface TodoItemInterface
 Specify the query interface and install the module.
 
 ```php
-protected function configure(): void
-{
-    $mediaQueries = [
-        TodoAddInterface::class,
-        TodoItemInterface::class, TodoItemInterface::class,
-    ];
-    $this->install(new MediaQueryModule('sqlite::memory:', $sqlDir, $mediaQueries));
-}
+    protected function configure(): void
+    {
+        $mediaQueries = [
+            UserAddInterface::class,
+            UserItemInterface::class
+        ];
+        $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
+        $this->install(new AuraSqlModule($this->dsn));
+    }
 ```
 
 You don't need to provide any implementation classes. It will be generated and injected.

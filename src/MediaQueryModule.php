@@ -17,22 +17,19 @@ class MediaQueryModule extends AbstractModule
 
     /** @var array<class-string> */
     private $mediaQueries;
-    private string $dsn;
 
     /**
      * @param array<class-string> $mediaQueries
      */
-    public function __construct(string $dsn, string $sqlDir, array $mediaQueries, ?AbstractModule $module = null)
+    public function __construct(string $sqlDir, array $mediaQueries, ?AbstractModule $module = null)
     {
         $this->mediaQueries = $mediaQueries;
         $this->sqlDir = $sqlDir;
-        $this->dsn = $dsn;
         parent::__construct($module);
     }
 
     protected function configure(): void
     {
-        $this->install(new AuraSqlModule($this->dsn));
         $this->bind(SqlQueryInterface::class)->to(SqlQuery::class);
         $this->bind(MediaQueryLoggerInterface::class)->to(MediaQueryLogger::class)->in(Scope::SINGLETON);
         $this->bindInterceptor(

@@ -42,14 +42,15 @@ interface TodoItemInterface
 クエリーインターフェイスを指定して、モジュールをインストールします。
 
 ```php
-protected function configure(): void
-{
-    $mediaQueries = [
-        TodoAddInterface::class,
-        TodoItemInterface::class,
-    ];
-    $this->install(new MediaQueryModule('sqlite::memory:', $sqlDir, $mediaQueries));
-}
+    protected function configure(): void
+    {
+        $mediaQueries = [
+            UserAddInterface::class,
+            UserItemInterface::class
+        ];
+        $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
+        $this->install(new AuraSqlModule($this->dsn));
+    }
 ```
 
 実装クラスを用意する必要はありません。生成され、インジェクトされます。

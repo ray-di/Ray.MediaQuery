@@ -6,6 +6,7 @@ namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
 use PHPUnit\Framework\TestCase;
+use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
@@ -34,7 +35,7 @@ class MediaQueryModuleTest extends TestCase
             TodoItemInterface::class,
             TodoListInterface::class,
         ];
-        $module = new MediaQueryModule('sqlite::memory:', dirname(__DIR__) . '/tests/sql', $mediaQueries);
+        $module = new MediaQueryModule(dirname(__DIR__) . '/tests/sql', $mediaQueries, new AuraSqlModule('sqlite::memory:'));
         $this->injector = new Injector($module);
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
