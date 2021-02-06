@@ -79,7 +79,7 @@ SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッ
 例えばIDが`todo_item`の指定では`todo_item.sql`SQL文に`['id => $id]`をバインドして実行します。
 
 * `$sqlDir/`ディレクトリにそれぞれのSQLを用意します。IDが`todo_add`なら`$sqlDir/todo_add.sql`です。
-* SQL実行が返すの単一行なら`item`、複数行なら`list`のpostfixを付けます。
+* SQL実行が返すのが単一行なら`item`、複数行なら`list`のpostfixを付けます。
 * SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果になります。
 
 ## Pagination

@@ -81,8 +81,9 @@ SQL execution is mapped to a method, and the SQL specified by ID is bound to the
 For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement will be executed with `['id => $id]` bound.
 
 * Prepare each SQL in `$sqlDir/` directory, `$sqlDir/todo_add.sql` if ID is `todo_add`.
-  If the ID is `todo_add`, the file is `$sqlDir/todo_add.sql`. * Add a postfix of `item` if the SQL execution returns a single row, or `list` if it returns multiple rows.
-* The SQL file can contain multiple SQL statements. * The SQL file can contain multiple SQL statements, where the last line of the SELECT is the result of the execution.
+  If the ID is `todo_add`, the file is `$sqlDir/todo_add.sql`.
+* Add a postfix of `item` if the SQL execution returns a single row, or `list` if it returns multiple rows.
+* The SQL file can contain multiple SQL statements, where the last line of the SELECT is the result of the execution.
 
 ## Pagination
 
@@ -146,7 +147,7 @@ $pages = $sqlQuery->getPages(); // Get the pager
 ```
 
 Ray.MediaQuery contains the [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule).
-If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://) which extends PDO.
+If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://github.com/auraphp/Aura.Sql) which extends PDO.
 [doctrine/dbal](https://github.com/ray-di/Ray.DbalModule) is also available.
 
 ## Profiler
