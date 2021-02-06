@@ -107,21 +107,20 @@ class SqlQuery implements SqlQueryInterface
         if (count($sqls) === 0) {
             return [];
         }
+        $this->logger->start();
 
         foreach ($sqls as $sql) {
-            $prepare = $this->pdo->prepare($sql);
             $pdoStatement = $this->pdo->perform($sql, $params);
         }
 
-        $this->logger->log($sqlId, $params);
         assert(isset($pdoStatement)); // @phpstan-ignore-line
         assert($pdoStatement instanceof PDOStatement);
         $lastQuery = trim((string) $pdoStatement->queryString);
-        if (stripos($lastQuery, 'select') === 0) {
-            return (array) $pdoStatement->fetchAll($fetchModode);
-        }
+        $isSelect = stripos($lastQuery, 'select') !== 0;
+        $result = $isSelect ? (array) $pdoStatement->fetchAll($fetchModode) : [];
+        $this->logger->log($sqlId, $params);
 
-        return [];
+        return $result;
     }
 
     /**
