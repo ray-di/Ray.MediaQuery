@@ -116,7 +116,7 @@ class SqlQuery implements SqlQueryInterface
         assert(isset($pdoStatement)); // @phpstan-ignore-line
         assert($pdoStatement instanceof PDOStatement);
         $lastQuery = trim((string) $pdoStatement->queryString);
-        $isSelect = stripos($lastQuery, 'select') !== 0;
+        $isSelect = stripos($lastQuery, 'select') === 0;
         $result = $isSelect ? (array) $pdoStatement->fetchAll($fetchModode) : [];
         $this->logger->log($sqlId, $params);
 
