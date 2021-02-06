@@ -18,9 +18,6 @@ final class Pager implements NamedArgumentConstructorAnnotation
     public $perPage;
 
     /** @var string */
-    public $queryKey;
-
-    /** @var string */
     public $template;
 
     public function __construct(int $perPage = 10, string $template = '/{?page}')

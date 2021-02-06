@@ -8,7 +8,7 @@ use ArrayAccess;
 use Countable;
 
 /**
- * @extends ArrayAccess<int, Page>
+ * @extends ArrayAccess<int, mixed>
  */
 interface PagesInterface extends ArrayAccess, Countable
 {
