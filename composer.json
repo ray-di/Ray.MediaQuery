@@ -13,6 +13,7 @@
         "ext-json": "*",
         "ext-pdo": "*",
         "aura/sql": "^3.0",
+        "babdev/pagerfanta": "^2.6",
         "doctrine/annotations": "^1.11",
         "koriym/null-object": "1.x-dev",
         "ray/aop": "^2.10",
