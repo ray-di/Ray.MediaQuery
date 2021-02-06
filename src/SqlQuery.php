@@ -107,6 +107,7 @@ class SqlQuery implements SqlQueryInterface
         if (count($sqls) === 0) {
             return [];
         }
+
         $this->logger->start();
 
         foreach ($sqls as $sql) {
