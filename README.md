@@ -23,25 +23,24 @@
 
 Define an interface for media access by adding the attribute `DbQuery` to the method and specifying the SQL ID.
 
-````php
+```php
 interface TodoAddInterface
 {
-    #[DbQuery('user_add'), Transactional].
+    #[DbQuery('user_add'), Transactional]
     public function __invoke(string $id, string $title): void;
 }
-````
+```
 
 ```php
-
 interface TodoItemInterface
 {
     /**
      * @return array{id: string, title: string}
-     */ [DbQuery('user_item')]]
-    #[DbQuery('user_item')]]
+     */
+    #[DbQuery('user_item')]
     public function __invoke(string $id): array;
 }
-````
+```
 
 Specify the query interface and install the module.
 
@@ -54,12 +53,11 @@ protected function configure(): void
     ];
     $this->install(new MediaQueryModule('sqlite::memory:', $sqlDir, $mediaQueries));
 }
-````
+```
 
 You don't need to provide any implementation classes. It will be generated and injected.
 
 ```php
-<?php
 class Todo
 {
     public function __construct(
@@ -77,7 +75,7 @@ class Todo
         return ($this->todoItem)($id);
     }
 }
-````
+```
 
 SQL execution is mapped to a method, and the SQL specified by ID is bound to the method argument and executed.
 For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement will be executed with `['id => $id]` bound.
@@ -148,8 +146,8 @@ $pages = $sqlQuery->getPages(); // Get the pager
 ```
 
 Ray.MediaQuery contains the [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule).
-If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://) which extends PDO. Sql]( github.com/auraphp/Aura.Sql).
-You can also use [doctrine/dbal](https://github.com/ray-di/Ray.DbalModule).
+If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://) which extends PDO.
+[doctrine/dbal](https://github.com/ray-di/Ray.DbalModule) is also available.
 
 ## Profiler
 
