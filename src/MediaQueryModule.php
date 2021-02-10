@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\Di\AbstractModule;
 use Ray\Di\Scope;
 use Ray\MediaQuery\Annotation\DbQuery;
@@ -40,7 +39,7 @@ class MediaQueryModule extends AbstractModule
         $this->bind()->annotatedWith(SqlDir::class)->toInstance($this->sqlDir);
         // Bind media query interface
         foreach ($this->mediaQueries as $mediaQuery) {
-            $this->bind($mediaQuery)->to($mediaQuery . 'Null');
+            $this->bind($mediaQuery)->toNull();
         }
     }
 }
