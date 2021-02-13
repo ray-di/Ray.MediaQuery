@@ -6,14 +6,15 @@ namespace Ray\MediaQuery;
 
 use function array_diff;
 use function array_pop;
+use function count;
 use function get_declared_interfaces;
-use function is_array;
 
 class GetClassName
 {
     public function __invoke(string $file): string
     {
         $interfaces = get_declared_interfaces();
+        /** @psalm-suppress UnresolvableInclude */
         include_once $file;
         $diff = array_diff(get_declared_interfaces(), $interfaces);
         if (count($diff)) {

@@ -22,7 +22,7 @@ class QueriesTest extends TestCase
         $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDir');
         $this->assertSame([
             TodoAddInterface::class,
-            TodoItemInterface::class
+            TodoItemInterface::class,
         ], $mediaQueries->classes);
     }
 }

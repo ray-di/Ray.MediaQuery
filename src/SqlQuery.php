@@ -43,6 +43,9 @@ class SqlQuery implements SqlQueryInterface
     /** @var AuraSqlPagerFactoryInterface */
     private $pagerFactory;
 
+    /**
+     * @Named("sqlDir=Ray\MediaQuery\Annotation\SqlDir")
+     */
     #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
     public function __construct(
         ExtendedPdoInterface $pdo,
