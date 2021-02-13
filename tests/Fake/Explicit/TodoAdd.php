@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery\Explicit;
 
+use Ray\MediaQuery\Queries\TodoAddInterface;
 use Ray\MediaQuery\SqlQueryInterface;
-use Ray\MediaQuery\TodoAddInterface;
 
 class TodoAdd implements TodoAddInterface
 {

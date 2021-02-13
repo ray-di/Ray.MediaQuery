@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery;
+namespace Ray\MediaQuery\Queries;
 
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
+use Ray\MediaQuery\Pages;
 
 interface TodoListInterface
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery;
+namespace Ray\MediaQuery\FromDir;
 
 use Ray\AuraSqlModule\Annotation\Transactional;
 use Ray\MediaQuery\Annotation\DbQuery;

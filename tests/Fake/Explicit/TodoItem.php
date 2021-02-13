@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery\Explicit;
 
+use Ray\MediaQuery\Queries\TodoItemInterface;
 use Ray\MediaQuery\SqlQueryInterface;
-use Ray\MediaQuery\TodoItemInterface;
 
 class TodoItem implements TodoItemInterface
 {
