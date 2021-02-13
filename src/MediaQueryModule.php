@@ -14,15 +14,12 @@ class MediaQueryModule extends AbstractModule
     /** @var string */
     private $sqlDir;
 
-    /** @var array<class-string> */
+    /** @var list<class-string> */
     private $mediaQueries;
 
-    /**
-     * @param array<class-string> $mediaQueries
-     */
-    public function __construct(string $sqlDir, array $mediaQueries, ?AbstractModule $module = null)
+    public function __construct(string $sqlDir, Queries $mediaQueries, ?AbstractModule $module = null)
     {
-        $this->mediaQueries = $mediaQueries;
+        $this->mediaQueries = $mediaQueries->classes;
         $this->sqlDir = $sqlDir;
         parent::__construct($module);
     }

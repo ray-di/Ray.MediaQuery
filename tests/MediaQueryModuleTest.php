@@ -10,9 +10,9 @@ use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
-use Ray\MediaQuery\Aop\TodoAdd;
-use Ray\MediaQuery\Aop\TodoItem;
-use Ray\MediaQuery\Aop\TodoList;
+use Ray\MediaQuery\Queries\TodoAddInterface;
+use Ray\MediaQuery\Queries\TodoItemInterface;
+use Ray\MediaQuery\Queries\TodoListInterface;
 
 use function assert;
 use function dirname;
@@ -30,11 +30,11 @@ class MediaQueryModuleTest extends TestCase
 
     protected function setUp(): void
     {
-        $mediaQueries = [
+        $mediaQueries = Queries::fromClasses([
             TodoAddInterface::class,
             TodoItemInterface::class,
             TodoListInterface::class,
-        ];
+        ]);
         $module = new MediaQueryModule(dirname(__DIR__) . '/tests/sql', $mediaQueries, new AuraSqlModule('sqlite::memory:'));
         $this->injector = new Injector($module);
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);

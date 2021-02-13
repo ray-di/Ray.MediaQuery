@@ -39,18 +39,15 @@ interface TodoItemInterface
 }
 ```
 
-クエリーインターフェイスを指定して、モジュールをインストールします。
+クエリーインターフェイス、またはのフォルダを指定して、モジュールをインストールします。
 
 ```php
-    protected function configure(): void
-    {
-        $mediaQueries = [
-            UserAddInterface::class,
-            UserItemInterface::class
-        ];
-        $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
-        $this->install(new AuraSqlModule($this->dsn));
-    }
+protected function configure(): void
+{
+    $queries = Queries::fromDir('path/to/Queries');
+    $this->install(new MediaQueryModule($this->sqlDir, $queries));
+    $this->install(new AuraSqlModule($this->dsn));
+}
 ```
 
 実装クラスを用意する必要はありません。生成され、インジェクトされます。

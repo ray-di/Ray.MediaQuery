@@ -44,7 +44,27 @@ interface TodoItemInterface
 }
 ```
 
-Specify the query interface and install the module.
+Specify a query interface, or a folder of interfaces,
+
+```php
+protected function configure(): void
+{
+    $queries = Queries::fromDir('path/to/Queries');
+    $this->install(new MediaQueryModule($this->sqlDir, $queries));
+    $this->install(new AuraSqlModule($this->dsn));
+}
+```
+
+Then install the module.
+
+```php
+protected function configure(): void
+{
+    $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
+    $this->install(new AuraSqlModule($this->dsn));
+}
+```
+and install the module.
 
 ```php
     protected function configure(): void
