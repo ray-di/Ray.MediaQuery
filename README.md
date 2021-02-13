@@ -1,4 +1,6 @@
 # Ray.MediaQuery
+[![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/master/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
+[![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 ![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/workflows/Continuous%20Integration/badge.svg)
 
 [日本語 (Japanese)](./README.ja.md)
