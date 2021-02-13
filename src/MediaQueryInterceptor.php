@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use LogiceException;
 use LogicException;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\Di\Di\Named;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
-use Ray\MediaQuery\Annotation\QueryId;
 
 use function file_exists;
 use function ltrim;
