@@ -12,6 +12,7 @@ use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\MediaQueryModule;
+use Ray\MediaQuery\Queries;
 
 $sqlDir = __DIR__ . '/sql';
 $dsn = 'sqlite::memory:';
@@ -24,11 +25,11 @@ $injector = new Injector(new class($sqlDir, $dsn) extends AbstractModule {
 
     protected function configure()
     {
-        $mediaQueries = [
+        $queries = Queries::fromClasses([
             UserAddInterface::class,
             UserItemInterface::class
-        ];
-        $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
+        ]);
+        $this->install(new MediaQueryModule($this->sqlDir, $queries));
         $this->install(new AuraSqlModule($this->dsn));
     }
 });
