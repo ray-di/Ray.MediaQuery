@@ -171,10 +171,10 @@ class TodoItem implements TodoItemInterface
 }
 ```
 
-`DateTimeIntetface`オブジェクトを渡すと日付文字列('Y-m-d H:i:s')に変換されて渡されます。
+`DateTimeIntetface`オブジェクトを渡すと、日付フォーマットされた文字列に変換されてクエリーが行われます。
 
 ```php
-$sqlQuery->exec('memo_add', ['created_at' => new DateTimeImmutable()]);
+$sqlQuery->exec('memo_add', ['created_at' => new DateTime()]);
 ```
 
 ## Get* Method

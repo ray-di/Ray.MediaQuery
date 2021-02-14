@@ -200,6 +200,13 @@ class TodoItem implements TodoItemInterface
 }
 ```
 
+If you pass a `DateTimeIntetface` object, it will be converted to a date formatted string.
+
+```php
+$sqlQuery->exec('memo_add', ['created_at' => new DateTime()]);
+```
+
+
 ## Get* Method
 
 To get the SELECT result, use `get*` method depending on the result you want to get.
