@@ -8,15 +8,12 @@ use LogicException;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\Di\Di\Named;
+use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 
 use function file_exists;
-use function ltrim;
-use function preg_replace;
 use function sprintf;
-use function strrpos;
-use function strtolower;
 use function substr;
 
 class MediaQueryInterceptor implements MethodInterceptor
@@ -29,16 +26,22 @@ class MediaQueryInterceptor implements MethodInterceptor
 
     /** @var MediaQueryLoggerInterface */
     private $logger;
+    private InjectorInterface $injector;
+
+    /** @var ParamInjectorInterface  */
+    private $paramInjector;
 
     /**
      * @Named("sqlDir=Ray\MediaQuery\Annotation\SqlDir")
      */
     #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
-    public function __construct(string $sqlDir, SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger)
+    public function __construct(string $sqlDir, SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger, InjectorInterface $injector, ParamInjectorInterface $paramInjector)
     {
         $this->sqlDir = $sqlDir;
         $this->sqlQuery = $sqlQuery;
         $this->logger = $logger;
+        $this->injector = $injector;
+        $this->paramInjector = $paramInjector;
     }
 
     /**
@@ -48,20 +51,19 @@ class MediaQueryInterceptor implements MethodInterceptor
     {
         /** @var DbQuery $dbQury */
         $dbQury = $invocation->getMethod()->getAnnotation(DbQuery::class);
-        $queryId = $dbQury->id ? $dbQury->id :  $this->getQueryId($invocation);
-        $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $queryId);
+        $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $dbQury->id);
         if (! file_exists($sqlFile)) {
             throw new LogicException($sqlFile);
         }
 
         $pager = $invocation->getMethod()->getAnnotation(Pager::class);
         /** @var array<string, mixed> $params */
-        $params = (array) $invocation->getNamedArguments();
+        $params = $this->paramInjector->getArgumentes($invocation);
         if ($pager instanceof Pager) {
-            return $this->getPager($queryId, $params, $pager);
+            return $this->getPager($dbQury->id, $params, $pager);
         }
 
-        return $this->sqlQuery($queryId, $params);
+        return $this->sqlQuery($dbQury->id, $params);
     }
 
     /**
@@ -83,16 +85,6 @@ class MediaQueryInterceptor implements MethodInterceptor
         $this->sqlQuery->exec($queryId, $params);
 
         return [];
-    }
-
-    private function getQueryId(MethodInvocation $invocation): string
-    {
-        $fullName = $invocation->getMethod()->getDeclaringClass()->getName();
-        $strPos = strrpos($fullName, '\\');
-        $name = $strPos ? substr($fullName, $strPos + 1) : $fullName;
-
-        // @see https://qiita.com/okapon_pon/items/498b88c2f91d7c42e9e8
-        return ltrim(strtolower((string) preg_replace(/** @lang regex */'/[A-Z]/', /** @lang regex */'_\0', $name)), '_');
     }
 
     /**
