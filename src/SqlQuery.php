@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
+use DateTimeInterface;
 use LogicException;
 use PDO;
 use PDOStatement;
@@ -26,6 +27,8 @@ use function trim;
 
 class SqlQuery implements SqlQueryInterface
 {
+    private const MYSQL_DATETIME = 'Y-m-d H:i:s';
+
     /** @var ExtendedPdoInterface  */
     private $pdo;
 
@@ -112,7 +115,7 @@ class SqlQuery implements SqlQueryInterface
         }
 
         $this->logger->start();
-
+        $this->convertDateTime($params);
         foreach ($sqls as $sql) {
             $pdoStatement = $this->pdo->perform($sql, $params);
         }
@@ -125,6 +128,18 @@ class SqlQuery implements SqlQueryInterface
         $this->logger->log($sqlId, $params);
 
         return $result;
+    }
+
+    /**
+     * @param array<mixed> $params
+     */
+    private function convertDateTime(array &$params): void
+    {
+        foreach ($params as &$param) {
+            if ($param instanceof DateTimeInterface) {
+                $param = $param->format(self::MYSQL_DATETIME);
+            }
+        }
     }
 
     /**

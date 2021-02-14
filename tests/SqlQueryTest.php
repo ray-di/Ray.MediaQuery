@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdo;
+use DateTime;
 use Pagerfanta\View\DefaultView;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
@@ -32,6 +33,11 @@ class SqlQueryTest extends TestCase
         $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS todo (
           id INTEGER,
           title TEXT
+)');
+        $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS promise (
+          id TEXT,
+          title TEXT,
+          time TEXT
 )');
         $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', $this->insertData);
         $this->log = new MediaQueryLogger();
@@ -104,5 +110,13 @@ class SqlQueryTest extends TestCase
         $this->sqlQuery->exec('todo_add', ['id' => '2', 'title' => 'walk']);
         $count = $this->sqlQuery->getCount('todo_list', []);
         $this->assertSame(2, $count);
+    }
+
+    public function testDateTime(): void
+    {
+        $dateTime = '2011-10-17 17:47:46';
+        $this->sqlQuery->exec('promise_add', ['id' => '1', 'title' => 'talk', 'time' => new DateTime($dateTime)]);
+        $item = $this->sqlQuery->getRow('promise_item', ['id' => 1]);
+        $this->assertContains($dateTime, $item);
     }
 }
