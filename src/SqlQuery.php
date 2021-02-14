@@ -131,10 +131,11 @@ class SqlQuery implements SqlQueryInterface
     }
 
     /**
-     * @param array<mixed> $params
+     * @param array<string, mixed> $params
      */
     private function convertDateTime(array &$params): void
     {
+        /** @psalm-suppress MixedAssignment $param */
         foreach ($params as &$param) {
             if ($param instanceof DateTimeInterface) {
                 $param = $param->format(self::MYSQL_DATETIME);
