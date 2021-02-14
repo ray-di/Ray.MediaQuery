@@ -8,6 +8,7 @@ use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
+
 use function substr;
 
 class MediaQueryInterceptor implements MethodInterceptor

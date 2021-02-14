@@ -9,6 +9,7 @@ use RecursiveIteratorIterator;
 use RecursiveRegexIterator;
 use RegexIterator;
 use SplFileInfo;
+
 use function assert;
 use function interface_exists;
 use function is_dir;
