@@ -80,6 +80,46 @@ SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッ
 * SQL実行が返すのが単一行なら`item`、複数行なら`list`のpostfixを付けます。
 * SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果になります。
 
+## Parameter Injection
+
+値が渡されない限り、`DateTimeInterface`の型を持つ引数には現在時刻がインジェクションされます。呼び出しで用意する必要はありません。
+以下の`$cratedAt`には`2021-2-14 00:00:00`のような文字列が渡されます。
+
+```php
+interface TodoAddInterface
+{
+    public function __invoke(string $title, DateTimeInterface $cratedAt = null): void;
+}
+```
+
+```sql
+INSERT INTO task (title, created_at) VALUES (:title, :createdAt);
+```
+
+オブジェクト型でタイプされ、既定値がnullのパラメーターは値が渡されない時はインジェクションされます。
+`ToScalar`インターフェイスを実装した`ToScalar()`メソッド、もしくは`__toString()`メソッドの返り値が引数になります。
+
+```php
+interface MemoAddInterface
+{
+    public function __invoke(LoginId $loginId, string $memo): void;
+}
+```
+
+```php
+class LoginId implements ToScalarInterface;
+{
+    public function __construct(
+        private AbstractLogin $login;
+    ){}
+    
+    public function toScalar(): id
+    {
+        return $this->login->id;
+    }
+}
+```
+
 ## Pagination
 
 `#[Pager]`アノテーションで、SELECTクエリーをページングする事ができます。
@@ -128,6 +168,12 @@ class TodoItem implements TodoItemInterface
         return $this->sqlQuery->getRow('todo_item', ['id' => $id]);
     }
 }
+```
+
+`DateTimeIntetface`オブジェクトを渡すと日付文字列('Y-m-d H:i:s')に変換されて渡されます。
+
+```php
+$sqlQuery->exec('memo_add', ['created_at' => new DateTimeImmutable()]);
 ```
 
 ## Get* Method

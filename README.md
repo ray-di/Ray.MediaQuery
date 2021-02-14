@@ -108,6 +108,46 @@ For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement wi
 * Add a postfix of `item` if the SQL execution returns a single row, or `list` if it returns multiple rows.
 * The SQL file can contain multiple SQL statements, where the last line of the SELECT is the result of the execution.
 
+## Parameter Injection
+
+Arguments with the `DateTimeInterface` type will be injected with the current time unless a value is passed.
+The value will be converted to a string such as `2021-2-14 00:00:00` at SQL execution time.
+
+```php
+interface TaskAddInterface
+{
+    public function __invoke(string $title, DateTimeInterface $cratedAt = null): void;
+}
+```
+
+```sql
+INSERT INTO task (title, created_at) VALUES (:title, :createdAt);
+```
+
+Parameters with a default value of null typed as an object type will be injected unless a value is passed.
+The return value of the `ToScalar()` method that implements the `ToScalar` interface or the `__toString()` method will be the argument.
+
+```php
+interface MemoAddInterface
+{
+    public function __invoke(LoginId $loginId, string $memo): void;
+}
+```
+
+```php
+class LoginId
+{
+    public function __construct(
+        private AbstractLogin $login;
+    ){}
+    
+    public function __toString()
+    {
+        return $this->login->id;
+    }
+}
+```
+
 ## Pagination
 
 The `#[Pager]` annotation allows you to paginate a SELECT query.
