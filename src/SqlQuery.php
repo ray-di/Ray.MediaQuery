@@ -65,17 +65,17 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function exec(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): void
+    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): void
     {
-        $this->perform($sqlId, $params, $fetchMode);
+        $this->perform($sqlId, $values, $fetchMode);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRow(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array
+    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array
     {
-        $rowList = $this->perform($sqlId, $params, $fetchMode);
+        $rowList = $this->perform($sqlId, $values, $fetchMode);
         /** @var array<string, mixed> $row */
         $row = (array) array_pop($rowList);
 
@@ -85,10 +85,10 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getRowList(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array
+    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array
     {
         /** @var array<array<mixed>> $list */
-        $list =  $this->perform($sqlId, $params, $fetchMode);
+        $list =  $this->perform($sqlId, $values, $fetchMode);
 
         return $list;
     }
@@ -96,17 +96,17 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getCount(string $sqlId, array $params): int
+    public function getCount(string $sqlId, array $values): int
     {
-        return (new ExtendedPdoAdapter($this->pdo, $this->getSql($sqlId), $params))->getNbResults();
+        return (new ExtendedPdoAdapter($this->pdo, $this->getSql($sqlId), $values))->getNbResults();
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      *
      * @return array<mixed>
      */
-    private function perform(string $sqlId, array $params, int $fetchModode): array
+    private function perform(string $sqlId, array $values, int $fetchModode): array
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
@@ -115,9 +115,9 @@ class SqlQuery implements SqlQueryInterface
         }
 
         $this->logger->start();
-        $this->convertDateTime($params);
+        $this->convertDateTime($values);
         foreach ($sqls as $sql) {
-            $pdoStatement = $this->pdo->perform($sql, $params);
+            $pdoStatement = $this->pdo->perform($sql, $values);
         }
 
         assert(isset($pdoStatement)); // @phpstan-ignore-line
@@ -125,20 +125,20 @@ class SqlQuery implements SqlQueryInterface
         $lastQuery = trim((string) $pdoStatement->queryString);
         $isSelect = stripos($lastQuery, 'select') === 0;
         $result = $isSelect ? (array) $pdoStatement->fetchAll($fetchModode) : [];
-        $this->logger->log($sqlId, $params);
+        $this->logger->log($sqlId, $values);
 
         return $result;
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      */
-    private function convertDateTime(array &$params): void
+    private function convertDateTime(array &$values): void
     {
-        /** @psalm-suppress MixedAssignment $param */
-        foreach ($params as &$param) {
-            if ($param instanceof DateTimeInterface) {
-                $param = $param->format(self::MYSQL_DATETIME);
+        /** @psalm-suppress MixedAssignment $value */
+        foreach ($values as &$value) {
+            if ($value instanceof DateTimeInterface) {
+                $value = $value->format(self::MYSQL_DATETIME);
             }
         }
     }
@@ -167,12 +167,12 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getPages(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): Pages
+    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): Pages
     {
         /** @psalm-suppress MixedArgumentTypeCoercion */
-        $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $params, $perPage, $queryTemplate);
+        $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $values, $perPage, $queryTemplate);
 
-        return new Pages($pager, $this->pdo, $this->getSql($sqlId), $params);
+        return new Pages($pager, $this->pdo, $this->getSql($sqlId), $values);
     }
 
     private function getSql(string $sqlId): string

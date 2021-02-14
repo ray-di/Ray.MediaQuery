@@ -10,33 +10,33 @@ use PDOStatement;
 interface SqlQueryInterface
 {
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      */
-    public function exec(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): void;
+    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): void;
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      *
      * @return array<mixed>
      */
-    public function getRow(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array;
+    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array;
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      *
      * @return array<array<mixed>>
      */
-    public function getRowList(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array;
+    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array;
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      */
-    public function getCount(string $sqlId, array $params): int;
+    public function getCount(string $sqlId, array $values): int;
 
     public function getStatement(): ?PDOStatement;
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      */
-    public function getPages(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): Pages;
+    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): Pages;
 }

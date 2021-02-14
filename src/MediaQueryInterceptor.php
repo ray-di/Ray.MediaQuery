@@ -26,6 +26,8 @@ class MediaQueryInterceptor implements MethodInterceptor
 
     /** @var MediaQueryLoggerInterface */
     private $logger;
+
+    /** @var InjectorInterface */
     private InjectorInterface $injector;
 
     /** @var ParamInjectorInterface  */
@@ -49,60 +51,55 @@ class MediaQueryInterceptor implements MethodInterceptor
      */
     public function invoke(MethodInvocation $invocation)
     {
+        $method = $invocation->getMethod();
         /** @var DbQuery $dbQury */
-        $dbQury = $invocation->getMethod()->getAnnotation(DbQuery::class);
-        $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $dbQury->id);
-        if (! file_exists($sqlFile)) {
-            throw new LogicException($sqlFile);
-        }
-
-        $pager = $invocation->getMethod()->getAnnotation(Pager::class);
-        /** @var array<string, mixed> $params */
-        $params = $this->paramInjector->getArgumentes($invocation);
+        $dbQury = $method->getAnnotation(DbQuery::class);
+        $pager = $method->getAnnotation(Pager::class);
+        $values = $this->paramInjector->getArgumentes($invocation);
         if ($pager instanceof Pager) {
-            return $this->getPager($dbQury->id, $params, $pager);
+            return $this->getPager($dbQury->id, $values, $pager);
         }
 
-        return $this->sqlQuery($dbQury->id, $params);
+        return $this->sqlQuery($dbQury->id, $values);
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      *
      * @return array<mixed>
      */
-    private function sqlQuery(string $queryId, array $params): array
+    private function sqlQuery(string $queryId, array $values): array
     {
         $postFix = substr($queryId, -4);
         if ($postFix === 'list') {
-            return $this->sqlQuery->getRowList($queryId, $params);
+            return $this->sqlQuery->getRowList($queryId, $values);
         }
 
         if ($postFix === 'item') {
-            return $this->sqlQuery->getRow($queryId, $params);
+            return $this->sqlQuery->getRow($queryId, $values);
         }
 
-        $this->sqlQuery->exec($queryId, $params);
+        $this->sqlQuery->exec($queryId, $values);
 
         return [];
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      */
-    private function getPage(string $queryId, array $params, Pager $pager): Pages
+    public function getPage(string $queryId, array $values, Pager $pager): Pages
     {
-        return $this->sqlQuery->getPages($queryId, $params, $pager->perPage, $pager->template);
+        return $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      */
-    private function getPager(string $queryId, array $params, Pager $pager): Pages
+    private function getPager(string $queryId, array $values, Pager $pager): Pages
     {
         $this->logger->start();
-        $result = $this->getPage($queryId, $params, $pager);
-        $this->logger->log($queryId, $params);
+        $result = $this->getPage($queryId, $values, $pager);
+        $this->logger->log($queryId, $values);
 
         return $result;
     }
