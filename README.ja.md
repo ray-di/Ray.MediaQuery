@@ -83,21 +83,22 @@ SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッ
 ## Parameter Injection
 
 値が渡されない限り、`DateTimeInterface`の型を持つ引数には現在時刻がインジェクションされます。呼び出しで用意する必要はありません。
-以下の`$cratedAt`には`2021-2-14 00:00:00`のような文字列が渡されます。
 
 ```php
-interface TodoAddInterface
+interface TaskAddInterface
 {
     public function __invoke(string $title, DateTimeInterface $cratedAt = null): void;
 }
 ```
 
+DateTimeは**SQL実行時に**`2021-2-14 00:00:00`のように日付フォーマットされた文字列に変換されます。
+
 ```sql
 INSERT INTO task (title, created_at) VALUES (:title, :createdAt);
 ```
 
-オブジェクト型でタイプされ、既定値がnullのパラメーターは値が渡されない時はインジェクションされます。
-`ToScalar`インターフェイスを実装した`ToScalar()`メソッド、もしくは`__toString()`メソッドの返り値が引数になります。
+オブジェクト型でタイプされたパラメーターは、値が渡されない時はインジェクションされます。
+その時`ToScalar`インターフェイスを実装した`ToScalar()`メソッド、もしくは`__toString()`メソッドの返り値が引数になります。
 
 ```php
 interface MemoAddInterface

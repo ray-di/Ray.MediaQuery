@@ -111,7 +111,6 @@ For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement wi
 ## Parameter Injection
 
 Arguments with the `DateTimeInterface` type will be injected with the current time unless a value is passed.
-The value will be converted to a string such as `2021-2-14 00:00:00` at SQL execution time.
 
 ```php
 interface TaskAddInterface
@@ -120,12 +119,15 @@ interface TaskAddInterface
 }
 ```
 
+DateTime will be converted to a date formatted string like `2021-2-14 00:00:00` at **SQL execution time**.
+
+
 ```sql
 INSERT INTO task (title, created_at) VALUES (:title, :createdAt);
 ```
 
-Parameters with a default value of null typed as an object type will be injected unless a value is passed.
-The return value of the `ToScalar()` method that implements the `ToScalar` interface or the `__toString()` method will be the argument.
+Parameters typed as object types will be injected if no value is passed.
+The return value of the `ToScalar()` method that implements the `ToScalar` interface or the `__toString()` method is then injected as the argument.
 
 ```php
 interface MemoAddInterface
