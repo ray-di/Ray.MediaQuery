@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RecursiveRegexIterator;
 use RegexIterator;
 use SplFileInfo;
-
 use function assert;
 use function interface_exists;
 use function is_dir;
@@ -65,7 +63,7 @@ final class Queries
             new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator(
                     $dir,
-                    FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_PATHNAME | FilesystemIterator::SKIP_DOTS
+                    /** @psalm-suppress ArgumentTypeCoercion */
                 ),
                 RecursiveIteratorIterator::LEAVES_ONLY
             ),

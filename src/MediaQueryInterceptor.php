@@ -4,45 +4,27 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use LogicException;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
-use Ray\Di\Di\Named;
-use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
-
-use function file_exists;
-use function sprintf;
 use function substr;
 
 class MediaQueryInterceptor implements MethodInterceptor
 {
-    /** @var string */
-    private $sqlDir;
-
     /** @var SqlQueryInterface */
     private $sqlQuery;
 
     /** @var MediaQueryLoggerInterface */
     private $logger;
 
-    /** @var InjectorInterface */
-    private InjectorInterface $injector;
-
     /** @var ParamInjectorInterface  */
     private $paramInjector;
 
-    /**
-     * @Named("sqlDir=Ray\MediaQuery\Annotation\SqlDir")
-     */
-    #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
-    public function __construct(string $sqlDir, SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger, InjectorInterface $injector, ParamInjectorInterface $paramInjector)
+    public function __construct(SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger, ParamInjectorInterface $paramInjector)
     {
-        $this->sqlDir = $sqlDir;
         $this->sqlQuery = $sqlQuery;
         $this->logger = $logger;
-        $this->injector = $injector;
         $this->paramInjector = $paramInjector;
     }
 
@@ -87,18 +69,10 @@ class MediaQueryInterceptor implements MethodInterceptor
     /**
      * @param array<string, mixed> $values
      */
-    public function getPage(string $queryId, array $values, Pager $pager): Pages
-    {
-        return $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);
-    }
-
-    /**
-     * @param array<string, mixed> $values
-     */
     private function getPager(string $queryId, array $values, Pager $pager): Pages
     {
         $this->logger->start();
-        $result = $this->getPage($queryId, $values, $pager);
+        $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);
         $this->logger->log($queryId, $values);
 
         return $result;

@@ -7,7 +7,6 @@ namespace Ray\MediaQuery;
 use function implode;
 use function json_encode;
 use function sprintf;
-
 use const PHP_EOL;
 
 final class MediaQueryLogger implements MediaQueryLoggerInterface

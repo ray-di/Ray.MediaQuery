@@ -7,10 +7,12 @@ namespace Ray\MediaQuery;
 use DateTimeInterface;
 use Ray\Aop\MethodInvocation;
 use Ray\Di\InjectorInterface;
+use Ray\MediaQuery\Exception\CouldNotBeConvertedException;
 use ReflectionNamedType;
 use ReflectionParameter;
-
 use function count;
+use function get_class;
+use function method_exists;
 
 final class ParamInjector implements ParamInjectorInterface
 {
@@ -23,7 +25,7 @@ final class ParamInjector implements ParamInjectorInterface
     }
 
     /**
-     * @return array<string, mixed>
+     * {@inheritDoc}
      */
     public function getArgumentes(MethodInvocation $invocation): array
     {
@@ -32,6 +34,7 @@ final class ParamInjector implements ParamInjectorInterface
         $counntArgs = count($args);
         $noInjection = $counntArgs === $method->getNumberOfParameters();
         if ($noInjection) {
+            /** @var array<string, mixed> */ // phpcs:ignoreFile
             return (array) $invocation->getNamedArguments();
         }
 
@@ -39,6 +42,7 @@ final class ParamInjector implements ParamInjectorInterface
         $parameters = $invocation->getMethod()->getParameters();
         foreach ($parameters as $parameter) {
             $pos = $parameter->getPosition();
+            /** @psalm-suppress MixedAssignment */
             $namedArgs[$parameter->getName()] = $args[$pos] ?? $this->getInjectedParam($parameter);
         }
 
@@ -55,8 +59,21 @@ final class ParamInjector implements ParamInjectorInterface
             return $parameter->getDefaultValue();
         }
 
+        /** @var object $instance */
         $instance = $this->injector->getInstance($type->getName());
 
-        return $instance instanceof DateTimeInterface ? $instance : (string) $instance;
+        if ($instance instanceof DateTimeInterface) {
+            return $instance; // will be convert date time string.
+        }
+
+        if (method_exists($instance, '__toString')) {
+            return (string) $instance;
+        }
+
+        if ($instance instanceof ToScalarInterface) {
+            return $instance->toScalar();
+        }
+
+        throw new CouldNotBeConvertedException(get_class($instance));
     }
 }

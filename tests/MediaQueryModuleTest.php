@@ -15,7 +15,6 @@ use Ray\MediaQuery\Queries\PromiseItemInterface;
 use Ray\MediaQuery\Queries\TodoAddInterface;
 use Ray\MediaQuery\Queries\TodoItemInterface;
 use Ray\MediaQuery\Queries\TodoListInterface;
-
 use function array_keys;
 use function assert;
 use function dirname;
