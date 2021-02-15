@@ -110,7 +110,8 @@ For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement wi
 
 ## Parameter Injection
 
-Arguments with the `DateTimeInterface` type will be injected with the current time unless a value is passed.
+You can pass a value object to the parameter.
+For example, you can specify a `DateTimeInterface` object like this.
 
 ```php
 interface TaskAddInterface
@@ -119,93 +120,63 @@ interface TaskAddInterface
 }
 ```
 
-DateTime will be converted to a date formatted string like `2021-2-14 00:00:00` at **SQL execution time**.
-
+The value will be converted to a date formatted string **at SQL execution time**.
 
 ```sql
-INSERT INTO task (title, created_at) VALUES (:title, :createdAt);
+INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 00:00:00
 ```
 
-Parameters typed as object types will be injected if no value is passed.
-The return value of the `ToScalar()` method that implements the `ToScalar` interface or the `__toString()` method is then injected as the argument.
+If no value is passed, the bound current time will be injected.
+This eliminates the need to hard-code `NOW()` inside SQL and pass the current time every time.
+
+### Test Time
+
+When testing, you can also set the `DateTimeInterface` binding to a single time, as follows.
+
+```php
+$this->bind(DateTimeInterface::class)->to(UnixEpochTime::class);
+```
+
+## VO
+
+If a value object other than `DateTime` is passed, the return value of the `ToScalar()` method that implements the `toScalar` interface or the `__toString()` method will be the argument.
 
 ```php
 interface MemoAddInterface
 {
-    public function __invoke(LoginId $loginId, string $memo): void;
+    public function __invoke(string $memo, UserId $userId = null): void;
 }
 ```
 
 ```php
-class LoginId
+class UserId implements ToScalarInterface
 {
     public function __construct(
-        private AbstractLogin $login;
+        private LoginUser $user;
     ){}
     
-    public function __toString()
+    public function toScalar(): int
     {
-        return $this->login->id;
+        return $this->user->id;
     }
 }
 ```
 
-## Pagination
-
-The `#[Pager]` annotation allows you to paginate a SELECT query.
-
-```php
-interface TodoList
-{
-    #[DbQuery, Pager(perPage: 10, template: '/{?page}')]]
-    public function __invoke(): Pages
-    {
-    }
-}
+```sql
+INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
 ```
 
-You can get the number of pages with `count()`, and you can get the page object with array access by page number.
-`Pages` is a SQL lazy execution object.
+Note that the default value of `null` for the value object argument is never used in SQL. If no value is passed, the scalar value of the injected value object will be used instead of null.
+
+# SqlQuery
+
+If you pass a `DateTimeIntetface` object, it will be converted to a date formatted string and queried.
 
 ```php
-$pages = ($todoList)();
-$cnt = count($page); // count SQL is generated and queried when count() is done.
-$page = $pages[2]; // When array access is done, DB query for that page is done.
-
-// $page->data // sliced data
-// $page->current;
-// $page->total
-// $page->hasNext
-// $page->hasPrevious
-// $page->maxPerPage;
-// (string) $page // pager html
+$sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
 ```
 
-## SqlQuery
-
-`SqlQuery` executes SQL by specifying the ID of an SQL file.
-It can be used to prepare implementation classes for detailed implementation.
-
-```php
-class TodoItem implements TodoItemInterface
-{
-    public function __construct(
-        private SqlQueryInterface $sqlQuery
-    ){}
-
-    public function __invoke(string $id) : array
-    {
-        return $this->sqlQuery->getRow('todo_item', ['id' => $id]);
-    }
-}
-```
-
-If you pass a `DateTimeIntetface` object, it will be converted to a date formatted string.
-
-```php
-$sqlQuery->exec('memo_add', ['created_at' => new DateTime()]);
-```
-
+When an object is passed, it is converted to a value of `toScalar()` or `__toString()` as in Parameter Injection.
 
 ## Get* Method
 
