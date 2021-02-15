@@ -13,6 +13,7 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\MediaQuery\Exception\InvalidSqlException;
+use Ray\MediaQuery\Exception\LogicException;
 
 use function assert;
 use function count;
@@ -134,5 +135,31 @@ class SqlQueryTest extends TestCase
     public function testGetStatement(SqlQuery $sqlQuery): void
     {
         $this->assertInstanceOf(PdoStatement::class, $sqlQuery->getStatement());
+    }
+
+    /**
+     * @depends testPager
+     */
+    public function testOffsetExists(Pages $pages): void
+    {
+        $this->assertTrue(isset($pages[1]));
+    }
+
+    /**
+     * @depends testPager
+     */
+    public function testOffsetSet(Pages $pages): void
+    {
+        $this->expectException(LogicException::class);
+        $pages[1] = '';
+    }
+
+    /**
+     * @depends testPager
+     */
+    public function testOffsetUnset(Pages $pages): void
+    {
+        $this->expectException(LogicException::class);
+        unset($pages[1]);
     }
 }

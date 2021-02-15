@@ -7,10 +7,10 @@ namespace Ray\MediaQuery;
 use ArrayAccess;
 use Aura\Sql\ExtendedPdoInterface;
 use Countable;
-use LogicException;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\Exception\LogicException;
 
 /**
  * @implements ArrayAccess<int, Page>

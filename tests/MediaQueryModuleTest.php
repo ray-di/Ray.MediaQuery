@@ -12,6 +12,7 @@ use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\Queries\PromiseAddInterface;
 use Ray\MediaQuery\Queries\PromiseItemInterface;
+use Ray\MediaQuery\Queries\PromiseListInterface;
 use Ray\MediaQuery\Queries\TodoAddInterface;
 use Ray\MediaQuery\Queries\TodoItemInterface;
 use Ray\MediaQuery\Queries\TodoListInterface;
@@ -40,6 +41,7 @@ class MediaQueryModuleTest extends TestCase
             TodoListInterface::class,
             PromiseAddInterface::class,
             PromiseItemInterface::class,
+            PromiseListInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $module = new MediaQueryModule($sqlDir, $mediaQueries, new AuraSqlModule('sqlite::memory:'));
@@ -49,6 +51,7 @@ class MediaQueryModuleTest extends TestCase
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
         $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), ['id' => '1', 'title' => 'run']);
+        $pdo->perform((string) file_get_contents($sqlDir . '/promise_add.sql'), ['id' => '1', 'title' => 'run', 'time' => UnixEpocTime::TEXT]);
         /** @var MediaQueryLoggerInterface $logger */
         $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
         $this->logger = $logger;
@@ -78,6 +81,17 @@ class MediaQueryModuleTest extends TestCase
         $this->assertSame(['id' => '1', 'title' => 'run'], $item);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query:todo_item', $log);
+    }
+
+    public function testSelectList(): void
+    {
+        $promiselist = $this->injector->getInstance(PromiseListInterface::class);
+        assert($promiselist instanceof PromiseListInterface);
+        $list = $promiselist->get();
+        $row = ['id' => '1', 'title' => 'run', 'time' => '1970-01-01 00:00:00'];
+        $this->assertSame([$row], $list);
+        $log = (string) $this->logger;
+        $this->assertStringContainsString('query:promise_list([])', $log);
     }
 
     public function testSelectPager(): void
