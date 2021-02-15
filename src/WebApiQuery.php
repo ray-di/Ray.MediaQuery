@@ -7,7 +7,7 @@ namespace Ray\MediaQuery;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Ray\Di\Di\Named;
-use RuntimeException;
+use Ray\MediaQuery\Exception\WebApiRequestException;
 
 use function json_decode;
 use function uri_template;
@@ -52,7 +52,7 @@ final class WebApiQuery implements WebApiQueryInterface
 
             return $body;
         } catch (GuzzleException $e) {
-            throw new RuntimeException($e->getMessage(), 0, $e);
+            throw new WebApiRequestException($e->getMessage(), (int) $e->getCode(), $e);
         }
     }
 }
