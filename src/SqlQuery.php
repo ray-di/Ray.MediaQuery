@@ -5,20 +5,19 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
-use LogicException;
 use PDO;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\Di\Di\Named;
+use Ray\MediaQuery\Exception\InvalidSqlException;
 
 use function array_pop;
 use function assert;
-use function count;
 use function explode;
 use function file;
+use function file_exists;
 use function file_get_contents;
-use function is_bool;
 use function sprintf;
 use function stripos;
 use function strpos;
@@ -35,7 +34,10 @@ class SqlQuery implements SqlQueryInterface
     /** @var string */
     private $sqlDir;
 
-    /** @var ?PDOStatement */
+    /**
+     * @var ?PDOStatement
+     * @psalm-readonly
+     */
     private $pdoStatement;
 
     /** @var AuraSqlPagerFactoryInterface */
@@ -110,21 +112,17 @@ class SqlQuery implements SqlQueryInterface
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
-        if (count($sqls) === 0) {
-            return [];
-        }
-
         $this->logger->start();
         ($this->paramConverter)($values);
         foreach ($sqls as $sql) {
-            $pdoStatement = $this->pdo->perform($sql, $values);
+            /** @psalm-suppress InaccessibleProperty */
+            $this->pdoStatement = $this->pdo->perform($sql, $values);
         }
 
-        assert(isset($pdoStatement)); // @phpstan-ignore-line
-        assert($pdoStatement instanceof PDOStatement);
-        $lastQuery = trim((string) $pdoStatement->queryString);
+        assert($this->pdoStatement instanceof PDOStatement);
+        $lastQuery = trim((string) $this->pdoStatement->queryString);
         $isSelect = stripos($lastQuery, 'select') === 0;
-        $result = $isSelect ? (array) $pdoStatement->fetchAll($fetchModode) : [];
+        $result = $isSelect ? (array) $this->pdoStatement->fetchAll($fetchModode) : [];
         $this->logger->log($sqlId, $values);
 
         return $result;
@@ -135,6 +133,10 @@ class SqlQuery implements SqlQueryInterface
      */
     private function getSqls(string $sqlFile): array
     {
+        if (! file_exists($sqlFile)) {
+            throw new InvalidSqlException($sqlFile);
+        }
+
         $sqls = (string) file_get_contents($sqlFile);
         if (! strpos($sqls, ';')) {
             $sqls .= ';';
@@ -142,12 +144,17 @@ class SqlQuery implements SqlQueryInterface
 
         $sqls = explode(';', trim($sqls, "\\ \t\n\r\0\x0B"));
         array_pop($sqls);
+        if ($sqls[0] === '') {
+            throw new InvalidSqlException($sqlFile);
+        }
 
         return $sqls;
     }
 
-    public function getStatement(): ?PDOStatement
+    public function getStatement(): PDOStatement
     {
+        assert($this->pdoStatement instanceof PDOStatement);
+
         return $this->pdoStatement;
     }
 
@@ -165,12 +172,8 @@ class SqlQuery implements SqlQueryInterface
     private function getSql(string $sqlId): string
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
-        $file = file($sqlFile);
-        if (is_bool($file) || ! isset($file[0])) {
-            throw new LogicException($sqlId);
-        }
-
-        $firstRow = $file[0];
+        $file = (array) file($sqlFile);
+        $firstRow = (string) $file[0];
 
         return trim($firstRow, "; \n\r\t\v\0");
     }

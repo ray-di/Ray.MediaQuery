@@ -7,10 +7,12 @@ namespace Ray\MediaQuery;
 use Aura\Sql\ExtendedPdo;
 use DateTime;
 use Pagerfanta\View\DefaultView;
+use PdoStatement;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\Exception\InvalidSqlException;
 
 use function assert;
 use function count;
@@ -104,11 +106,33 @@ class SqlQueryTest extends TestCase
         $this->assertSame(2, $count);
     }
 
-    public function testDateTime(): void
+    public function testDateTime(): SqlQuery
     {
         $dateTime = '2011-10-17 17:47:46';
         $this->sqlQuery->exec('promise_add', ['id' => '1', 'title' => 'talk', 'time' => new DateTime($dateTime)]);
         $item = $this->sqlQuery->getRow('promise_item', ['id' => 1]);
         $this->assertContains($dateTime, $item);
+
+        return $this->sqlQuery;
+    }
+
+    public function testInvalidSql(): void
+    {
+        $this->expectException(InvalidSqlException::class);
+        $this->sqlQuery->exec('empty_add', []);
+    }
+
+    public function testNotExistsSql(): void
+    {
+        $this->expectException(InvalidSqlException::class);
+        $this->sqlQuery->exec('__not_exists', []);
+    }
+
+    /**
+     * @depends testDateTime
+     */
+    public function testGetStatement(SqlQuery $sqlQuery): void
+    {
+        $this->assertInstanceOf(PdoStatement::class, $sqlQuery->getStatement());
     }
 }

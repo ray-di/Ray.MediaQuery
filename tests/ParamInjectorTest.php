@@ -31,4 +31,10 @@ class ParamInjectorTest extends TestCase
         $namedArgs = $this->injector->getArgumentes(new ReflectiveMethodInvocation(new FakeParamInjectMethod(), 'paramInject', []));
         $this->assertInstanceOf(DateTimeImmutable::class, $namedArgs['dateTime']);
     }
+
+    public function testDefaultValue(): void
+    {
+        $namedArgs = $this->injector->getArgumentes(new ReflectiveMethodInvocation(new FakeParamInjectMethod(), 'defaultValue', []));
+        $this->assertSame(['int' => 1, 'bool' => true], $namedArgs);
+    }
 }

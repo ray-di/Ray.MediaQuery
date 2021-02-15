@@ -15,4 +15,8 @@ class FakeParamInjectMethod
     public function paramConvert(?FakeBool $bool = null, ?FakeString $string = null, ?DateTimeInterface $dateTime = null): void
     {
     }
+
+    public function defaultValue(int $int = 1, bool $bool = true): void
+    {
+    }
 }
