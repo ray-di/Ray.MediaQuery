@@ -129,8 +129,6 @@ INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 0
 If no value is passed, the bound current time will be injected.
 This eliminates the need to hard-code `NOW()` inside SQL and pass the current time every time.
 
-### Test Time
-
 When testing, you can also set the `DateTimeInterface` binding to a single time, as follows.
 
 ```php

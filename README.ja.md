@@ -136,16 +136,6 @@ INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
 
 バリューオブジェクトの引数のデフォルトの値の`null`がSQLで使われることは無い事に注意してください。値が渡されないと、nullの代わりにインジェクトされたバリューオブジェクトのスカラー値が使われます。
 
-## SqlQuery
-
-`DateTimeIntetface`オブジェクトを渡すと、日付フォーマットされた文字列に変換されてクエリーが行われます。
-
-```php
-$sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
-```
-
-オブジェクトが渡されるとParameter Injectionと同様`toScalar()`または`__toString()`の値に変換されます。
-
 ## ページネーション
 
 `#[Pager]`アノテーションで、SELECTクエリーをページングする事ができます。
@@ -196,12 +186,6 @@ class TodoItem implements TodoItemInterface
 }
 ```
 
-`DateTimeIntetface`オブジェクトを渡すと、日付フォーマットされた文字列に変換されてクエリーが行われます。
-
-```php
-$sqlQuery->exec('memo_add', ['created_at' => new DateTime()]);
-```
-
 ## Get* メソッド
 
 SELECT結果を取得するためには取得する結果に応じた`get*`を使います。
@@ -217,15 +201,14 @@ Ray.MediaQueryは[Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule
 さらに低レイヤーの操作が必要な時はAura.Sqlの[Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) やPDOを拡張した[Aura.Sql](https://github.com/auraphp/Aura.Sql) のExtended PDOをお使いください。
 [doctrine/dbal](https://github.com/ray-di/Ray.DbalModule) も利用できます。
 
-## バリューオブジェクト
 
-`DateTimeIntetface`オブジェクトを渡すと、日付フォーマットされた文字列に変換されてクエリーが行われます。
+Parameter Injectionと同様、`DateTimeIntetface`オブジェクトを渡すと日付フォーマットされた文字列に変換されます。
 
 ```php
 $sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
 ```
 
-オブジェクトが渡されるとParameter Injectionと同様`toScalar()`または`__toString()`の値に変換されます。
+他のオブジェクトが渡されると`toScalar()`または`__toString()`の値に変換されます。
 
 # Web API
 
@@ -239,7 +222,7 @@ interface GetPostInterface
 }
 ```
 
-認証のためのヘッダーの指定などはGuzzleのClinetInterfaceをバインドして行います。
+認証のためのヘッダーの指定などはGuzzleの`ClinetInterface`をバインドして行います。
 
 ```php
 $this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
