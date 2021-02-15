@@ -80,6 +80,75 @@ SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッ
 * SQL実行が返すのが単一行なら`item`、複数行なら`list`のpostfixを付けます。
 * SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果になります。
 
+# パラメーターインジェクション
+
+パラメーターにバリューオブジェクトを渡すことができます。
+例えば、`DateTimeInterface`オブジェクトをこのように指定できます。
+
+```php
+interface TaskAddInterface
+{
+    public function __invoke(string $title, DateTimeInterface $cratedAt = null): void;
+}
+```
+
+値は**SQL実行時に**日付フォーマットされた文字列に変換されます。
+
+```sql
+INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 00:00:00
+```
+
+値を渡さないとバインドされている現在時刻がインジェクションされます。
+SQL内部で`NOW()`とハードコーディングする事や、毎回現在時刻を渡す手間を省きます。
+## テストの時刻
+
+テストの時には以下のように`DateTimeInterface`の束縛を１つの時刻にする事もできます。
+
+```php
+$this->bind(DateTimeInterface::class)->to(UnixEpochTime::class);
+```
+
+## バリューオブジェクト
+
+`DateTime`以外のバリューオブジェクトが渡されると`toScalar`インターフェイスを実装した`ToScalar()`メソッド、もしくは`__toString()`メソッドの返り値が引数になります。
+
+```php
+interface MemoAddInterface
+{
+    public function __invoke(string $memo, UserId $userId = null): void;
+}
+```
+
+```php
+class UserId implements ToScalarInterface
+{
+    public function __construct(
+        private LoginUser $user;
+    ){}
+    
+    public function toScalar(): int
+    {
+        return $this->user->id;
+    }
+}
+```
+
+```sql
+INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
+```
+
+バリューオブジェクトの引数のデフォルトの値の`null`がSQLで使われることは無い事に注意してください。値が渡されないと、nullの代わりにインジェクトされたバリューオブジェクトのスカラー値が使われます。
+
+# SqlQuery
+
+`DateTimeIntetface`オブジェクトを渡すと、日付フォーマットされた文字列に変換されてクエリーが行われます。
+
+```php
+$sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
+```
+
+オブジェクトが渡されるとParameter Injectionと同様`toScalar()`または`__toString()`の値に変換されます。
+
 ## Pagination
 
 `#[Pager]`アノテーションで、SELECTクエリーをページングする事ができます。
@@ -130,6 +199,12 @@ class TodoItem implements TodoItemInterface
 }
 ```
 
+`DateTimeIntetface`オブジェクトを渡すと、日付フォーマットされた文字列に変換されてクエリーが行われます。
+
+```php
+$sqlQuery->exec('memo_add', ['created_at' => new DateTime()]);
+```
+
 ## Get* Method
 
 SELECT結果を取得するためには取得する結果に応じた`get*`を使います。
@@ -144,6 +219,17 @@ $pages = $sqlQuery->getPages(); // ページャーを取得
 Ray.MediaQueryは[Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule) を含んでいます。
 さらに低レイヤーの操作が必要な時はAura.Sqlの[Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) やPDOを拡張した[Aura.Sql](https://github.com/auraphp/Aura.Sql) のExtended PDOをお使いください。
 [doctrine/dbal](https://github.com/ray-di/Ray.DbalModule) も利用できます。
+
+## バリューオブジェクト
+
+`DateTimeIntetface`オブジェクトを渡すと、日付フォーマットされた文字列に変換されてクエリーが行われます。
+
+```php
+$sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
+```
+
+オブジェクトが渡されるとParameter Injectionと同様`toScalar()`または`__toString()`の値に変換されます。
+
 
 ## プロファイラー
 

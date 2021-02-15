@@ -5,20 +5,19 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
-use LogicException;
 use PDO;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\Di\Di\Named;
+use Ray\MediaQuery\Exception\InvalidSqlException;
 
 use function array_pop;
 use function assert;
-use function count;
 use function explode;
 use function file;
+use function file_exists;
 use function file_get_contents;
-use function is_bool;
 use function sprintf;
 use function stripos;
 use function strpos;
@@ -33,15 +32,19 @@ class SqlQuery implements SqlQueryInterface
     private $logger;
 
     /** @var string */
-
-    /** @var string */
     private $sqlDir;
 
-    /** @var ?PDOStatement */
+    /**
+     * @var ?PDOStatement
+     * @psalm-readonly
+     */
     private $pdoStatement;
 
     /** @var AuraSqlPagerFactoryInterface */
     private $pagerFactory;
+
+    /** @var ParamConverterInterface  */
+    private $paramConverter;
 
     /**
      * @Named("sqlDir=Ray\MediaQuery\Annotation\SqlDir")
@@ -51,28 +54,30 @@ class SqlQuery implements SqlQueryInterface
         ExtendedPdoInterface $pdo,
         string $sqlDir,
         MediaQueryLoggerInterface $logger,
-        AuraSqlPagerFactoryInterface $pagerFactory
+        AuraSqlPagerFactoryInterface $pagerFactory,
+        ParamConverterInterface $paramConverter
     ) {
         $this->pdo = $pdo;
         $this->logger = $logger;
         $this->sqlDir = $sqlDir;
         $this->pagerFactory = $pagerFactory;
+        $this->paramConverter = $paramConverter;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function exec(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): void
+    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): void
     {
-        $this->perform($sqlId, $params, $fetchMode);
+        $this->perform($sqlId, $values, $fetchMode);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRow(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array
+    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array
     {
-        $rowList = $this->perform($sqlId, $params, $fetchMode);
+        $rowList = $this->perform($sqlId, $values, $fetchMode);
         /** @var array<string, mixed> $row */
         $row = (array) array_pop($rowList);
 
@@ -82,10 +87,10 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getRowList(string $sqlId, array $params = [], int $fetchMode = PDO::FETCH_ASSOC): array
+    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array
     {
         /** @var array<array<mixed>> $list */
-        $list =  $this->perform($sqlId, $params, $fetchMode);
+        $list =  $this->perform($sqlId, $values, $fetchMode);
 
         return $list;
     }
@@ -93,36 +98,32 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getCount(string $sqlId, array $params): int
+    public function getCount(string $sqlId, array $values): int
     {
-        return (new ExtendedPdoAdapter($this->pdo, $this->getSql($sqlId), $params))->getNbResults();
+        return (new ExtendedPdoAdapter($this->pdo, $this->getSql($sqlId), $values))->getNbResults();
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      *
      * @return array<mixed>
      */
-    private function perform(string $sqlId, array $params, int $fetchModode): array
+    private function perform(string $sqlId, array $values, int $fetchModode): array
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
-        if (count($sqls) === 0) {
-            return [];
-        }
-
         $this->logger->start();
-
+        ($this->paramConverter)($values);
         foreach ($sqls as $sql) {
-            $pdoStatement = $this->pdo->perform($sql, $params);
+            /** @psalm-suppress InaccessibleProperty */
+            $this->pdoStatement = $this->pdo->perform($sql, $values);
         }
 
-        assert(isset($pdoStatement)); // @phpstan-ignore-line
-        assert($pdoStatement instanceof PDOStatement);
-        $lastQuery = trim((string) $pdoStatement->queryString);
+        assert($this->pdoStatement instanceof PDOStatement);
+        $lastQuery = trim((string) $this->pdoStatement->queryString);
         $isSelect = stripos($lastQuery, 'select') === 0;
-        $result = $isSelect ? (array) $pdoStatement->fetchAll($fetchModode) : [];
-        $this->logger->log($sqlId, $params);
+        $result = $isSelect ? (array) $this->pdoStatement->fetchAll($fetchModode) : [];
+        $this->logger->log($sqlId, $values);
 
         return $result;
     }
@@ -132,6 +133,10 @@ class SqlQuery implements SqlQueryInterface
      */
     private function getSqls(string $sqlFile): array
     {
+        if (! file_exists($sqlFile)) {
+            throw new InvalidSqlException($sqlFile);
+        }
+
         $sqls = (string) file_get_contents($sqlFile);
         if (! strpos($sqls, ';')) {
             $sqls .= ';';
@@ -139,35 +144,36 @@ class SqlQuery implements SqlQueryInterface
 
         $sqls = explode(';', trim($sqls, "\\ \t\n\r\0\x0B"));
         array_pop($sqls);
+        if ($sqls[0] === '') {
+            throw new InvalidSqlException($sqlFile);
+        }
 
         return $sqls;
     }
 
-    public function getStatement(): ?PDOStatement
+    public function getStatement(): PDOStatement
     {
+        assert($this->pdoStatement instanceof PDOStatement);
+
         return $this->pdoStatement;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getPages(string $sqlId, array $params, int $perPage, string $queryTemplate = '/{?page}'): Pages
+    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): Pages
     {
         /** @psalm-suppress MixedArgumentTypeCoercion */
-        $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $params, $perPage, $queryTemplate);
+        $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $values, $perPage, $queryTemplate);
 
-        return new Pages($pager, $this->pdo, $this->getSql($sqlId), $params);
+        return new Pages($pager, $this->pdo, $this->getSql($sqlId), $values);
     }
 
     private function getSql(string $sqlId): string
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
-        $file = file($sqlFile);
-        if (is_bool($file) || ! isset($file[0])) {
-            throw new LogicException($sqlId);
-        }
-
-        $firstRow = $file[0];
+        $file = (array) file($sqlFile);
+        $firstRow = (string) $file[0];
 
         return trim($firstRow, "; \n\r\t\v\0");
     }

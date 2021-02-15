@@ -4,41 +4,29 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use LogicException;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
-use Ray\Di\Di\Named;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 
-use function file_exists;
-use function ltrim;
-use function preg_replace;
-use function sprintf;
-use function strrpos;
-use function strtolower;
 use function substr;
 
 class MediaQueryInterceptor implements MethodInterceptor
 {
-    /** @var string */
-    private $sqlDir;
-
     /** @var SqlQueryInterface */
     private $sqlQuery;
 
     /** @var MediaQueryLoggerInterface */
     private $logger;
 
-    /**
-     * @Named("sqlDir=Ray\MediaQuery\Annotation\SqlDir")
-     */
-    #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
-    public function __construct(string $sqlDir, SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger)
+    /** @var ParamInjectorInterface  */
+    private $paramInjector;
+
+    public function __construct(SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger, ParamInjectorInterface $paramInjector)
     {
-        $this->sqlDir = $sqlDir;
         $this->sqlQuery = $sqlQuery;
         $this->logger = $logger;
+        $this->paramInjector = $paramInjector;
     }
 
     /**
@@ -46,71 +34,47 @@ class MediaQueryInterceptor implements MethodInterceptor
      */
     public function invoke(MethodInvocation $invocation)
     {
+        $method = $invocation->getMethod();
         /** @var DbQuery $dbQury */
-        $dbQury = $invocation->getMethod()->getAnnotation(DbQuery::class);
-        $queryId = $dbQury->id ? $dbQury->id :  $this->getQueryId($invocation);
-        $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $queryId);
-        if (! file_exists($sqlFile)) {
-            throw new LogicException($sqlFile);
-        }
-
-        $pager = $invocation->getMethod()->getAnnotation(Pager::class);
-        /** @var array<string, mixed> $params */
-        $params = (array) $invocation->getNamedArguments();
+        $dbQury = $method->getAnnotation(DbQuery::class);
+        $pager = $method->getAnnotation(Pager::class);
+        $values = $this->paramInjector->getArgumentes($invocation);
         if ($pager instanceof Pager) {
-            return $this->getPager($queryId, $params, $pager);
+            return $this->getPager($dbQury->id, $values, $pager);
         }
 
-        return $this->sqlQuery($queryId, $params);
+        return $this->sqlQuery($dbQury->id, $values);
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      *
      * @return array<mixed>
      */
-    private function sqlQuery(string $queryId, array $params): array
+    private function sqlQuery(string $queryId, array $values): array
     {
         $postFix = substr($queryId, -4);
         if ($postFix === 'list') {
-            return $this->sqlQuery->getRowList($queryId, $params);
+            return $this->sqlQuery->getRowList($queryId, $values);
         }
 
         if ($postFix === 'item') {
-            return $this->sqlQuery->getRow($queryId, $params);
+            return $this->sqlQuery->getRow($queryId, $values);
         }
 
-        $this->sqlQuery->exec($queryId, $params);
+        $this->sqlQuery->exec($queryId, $values);
 
         return [];
     }
 
-    private function getQueryId(MethodInvocation $invocation): string
-    {
-        $fullName = $invocation->getMethod()->getDeclaringClass()->getName();
-        $strPos = strrpos($fullName, '\\');
-        $name = $strPos ? substr($fullName, $strPos + 1) : $fullName;
-
-        // @see https://qiita.com/okapon_pon/items/498b88c2f91d7c42e9e8
-        return ltrim(strtolower((string) preg_replace(/** @lang regex */'/[A-Z]/', /** @lang regex */'_\0', $name)), '_');
-    }
-
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      */
-    private function getPage(string $queryId, array $params, Pager $pager): Pages
-    {
-        return $this->sqlQuery->getPages($queryId, $params, $pager->perPage, $pager->template);
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     */
-    private function getPager(string $queryId, array $params, Pager $pager): Pages
+    private function getPager(string $queryId, array $values, Pager $pager): Pages
     {
         $this->logger->start();
-        $result = $this->getPage($queryId, $params, $pager);
-        $this->logger->log($queryId, $params);
+        $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);
+        $this->logger->log($queryId, $values);
 
         return $result;
     }

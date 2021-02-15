@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use DateTimeImmutable;
+use DateTimeInterface;
 use Ray\Di\AbstractModule;
 use Ray\Di\Scope;
 use Ray\MediaQuery\Annotation\DbQuery;
@@ -28,6 +30,9 @@ class MediaQueryModule extends AbstractModule
     {
         $this->bind(SqlQueryInterface::class)->to(SqlQuery::class);
         $this->bind(MediaQueryLoggerInterface::class)->to(MediaQueryLogger::class)->in(Scope::SINGLETON);
+        $this->bind(ParamInjectorInterface::class)->to(ParamInjector::class);
+        $this->bind(ParamConverterInterface::class)->to(ParamConverter::class);
+        $this->bind(DateTimeInterface::class)->to(DateTimeImmutable::class);
         $this->bindInterceptor(
             $this->matcher->any(),
             $this->matcher->annotatedWith(DbQuery::class),

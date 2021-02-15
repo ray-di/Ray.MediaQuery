@@ -10,12 +10,17 @@ use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
+use Ray\MediaQuery\Queries\PromiseAddInterface;
+use Ray\MediaQuery\Queries\PromiseItemInterface;
+use Ray\MediaQuery\Queries\PromiseListInterface;
 use Ray\MediaQuery\Queries\TodoAddInterface;
 use Ray\MediaQuery\Queries\TodoItemInterface;
 use Ray\MediaQuery\Queries\TodoListInterface;
 
+use function array_keys;
 use function assert;
 use function dirname;
+use function file_get_contents;
 
 class MediaQueryModuleTest extends TestCase
 {
@@ -34,16 +39,19 @@ class MediaQueryModuleTest extends TestCase
             TodoAddInterface::class,
             TodoItemInterface::class,
             TodoListInterface::class,
+            PromiseAddInterface::class,
+            PromiseItemInterface::class,
+            PromiseListInterface::class,
         ]);
-        $module = new MediaQueryModule(dirname(__DIR__) . '/tests/sql', $mediaQueries, new AuraSqlModule('sqlite::memory:'));
+        $sqlDir = dirname(__DIR__) . '/tests/sql';
+        $module = new MediaQueryModule($sqlDir, $mediaQueries, new AuraSqlModule('sqlite::memory:'));
         $this->injector = new Injector($module);
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
-        $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS todo (
-          id INTEGER,
-          title TEXT
-)');
-        $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', ['id' => '1', 'title' => 'run']);
+        $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
+        $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
+        $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), ['id' => '1', 'title' => 'run']);
+        $pdo->perform((string) file_get_contents($sqlDir . '/promise_add.sql'), ['id' => '1', 'title' => 'run', 'time' => UnixEpocTime::TEXT]);
         /** @var MediaQueryLoggerInterface $logger */
         $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
         $this->logger = $logger;
@@ -75,6 +83,17 @@ class MediaQueryModuleTest extends TestCase
         $this->assertStringContainsString('query:todo_item', $log);
     }
 
+    public function testSelectList(): void
+    {
+        $promiselist = $this->injector->getInstance(PromiseListInterface::class);
+        assert($promiselist instanceof PromiseListInterface);
+        $list = $promiselist->get();
+        $row = ['id' => '1', 'title' => 'run', 'time' => '1970-01-01 00:00:00'];
+        $this->assertSame([$row], $list);
+        $log = (string) $this->logger;
+        $this->assertStringContainsString('query:promise_list([])', $log);
+    }
+
     public function testSelectPager(): void
     {
         $todoList = $this->injector->getInstance(TodoListInterface::class);
@@ -85,5 +104,14 @@ class MediaQueryModuleTest extends TestCase
         $this->assertSame([['id' => '1', 'title' => 'run']], $page->data);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query:todo_list', $log);
+    }
+
+    public function testPramInjection(): void
+    {
+        /** @var FakeFoo $foo */
+        $foo = $this->injector->getInstance(FakeFoo::class);
+        $foo->add();
+        $item = $foo->get();
+        $this->assertSame(['id', 'title', 'time'], array_keys($item));
     }
 }

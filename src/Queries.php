@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RecursiveRegexIterator;
@@ -65,7 +64,7 @@ final class Queries
             new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator(
                     $dir,
-                    FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_PATHNAME | FilesystemIterator::SKIP_DOTS
+                    /** @psalm-suppress ArgumentTypeCoercion */
                 ),
                 RecursiveIteratorIterator::LEAVES_ONLY
             ),

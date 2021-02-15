@@ -7,32 +7,37 @@ namespace Ray\MediaQuery;
 use ArrayAccess;
 use Aura\Sql\ExtendedPdoInterface;
 use Countable;
-use LogicException;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\Exception\LogicException;
 
 /**
  * @implements ArrayAccess<int, Page>
  */
 class Pages implements ArrayAccess, Countable
 {
-    private AuraSqlPagerInterface $delegate;
-    private ExtendedPdoInterface $pdo;
-    private string $sql;
+    /** @var AuraSqlPagerInterface  */
+    private $delegate;
+
+    /** @var ExtendedPdoInterface */
+    private $pdo;
+
+    /** @var string */
+    private $sql;
 
     /** @var array<string, mixed> */
-    private array $params;
+    private $params;
 
     /**
-     * @param array<string, mixed> $params
+     * @param array<string, mixed> $values
      */
-    public function __construct(AuraSqlPagerInterface $pager, ExtendedPdoInterface $pdo, string $sql, array $params)
+    public function __construct(AuraSqlPagerInterface $pager, ExtendedPdoInterface $pdo, string $sql, array $values)
     {
         $this->delegate = $pager;
         $this->pdo = $pdo;
         $this->sql = $sql;
-        $this->params = $params;
+        $this->params = $values;
     }
 
     /**

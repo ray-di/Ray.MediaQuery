@@ -108,55 +108,75 @@ For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement wi
 * Add a postfix of `item` if the SQL execution returns a single row, or `list` if it returns multiple rows.
 * The SQL file can contain multiple SQL statements, where the last line of the SELECT is the result of the execution.
 
-## Pagination
+## Parameter Injection
 
-The `#[Pager]` annotation allows you to paginate a SELECT query.
+You can pass a value object to the parameter.
+For example, you can specify a `DateTimeInterface` object like this.
 
 ```php
-interface TodoList
+interface TaskAddInterface
 {
-    #[DbQuery, Pager(perPage: 10, template: '/{?page}')]]
-    public function __invoke(): Pages
-    {
-    }
+    public function __invoke(string $title, DateTimeInterface $cratedAt = null): void;
 }
 ```
 
-You can get the number of pages with `count()`, and you can get the page object with array access by page number.
-`Pages` is a SQL lazy execution object.
+The value will be converted to a date formatted string **at SQL execution time**.
 
-```php
-$pages = ($todoList)();
-$cnt = count($page); // count SQL is generated and queried when count() is done.
-$page = $pages[2]; // When array access is done, DB query for that page is done.
-
-// $page->data // sliced data
-// $page->current;
-// $page->total
-// $page->hasNext
-// $page->hasPrevious
-// $page->maxPerPage;
-// (string) $page // pager html
+```sql
+INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 00:00:00
 ```
 
-## SqlQuery
+If no value is passed, the bound current time will be injected.
+This eliminates the need to hard-code `NOW()` inside SQL and pass the current time every time.
 
-`SqlQuery` executes SQL by specifying the ID of an SQL file.
-It can be used to prepare implementation classes for detailed implementation.
+### Test Time
+
+When testing, you can also set the `DateTimeInterface` binding to a single time, as follows.
 
 ```php
-class TodoItem implements TodoItemInterface
+$this->bind(DateTimeInterface::class)->to(UnixEpochTime::class);
+```
+
+## VO
+
+If a value object other than `DateTime` is passed, the return value of the `ToScalar()` method that implements the `toScalar` interface or the `__toString()` method will be the argument.
+
+```php
+interface MemoAddInterface
+{
+    public function __invoke(string $memo, UserId $userId = null): void;
+}
+```
+
+```php
+class UserId implements ToScalarInterface
 {
     public function __construct(
-        private SqlQueryInterface $sqlQuery
+        private LoginUser $user;
     ){}
-
-    public function __invoke(string $id) : array
+    
+    public function toScalar(): int
     {
-        return $this->sqlQuery->getRow('todo_item', ['id' => $id]);
+        return $this->user->id;
     }
 }
 ```
+
+```sql
+INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
+```
+
+Note that the default value of `null` for the value object argument is never used in SQL. If no value is passed, the scalar value of the injected value object will be used instead of null.
+
+# SqlQuery
+
+If you pass a `DateTimeIntetface` object, it will be converted to a date formatted string and queried.
+
+```php
+$sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
+```
+
+When an object is passed, it is converted to a value of `toScalar()` or `__toString()` as in Parameter Injection.
 
 ## Get* Method
 

@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdo;
+use DateTime;
 use Pagerfanta\View\DefaultView;
+use PdoStatement;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\Exception\InvalidSqlException;
+use Ray\MediaQuery\Exception\LogicException;
 
 use function assert;
 use function count;
-use function dirname;
+use function file_get_contents;
 
 class SqlQueryTest extends TestCase
 {
@@ -28,27 +32,24 @@ class SqlQueryTest extends TestCase
 
     protected function setUp(): void
     {
+        $sqlDir = __DIR__ . '/sql';
         $pdo = new ExtendedPdo('sqlite::memory:');
-        $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS todo (
-          id INTEGER,
-          title TEXT
-)');
-        $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', $this->insertData);
+        $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
+        $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
+        $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), $this->insertData);
         $this->log = new MediaQueryLogger();
-        $pagerFactory = new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), []));
-        $this->sqlQuery = new SqlQuery($pdo, dirname(__DIR__) . '/tests/sql', $this->log, $pagerFactory);
+        $this->sqlQuery = new SqlQuery(
+            $pdo,
+            __DIR__ . '/sql',
+            $this->log,
+            new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), [])),
+            new ParamConverter()
+        );
     }
 
     public function testNewInstance(): void
     {
-        $sqlDir = __DIR__ . '/sql';
-        $sqlQuery = new SqlQuery(
-            new ExtendedPdo('sqlite::memory:'),
-            $sqlDir,
-            new MediaQueryLogger(),
-            new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), []))
-        );
-        $this->assertInstanceOf(SqlQueryInterface::class, $sqlQuery);
+        $this->assertInstanceOf(SqlQueryInterface::class, $this->sqlQuery);
     }
 
     public function testExec(): void
@@ -104,5 +105,61 @@ class SqlQueryTest extends TestCase
         $this->sqlQuery->exec('todo_add', ['id' => '2', 'title' => 'walk']);
         $count = $this->sqlQuery->getCount('todo_list', []);
         $this->assertSame(2, $count);
+    }
+
+    public function testDateTime(): SqlQuery
+    {
+        $dateTime = '2011-10-17 17:47:46';
+        $this->sqlQuery->exec('promise_add', ['id' => '1', 'title' => 'talk', 'time' => new DateTime($dateTime)]);
+        $item = $this->sqlQuery->getRow('promise_item', ['id' => 1]);
+        $this->assertContains($dateTime, $item);
+
+        return $this->sqlQuery;
+    }
+
+    public function testInvalidSql(): void
+    {
+        $this->expectException(InvalidSqlException::class);
+        $this->sqlQuery->exec('empty_add', []);
+    }
+
+    public function testNotExistsSql(): void
+    {
+        $this->expectException(InvalidSqlException::class);
+        $this->sqlQuery->exec('__not_exists', []);
+    }
+
+    /**
+     * @depends testDateTime
+     */
+    public function testGetStatement(SqlQuery $sqlQuery): void
+    {
+        $this->assertInstanceOf(PdoStatement::class, $sqlQuery->getStatement());
+    }
+
+    /**
+     * @depends testPager
+     */
+    public function testOffsetExists(Pages $pages): void
+    {
+        $this->assertTrue(isset($pages[1]));
+    }
+
+    /**
+     * @depends testPager
+     */
+    public function testOffsetSet(Pages $pages): void
+    {
+        $this->expectException(LogicException::class);
+        $pages[1] = '';
+    }
+
+    /**
+     * @depends testPager
+     */
+    public function testOffsetUnset(Pages $pages): void
+    {
+        $this->expectException(LogicException::class);
+        unset($pages[1]);
     }
 }
