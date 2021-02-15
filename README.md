@@ -50,7 +50,7 @@ Specify a query interface, or a folder of interfaces,
 protected function configure(): void
 {
     $queries = Queries::fromDir('path/to/Queries');
-    $this->install(new MediaQueryModule($this->sqlDir, $queries));
+    $this->install(new MediaQueryModule($queries, $this->sqlDir));
     $this->install(new AuraSqlModule($this->dsn));
 }
 ```
@@ -227,7 +227,7 @@ Media accesses are logged by a logger. By default, a memory logger is bound to b
 public function testAdd(): void
 {
     $this->sqlQuery->exec('todo_add', $todoRun);
-    $this->assertStringContainsString('query:todo_add({"id": "1", "title": "run"})', (string) $this->log);
+    $this->assertStringContainsString('query: todo_add({"id": "1", "title": "run"})', (string) $this->log);
 }
 ```
 

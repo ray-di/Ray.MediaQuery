@@ -261,7 +261,7 @@ WebQueryの時と同じようにVOを渡す事もできます。
 public function testAdd(): void
 {
     $this->sqlQuery->exec('todo_add', $todoRun);
-    $this->assertStringContainsString('query:todo_add({"id":"1","title":"run"})', (string) $this->log);
+    $this->assertStringContainsString('query: todo_add({"id":"1","title":"run"})', (string) $this->log);
 }
 ```
 
