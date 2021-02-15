@@ -25,6 +25,8 @@ final class WebApiQuery implements WebApiQueryInterface
 
     /**
      * @param array<string, string> $domainBindings
+     *
+     * @Named("'domainBindings=web_api_query_domain")
      */
     #[Named('domainBindings=web_api_query_domain')]
     public function __construct(ClientInterface $client, MediaQueryLoggerInterface $logger, array $domainBindings)
