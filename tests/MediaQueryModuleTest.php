@@ -44,7 +44,7 @@ class MediaQueryModuleTest extends TestCase
             PromiseListInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
-        $module = new MediaQueryModule($sqlDir, $mediaQueries, new AuraSqlModule('sqlite::memory:'));
+        $module = new MediaQueryModule($mediaQueries, $sqlDir, [], new AuraSqlModule('sqlite::memory:'));
         $this->injector = new Injector($module);
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
@@ -63,14 +63,14 @@ class MediaQueryModuleTest extends TestCase
         assert($todoAdd instanceof TodoAddInterface);
         $todoAdd('1', 'run');
         $log = (string) $this->logger;
-        $this->assertStringContainsString('query:todo_add', $log);
+        $this->assertStringContainsString('query: todo_add', $log);
         $todoItem = $this->injector->getInstance(TodoItemInterface::class);
 
         assert($todoItem instanceof TodoItemInterface);
         $item = $todoItem('1');
         $this->assertSame(['id' => '1', 'title' => 'run'], $item);
         $log = (string) $this->logger;
-        $this->assertStringContainsString('query:todo_item', $log);
+        $this->assertStringContainsString('query: todo_item', $log);
     }
 
     public function testSelectItem(): void
@@ -80,7 +80,7 @@ class MediaQueryModuleTest extends TestCase
         $item = $todoItem('1');
         $this->assertSame(['id' => '1', 'title' => 'run'], $item);
         $log = (string) $this->logger;
-        $this->assertStringContainsString('query:todo_item', $log);
+        $this->assertStringContainsString('query: todo_item', $log);
     }
 
     public function testSelectList(): void
@@ -91,7 +91,7 @@ class MediaQueryModuleTest extends TestCase
         $row = ['id' => '1', 'title' => 'run', 'time' => '1970-01-01 00:00:00'];
         $this->assertSame([$row], $list);
         $log = (string) $this->logger;
-        $this->assertStringContainsString('query:promise_list([])', $log);
+        $this->assertStringContainsString('query: promise_list([])', $log);
     }
 
     public function testSelectPager(): void
@@ -103,7 +103,7 @@ class MediaQueryModuleTest extends TestCase
         $page = $list[1];
         $this->assertSame([['id' => '1', 'title' => 'run']], $page->data);
         $log = (string) $this->logger;
-        $this->assertStringContainsString('query:todo_list', $log);
+        $this->assertStringContainsString('query: todo_list', $log);
     }
 
     public function testPramInjection(): void

@@ -11,7 +11,7 @@ use Ray\MediaQuery\Annotation\Pager;
 
 use function substr;
 
-class MediaQueryInterceptor implements MethodInterceptor
+class DbQueryInterceptor implements MethodInterceptor
 {
     /** @var SqlQueryInterface */
     private $sqlQuery;

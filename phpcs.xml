@@ -49,6 +49,7 @@
         <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
         <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
         <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint"/>
+        <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.UselessAnnotation"/>
     </rule>
 
 

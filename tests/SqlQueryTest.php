@@ -55,7 +55,7 @@ class SqlQueryTest extends TestCase
     public function testExec(): void
     {
         $this->sqlQuery->exec('todo_add', $this->insertData);
-        $this->assertStringContainsString('query:todo_add({"id":"1","title":"run"})', (string) $this->log);
+        $this->assertStringContainsString('query: todo_add({"id":"1","title":"run"})', (string) $this->log);
     }
 
     /**
