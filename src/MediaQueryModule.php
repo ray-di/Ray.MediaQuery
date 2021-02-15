@@ -31,6 +31,7 @@ class MediaQueryModule extends AbstractModule
         $this->bind(SqlQueryInterface::class)->to(SqlQuery::class);
         $this->bind(MediaQueryLoggerInterface::class)->to(MediaQueryLogger::class)->in(Scope::SINGLETON);
         $this->bind(ParamInjectorInterface::class)->to(ParamInjector::class);
+        $this->bind(ParamConverterInterface::class)->to(ParamConverter::class);
         $this->bind(DateTimeInterface::class)->to(DateTimeImmutable::class);
         $this->bindInterceptor(
             $this->matcher->any(),

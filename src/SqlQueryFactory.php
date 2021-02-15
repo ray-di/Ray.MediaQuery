@@ -28,7 +28,8 @@ class SqlQueryFactory
             new ExtendedPdo($dsn, $username, $password, $options),
             $sqlDir,
             $logger ?? new MediaQueryLogger(),
-            $pagerFactory ?? new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), []))
+            $pagerFactory ?? new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), [])),
+            new ParamConverter()
         );
     }
 }

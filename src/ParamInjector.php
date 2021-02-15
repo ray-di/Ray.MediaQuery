@@ -12,6 +12,7 @@ use ReflectionNamedType;
 use ReflectionParameter;
 use function count;
 use function get_class;
+use function is_object;
 use function method_exists;
 
 final class ParamInjector implements ParamInjectorInterface
@@ -59,21 +60,9 @@ final class ParamInjector implements ParamInjectorInterface
             return $parameter->getDefaultValue();
         }
 
-        /** @var object $instance */
-        $instance = $this->injector->getInstance($type->getName());
+        $object = $this->injector->getInstance($type->getName());
+        assert(is_object($object));
 
-        if ($instance instanceof DateTimeInterface) {
-            return $instance; // will be convert date time string.
-        }
-
-        if (method_exists($instance, '__toString')) {
-            return (string) $instance;
-        }
-
-        if ($instance instanceof ToScalarInterface) {
-            return $instance->toScalar();
-        }
-
-        throw new CouldNotBeConvertedException(get_class($instance));
+        return $object;
     }
 }

@@ -8,7 +8,11 @@ use DateTimeInterface;
 
 class FakeParamInjectMethod
 {
-    public function paramInject(?FakeBool $bool = null, ?FakeString $string = null, ?DateTimeInterface $dateTime = null): void
+    public function paramInject(?DateTimeInterface $dateTime = null): void
+    {
+    }
+
+    public function paramConvert(?FakeBool $bool = null, ?FakeString $string = null, ?DateTimeInterface $dateTime = null): void
     {
     }
 }

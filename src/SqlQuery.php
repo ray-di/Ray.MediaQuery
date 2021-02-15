@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
-use DateTimeInterface;
 use LogicException;
 use PDO;
 use PDOStatement;
@@ -27,15 +26,11 @@ use function trim;
 
 class SqlQuery implements SqlQueryInterface
 {
-    private const MYSQL_DATETIME = 'Y-m-d H:i:s';
-
     /** @var ExtendedPdoInterface  */
     private $pdo;
 
     /** @var MediaQueryLoggerInterface  */
     private $logger;
-
-    /** @var string */
 
     /** @var string */
     private $sqlDir;
@@ -46,6 +41,9 @@ class SqlQuery implements SqlQueryInterface
     /** @var AuraSqlPagerFactoryInterface */
     private $pagerFactory;
 
+    /** @var ParamConverterInterface  */
+    private $paramConverter;
+
     /**
      * @Named("sqlDir=Ray\MediaQuery\Annotation\SqlDir")
      */
@@ -54,12 +52,14 @@ class SqlQuery implements SqlQueryInterface
         ExtendedPdoInterface $pdo,
         string $sqlDir,
         MediaQueryLoggerInterface $logger,
-        AuraSqlPagerFactoryInterface $pagerFactory
+        AuraSqlPagerFactoryInterface $pagerFactory,
+        ParamConverterInterface $paramConverter
     ) {
         $this->pdo = $pdo;
         $this->logger = $logger;
         $this->sqlDir = $sqlDir;
         $this->pagerFactory = $pagerFactory;
+        $this->paramConverter = $paramConverter;
     }
 
     /**
@@ -115,7 +115,7 @@ class SqlQuery implements SqlQueryInterface
         }
 
         $this->logger->start();
-        $this->convertDateTime($values);
+        ($this->paramConverter)($values);
         foreach ($sqls as $sql) {
             $pdoStatement = $this->pdo->perform($sql, $values);
         }
@@ -128,19 +128,6 @@ class SqlQuery implements SqlQueryInterface
         $this->logger->log($sqlId, $values);
 
         return $result;
-    }
-
-    /**
-     * @param array<string, mixed> $values
-     */
-    private function convertDateTime(array &$values): void
-    {
-        /** @psalm-suppress MixedAssignment $value */
-        foreach ($values as &$value) {
-            if ($value instanceof DateTimeInterface) {
-                $value = $value->format(self::MYSQL_DATETIME);
-            }
-        }
     }
 
     /**

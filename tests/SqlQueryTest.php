@@ -14,7 +14,6 @@ use Ray\AuraSqlModule\Pagerfanta\Page;
 
 use function assert;
 use function count;
-use function dirname;
 
 class SqlQueryTest extends TestCase
 {
@@ -41,20 +40,18 @@ class SqlQueryTest extends TestCase
 )');
         $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', $this->insertData);
         $this->log = new MediaQueryLogger();
-        $pagerFactory = new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), []));
-        $this->sqlQuery = new SqlQuery($pdo, dirname(__DIR__) . '/tests/sql', $this->log, $pagerFactory);
+        $this->sqlQuery = new SqlQuery(
+            $pdo,
+            __DIR__ . '/sql',
+            $this->log,
+            new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), [])),
+            new ParamConverter()
+        );
     }
 
     public function testNewInstance(): void
     {
-        $sqlDir = __DIR__ . '/sql';
-        $sqlQuery = new SqlQuery(
-            new ExtendedPdo('sqlite::memory:'),
-            $sqlDir,
-            new MediaQueryLogger(),
-            new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), []))
-        );
-        $this->assertInstanceOf(SqlQueryInterface::class, $sqlQuery);
+        $this->assertInstanceOf(SqlQueryInterface::class, $this->sqlQuery);
     }
 
     public function testExec(): void
