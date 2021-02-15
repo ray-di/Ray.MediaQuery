@@ -19,6 +19,7 @@ use Ray\MediaQuery\Queries\TodoListInterface;
 use function array_keys;
 use function assert;
 use function dirname;
+use function file_get_contents;
 
 class MediaQueryModuleTest extends TestCase
 {
@@ -40,20 +41,14 @@ class MediaQueryModuleTest extends TestCase
             PromiseAddInterface::class,
             PromiseItemInterface::class,
         ]);
-        $module = new MediaQueryModule(dirname(__DIR__) . '/tests/sql', $mediaQueries, new AuraSqlModule('sqlite::memory:'));
+        $sqlDir = dirname(__DIR__) . '/tests/sql';
+        $module = new MediaQueryModule($sqlDir, $mediaQueries, new AuraSqlModule('sqlite::memory:'));
         $this->injector = new Injector($module);
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
-        $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS todo (
-          id INTEGER,
-          title TEXT
-)');
-        $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS promise (
-          id TEXT,
-          title TEXT,
-          time TEXT
-)');
-        $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', ['id' => '1', 'title' => 'run']);
+        $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
+        $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
+        $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), ['id' => '1', 'title' => 'run']);
         /** @var MediaQueryLoggerInterface $logger */
         $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
         $this->logger = $logger;

@@ -14,6 +14,7 @@ use Ray\AuraSqlModule\Pagerfanta\Page;
 
 use function assert;
 use function count;
+use function file_get_contents;
 
 class SqlQueryTest extends TestCase
 {
@@ -28,17 +29,11 @@ class SqlQueryTest extends TestCase
 
     protected function setUp(): void
     {
+        $sqlDir = __DIR__ . '/sql';
         $pdo = new ExtendedPdo('sqlite::memory:');
-        $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS todo (
-          id INTEGER,
-          title TEXT
-)');
-        $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS promise (
-          id TEXT,
-          title TEXT,
-          time TEXT
-)');
-        $pdo->perform(/** @lang sql */'INSERT INTO todo (id, title) VALUES (:id, :title)', $this->insertData);
+        $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
+        $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
+        $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), $this->insertData);
         $this->log = new MediaQueryLogger();
         $this->sqlQuery = new SqlQuery(
             $pdo,
