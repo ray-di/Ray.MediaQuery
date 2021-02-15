@@ -44,7 +44,7 @@ class MediaQueryModuleTest extends TestCase
             PromiseListInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
-        $module = new MediaQueryModule($sqlDir, $mediaQueries, [], new AuraSqlModule('sqlite::memory:'));
+        $module = new MediaQueryModule($mediaQueries, $sqlDir, [], new AuraSqlModule('sqlite::memory:'));
         $this->injector = new Injector($module);
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);

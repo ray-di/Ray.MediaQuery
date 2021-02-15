@@ -26,9 +26,12 @@ class MediaQueryModule extends AbstractModule
     private array $domainBindings;
 
     /**
+     * @param Queries               $mediaQueries
+     * @param string                $sqlDir
      * @param array<string, string> $domainBindings
+     * @param AbstractModule|null   $module
      */
-    public function __construct(string $sqlDir, Queries $mediaQueries, array $domainBindings, ?AbstractModule $module = null)
+    public function __construct(Queries $mediaQueries, string $sqlDir, array $domainBindings = [], ?AbstractModule $module = null)
     {
         $this->mediaQueries = $mediaQueries->classes;
         $this->sqlDir = $sqlDir;
