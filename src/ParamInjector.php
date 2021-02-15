@@ -56,7 +56,7 @@ final class ParamInjector implements ParamInjectorInterface
     private function getInjectedParam(ReflectionParameter $parameter)
     {
         $type = $parameter->getType();
-        if (! $type instanceof ReflectionNamedType) {
+        if (! $type instanceof ReflectionNamedType || $type->isBuiltin()) {
             return $parameter->getDefaultValue();
         }
 
