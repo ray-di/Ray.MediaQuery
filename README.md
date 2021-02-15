@@ -73,7 +73,7 @@ and install the module.
             UserAddInterface::class,
             UserItemInterface::class
         ];
-        $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
+    $this->install(new MediaQueryModule($queries, $this->sqlDir));
         $this->install(new AuraSqlModule($this->dsn));
     }
 ```
@@ -192,6 +192,32 @@ $pages = $sqlQuery->getPages(); // Get the pager
 Ray.MediaQuery contains the [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule).
 If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://github.com/auraphp/Aura.Sql) which extends PDO.
 [doctrine/dbal](https://github.com/ray-di/Ray.DbalModule) is also available.
+
+# Web API
+
+To bind an interface to a WebAPI request, add the `WebQuery` attribute and specify the `method` and `uri`, where `uri` is the uri template. The method arguments will be bound to the uri template, and the request object where the Web API request will be made will be created and injected.
+
+```php
+interface GetPostInterface
+{
+    #[WebQuery(method: 'GET', uri: 'https://{domain}/posts/{id}')]
+    public function __invoke(string $id): array;
+}
+```
+
+You can bind Guzzle's ClinetInterface to specify the header for authentication.
+
+```php
+$this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
+```
+
+To install, specify the domain to be assigned with the third argument of `MediaQueryModule`.
+
+```php
+$module = new MediaQueryModule($mediaQueries, $sqlDir,  ['domain' => 'httpbin.org']);
+```
+
+WebQueryの時と同じようにVOを渡す事もできます。
 
 ## Profiler
 

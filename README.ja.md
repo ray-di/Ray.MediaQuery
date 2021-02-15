@@ -45,7 +45,7 @@ interface TodoItemInterface
 protected function configure(): void
 {
     $queries = Queries::fromDir('path/to/Queries');
-    $this->install(new MediaQueryModule($this->sqlDir, $queries));
+    $this->install(new MediaQueryModule($queries, $this->sqlDir));
     $this->install(new AuraSqlModule($this->dsn));
 }
 ```
@@ -230,7 +230,32 @@ $sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
 
 オブジェクトが渡されるとParameter Injectionと同様`toScalar()`または`__toString()`の値に変換されます。
 
-#
+# Web API
+
+インターフェイスをWebAPIリクエストにバインドするためには`WebQuery`の属性をつけ、`method`と`uri`を指定し`uri`はuri templateを指定します。メソッドの引数がuri templateにバインドされ、Web APIリクエストが行われるリクエストオブジェクトが生成されインジェクトされます。
+
+```php
+interface GetPostInterface
+{
+    #[WebQuery(method: 'GET', uri: 'https://{domain}/posts/{id}')]
+    public function __invoke(string $id): array;
+}
+```
+
+認証のためのヘッダーの指定などはGuzzleのClinetInterfaceをバインドして行います。
+
+```php
+$this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
+```
+
+インストールは`MediaQueryModule`の3つ目の引数でアサインするドメインを指定します。
+
+```php
+$module = new MediaQueryModule($mediaQueries, $sqlDir,  ['domain' => 'httpbin.org']);
+```
+
+WebQueryの時と同じようにVOを渡す事もできます。
+
 ## プロファイラー
 
 メディアアクセスはロガーで記録されます。標準ではテストに使うメモリロガーがバインドされています。
