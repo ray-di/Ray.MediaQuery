@@ -11,8 +11,8 @@ class WebQueryTest extends TestCase
 {
     public function testRequest(): void
     {
-        $webQuery = new WebApiQuery(new Client(), new MediaQueryLogger());
-        $response = $webQuery->request('GET', 'https://httpbin.org/anything/foo', ['id' => '1']);
+        $webQuery = new WebApiQuery(new Client(), new MediaQueryLogger(), ['domain1' => 'httpbin.org']);
+        $response = $webQuery->request('GET', 'https://{domain1}/anything/foo', ['id' => '1']);
         $this->assertSame('GET', $response['method']);
     }
 }

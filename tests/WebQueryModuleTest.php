@@ -26,7 +26,8 @@ class WebQueryModuleTest extends TestCase
     {
         $mediaQueries = Queries::fromClasses([FooItemInterface::class]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
-        $module = new MediaQueryModule($sqlDir, $mediaQueries);
+        $uriBindings = ['domain' => 'httpbin.org'];
+        $module = new MediaQueryModule($sqlDir, $mediaQueries, $uriBindings);
         $this->injector = new Injector($module);
         $this->logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
     }
@@ -36,5 +37,6 @@ class WebQueryModuleTest extends TestCase
         $fooItem = $this->injector->getInstance(FooItemInterface::class);
         $response = ($fooItem)('hello');
         $this->assertSame('https://httpbin.org/anything/hello', $response['url']);
+        $this->assertSame('query: https://httpbin.org/anything/hello({"id":"hello"})', (string) $this->logger);
     }
 }

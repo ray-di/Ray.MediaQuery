@@ -13,16 +13,12 @@ class WebQueryInterceptor implements MethodInterceptor
     /** @var WebApiQueryInterface */
     private $webApiQuery;
 
-    /** @var MediaQueryLoggerInterface */
-    private $logger;
-
     /** @var ParamInjectorInterface  */
     private $paramInjector;
 
-    public function __construct(WebApiQueryInterface $webApiQuery, MediaQueryLoggerInterface $logger, ParamInjectorInterface $paramInjector)
+    public function __construct(WebApiQueryInterface $webApiQuery, ParamInjectorInterface $paramInjector)
     {
         $this->webApiQuery = $webApiQuery;
-        $this->logger = $logger;
         $this->paramInjector = $paramInjector;
     }
 

@@ -22,10 +22,17 @@ class MediaQueryModule extends AbstractModule
     /** @var list<class-string> */
     private $mediaQueries;
 
-    public function __construct(string $sqlDir, Queries $mediaQueries, ?AbstractModule $module = null)
+    /** @var array<string, string> */
+    private array $domainBindings;
+
+    /**
+     * @param array<string, string> $domainBindings
+     */
+    public function __construct(string $sqlDir, Queries $mediaQueries, array $domainBindings, ?AbstractModule $module = null)
     {
         $this->mediaQueries = $mediaQueries->classes;
         $this->sqlDir = $sqlDir;
+        $this->domainBindings = $domainBindings;
         parent::__construct($module);
     }
 
@@ -56,5 +63,6 @@ class MediaQueryModule extends AbstractModule
         );
         $this->bind(ClientInterface::class)->to(Client::class);
         $this->bind(WebApiQueryInterface::class)->to(WebApiQuery::class);
+        $this->bind()->annotatedWith('web_api_query_domain')->toInstance($this->domainBindings);
     }
 }

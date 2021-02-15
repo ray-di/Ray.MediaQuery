@@ -24,7 +24,7 @@ final class MediaQueryLogger implements MediaQueryLoggerInterface
      */
     public function log(string $queryId, array $values): void
     {
-        $this->logs[] = sprintf('query:%s(%s)', $queryId, json_encode($values));
+        $this->logs[] = sprintf('query: %s(%s)', $queryId, json_encode($values));
     }
 
     public function __toString(): string
