@@ -1,10 +1,8 @@
 # Ray.MediaQuery
 
-## Overview
+## 概要
 
 `Ray.MediaQuery` 外部メディアのクエリーのインターフェイスを実行オブジェクトに変えインジェクトします。
-
-## Motivation
 
 * ドメイン層とインフラ層の境界をコードの中で明確に持つことができます。
 * 実行オブジェクトは自動的に生成されるので、実行のための手続き的なコードを書く必要はありません。
@@ -14,7 +12,7 @@
 
     $ composer require ray/media-query 1.x-dev
 
-## Usage
+## 利用方法
 
 メディアアクセスするインターフェイスを定義します。
 メソッドに`DbQuery`の属性をつけて、SQLのIDを指定します。
@@ -80,7 +78,7 @@ SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッ
 * SQL実行が返すのが単一行なら`item`、複数行なら`list`のpostfixを付けます。
 * SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果になります。
 
-# パラメーターインジェクション
+## パラメーターインジェクション
 
 パラメーターにバリューオブジェクトを渡すことができます。
 例えば、`DateTimeInterface`オブジェクトをこのように指定できます。
@@ -100,7 +98,6 @@ INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 0
 
 値を渡さないとバインドされている現在時刻がインジェクションされます。
 SQL内部で`NOW()`とハードコーディングする事や、毎回現在時刻を渡す手間を省きます。
-## テストの時刻
 
 テストの時には以下のように`DateTimeInterface`の束縛を１つの時刻にする事もできます。
 
@@ -108,7 +105,7 @@ SQL内部で`NOW()`とハードコーディングする事や、毎回現在時�
 $this->bind(DateTimeInterface::class)->to(UnixEpochTime::class);
 ```
 
-## バリューオブジェクト
+## VO
 
 `DateTime`以外のバリューオブジェクトが渡されると`toScalar`インターフェイスを実装した`ToScalar()`メソッド、もしくは`__toString()`メソッドの返り値が引数になります。
 
@@ -139,7 +136,7 @@ INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
 
 バリューオブジェクトの引数のデフォルトの値の`null`がSQLで使われることは無い事に注意してください。値が渡されないと、nullの代わりにインジェクトされたバリューオブジェクトのスカラー値が使われます。
 
-# SqlQuery
+## SqlQuery
 
 `DateTimeIntetface`オブジェクトを渡すと、日付フォーマットされた文字列に変換されてクエリーが行われます。
 
@@ -149,7 +146,7 @@ $sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
 
 オブジェクトが渡されるとParameter Injectionと同様`toScalar()`または`__toString()`の値に変換されます。
 
-## Pagination
+## ページネーション
 
 `#[Pager]`アノテーションで、SELECTクエリーをページングする事ができます。
 
@@ -205,7 +202,7 @@ class TodoItem implements TodoItemInterface
 $sqlQuery->exec('memo_add', ['created_at' => new DateTime()]);
 ```
 
-## Get* Method
+## Get* メソッド
 
 SELECT結果を取得するためには取得する結果に応じた`get*`を使います。
 
