@@ -36,7 +36,7 @@ class MediaQueryModule extends AbstractModule
         $this->bindInterceptor(
             $this->matcher->any(),
             $this->matcher->annotatedWith(DbQuery::class),
-            [MediaQueryInterceptor::class]
+            [DbQueryInterceptor::class]
         );
         $this->bind()->annotatedWith(SqlDir::class)->toInstance($this->sqlDir);
         // Bind media query interface
