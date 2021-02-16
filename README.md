@@ -21,7 +21,7 @@
 
     $ composer require ray/media-query
 
-## Usage
+## Getting Started
 
 Define an interface for media access by adding the attribute `DbQuery` to the method and specifying the SQL ID.
 
@@ -55,27 +55,15 @@ protected function configure(): void
 }
 ```
 
-Then install the module.
+Install the module by specifying the query interface or folder.
 
 ```php
 protected function configure(): void
 {
-    $this->install(new MediaQueryModule($this->sqlDir, $mediaQueries));
+    $queries = Queries::fromDir('path/to/Queries');
+    $this->install(new MediaQueryModule($queries, $this->sqlDir));
     $this->install(new AuraSqlModule($this->dsn));
 }
-```
-and install the module.
-
-```php
-    protected function configure(): void
-    {
-        $mediaQueries = [
-            UserAddInterface::class,
-            UserItemInterface::class
-        ];
-    $this->install(new MediaQueryModule($queries, $this->sqlDir));
-        $this->install(new AuraSqlModule($this->dsn));
-    }
 ```
 
 You don't need to provide any implementation classes. It will be generated and injected.
@@ -165,6 +153,37 @@ INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
 ```
 
 Note that the default value of `null` for the value object argument is never used in SQL. If no value is passed, the scalar value of the injected value object will be used instead of null.
+
+## Pagenation
+
+The `#[Pager]` annotation allows paging of SELECT queries.
+
+```php
+interface TodoList
+{
+    #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
+    public function __invoke(): Pages
+    {
+    }
+}
+```
+
+You can get the number of pages with `count()`, and you can get the page object with array access by page number.
+`Pages` is a SQL lazy execution object.
+
+```php
+$pages = ($todoList)();
+$cnt = count($page); // count()をした時にカウントSQLが生成されクエリーが行われます。
+$page = $pages[2]; // 配列アクセスをした時にそのページのDBクエリーが行われます。
+
+// $page->data // sliced data
+// $page->current;
+// $page->total
+// $page->hasNext
+// $page->hasPrevious
+// $page->maxPerPage;
+// (string) $page // pager html
+```
 
 # SqlQuery
 
