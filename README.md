@@ -23,37 +23,32 @@
 
 ## Getting Started
 
-Define an interface for media access by adding the attribute `DbQuery` to the method and specifying the SQL ID.
+Define the interface for media access.
+
+### DB
+
+Specify the ID of the SQL with the attribute `DbQuery`.
 
 ```php
 interface TodoAddInterface
 {
-    #[DbQuery('user_add'), Transactional]
-    public function __invoke(string $id, string $title): void;
+    #[DbQuery('user_add')]
+    public function add(string $id, string $title): void;
 }
 ```
+
+### Web API
+
+Specify the method and URI.
 
 ```php
-interface TodoItemInterface
+interface PostItemInterface
 {
-    /**
-     * @return array{id: string, title: string}
-     */
-    #[DbQuery('user_item')]
-    public function __invoke(string $id): array;
+    #[WebQuery(method: 'GET', uri: 'https://{domain}/posts/{id}')]
+    public function get(string $id): array;
 }
 ```
-
-Specify a query interface, or a folder of interfaces,
-
-```php
-protected function configure(): void
-{
-    $queries = Queries::fromDir('path/to/Queries');
-    $this->install(new MediaQueryModule($queries, $this->sqlDir));
-    $this->install(new AuraSqlModule($this->dsn));
-}
-```
+### Module
 
 Install the module by specifying the query interface or folder.
 
@@ -66,39 +61,48 @@ protected function configure(): void
 }
 ```
 
+### Request object injection
+
 You don't need to provide any implementation classes. It will be generated and injected.
 
 ```php
 class Todo
 {
     public function __construct(
-        private TodoAddInterface $todoAdd,
-        private TodoItemInterface $todoItem
+        private TodoAddInterface $todoAdd
     ) {}
 
     public function add(string $id, string $title): void
     {
-        ($this->todoAdd)($id, $title);
-    }
-
-    public function get(string $id): array
-    {
-        return ($this->todoItem)($id);
+        $this->todoAdd->add($id, $title);
     }
 }
 ```
 
-SQL execution is mapped to a method, and the SQL specified by ID is bound to the method argument and executed.
-For example, if ID is specified as `todo_item`, `todo_item.sql` SQL statement will be executed with `['id => $id]` bound.
+### Notes
 
-* Prepare each SQL in `$sqlDir/` directory, `$sqlDir/todo_add.sql` if ID is `todo_add`.
-  If the ID is `todo_add`, the file is `$sqlDir/todo_add.sql`.
-* Add a postfix of `item` if the SQL execution returns a single row, or `list` if it returns multiple rows.
-* The SQL file can contain multiple SQL statements, where the last line of the SELECT is the result of the execution.
+#### DbQuery
 
-## Parameter Injection
+SQL execution is mapped to a method, and the SQL specified by ID is bound and executed by the method argument.
+For example, if the ID is `todo_item`, `todo_item.sql` SQL statement will be executed with `['id => $id]` bound.
 
-You can pass a value object to the parameter.
+* Prepare the SQL file in the `$sqlDir` directory.
+* Add a postfix of `item` if the return value of the SQL execution is a single line, or `list` if it is multiple lines.
+* The SQL file can contain multiple SQL statements. The last line of SELECT will be the return value.
+
+#### Web API
+
+* Customization such as header for authentication is done by binding Guzzle's `ClinetInterface`.
+
+```php
+$this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
+```
+
+## Parameters
+
+### DateTime
+
+You can pass a value object as a parameter.
 For example, you can specify a `DateTimeInterface` object like this.
 
 ```php
@@ -108,7 +112,7 @@ interface TaskAddInterface
 }
 ```
 
-The value will be converted to a date formatted string **at SQL execution time**.
+The value will be converted to a date formatted string at SQL execution time or Web API request time.
 
 ```sql
 INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 00:00:00
@@ -117,7 +121,9 @@ INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 0
 If no value is passed, the bound current time will be injected.
 This eliminates the need to hard-code `NOW()` inside SQL and pass the current time every time.
 
-When testing, you can also set the `DateTimeInterface` binding to a single time, as follows.
+### Test clock
+
+When testing, you can also use a single time binding for the `DateTimeInterface`, as shown below.
 
 ```php
 $this->bind(DateTimeInterface::class)->to(UnixEpochTime::class);
@@ -152,7 +158,13 @@ class UserId implements ToScalarInterface
 INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
 ```
 
-Note that the default value of `null` for the value object argument is never used in SQL. If no value is passed, the scalar value of the injected value object will be used instead of null.
+### Parameter Injection
+
+Note that the default value of `null` for the value object argument is never used in SQL. If no value is passed, the scalar value of the value object injected with the parameter type will be used instead of null.
+
+```php
+public function __invoke(Uuid $uuid = null): void; // UUID is generated and passed.
+````
 
 ## Pagenation
 
@@ -173,8 +185,8 @@ You can get the number of pages with `count()`, and you can get the page object 
 
 ```php
 $pages = ($todoList)();
-$cnt = count($page); // count()をした時にカウントSQLが生成されクエリーが行われます。
-$page = $pages[2]; // 配列アクセスをした時にそのページのDBクエリーが行われます。
+$cnt = count($page); // When count() is called, the count SQL is generated and queried.
+$page = $pages[2]; // A page query is executed when an array access is made.
 
 // $page->data // sliced data
 // $page->current;
@@ -210,32 +222,6 @@ Ray.MediaQuery contains the [Ray.AuraSqlModule](https://github.com/ray-di/Ray.Au
 If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://github.com/auraphp/Aura.Sql) which extends PDO.
 [doctrine/dbal](https://github.com/ray-di/Ray.DbalModule) is also available.
 
-# Web API
-
-To bind an interface to a WebAPI request, add the `WebQuery` attribute and specify the `method` and `uri`, where `uri` is the uri template. The method arguments will be bound to the uri template, and the request object where the Web API request will be made will be created and injected.
-
-```php
-interface GetPostInterface
-{
-    #[WebQuery(method: 'GET', uri: 'https://{domain}/posts/{id}')]
-    public function __invoke(string $id): array;
-}
-```
-
-You can bind Guzzle's ClinetInterface to specify the header for authentication.
-
-```php
-$this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
-```
-
-To install, specify the domain to be assigned with the third argument of `MediaQueryModule`.
-
-```php
-$module = new MediaQueryModule($mediaQueries, $sqlDir,  ['domain' => 'httpbin.org']);
-```
-
-WebQueryの時と同じようにVOを渡す事もできます。
-
 ## Profiler
 
 Media accesses are logged by a logger. By default, a memory logger is bound to be used for testing.
@@ -250,3 +236,14 @@ public function testAdd(): void
 
 Implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) and run
 You can also implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) to benchmark each media query and log it with the injected PSR logger.
+
+## Testing Ray.MediaQuery
+
+Here's how to install Ray.MediaQuery from the source and run the unit tests and demos.
+
+```
+$ git clone https://github.com/ray-di/Ray.MediaQuery.git
+$ cd Ray.MediaQuery
+$ composer tests
+$ php demo/run.php
+```

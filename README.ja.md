@@ -2,10 +2,10 @@
 
 ## 概要
 
-`Ray.MediaQuery` 外部メディアのクエリーのインターフェイスを実行オブジェクトに変えインジェクトします。
+`Ray.MediaQuery`はDBやWeb APIなどの外部メディアのクエリーのインターフェイスを、実行オブジェクトに変えインジェクトします。
 
 * ドメイン層とインフラ層の境界をコードで明確に持つことができます。
-* インターフェイスからリクエストオブジェクトが生成されるので、実行のための手続き的なコードを書く必要がありません。
+* インターフェイスから生成され、実行のための手続き的なコードを書く必要がありません。
 * 利用コードは外部メディアの実体には無関係なので、後からストレージを変更することができます。並列開発やスタッビングが容易です。
 
 ## インストール
@@ -15,70 +15,84 @@
 ## 利用方法
 
 メディアアクセスするインターフェイスを定義します。
+
+### データベースの場合
+
 メソッドに`DbQuery`の属性をつけて、SQLのIDを指定します。
 
 ```php
 interface TodoAddInterface
 {
-    #[DbQuery('user_add'), Transactional]
-    public function __invoke(string $id, string $title): void;
+    #[DbQuery('user_add')]
+    public function add(string $id, string $title): void;
 }
 ```
+
+### Web APIの場合
+
+リクエストメソッドとURIを指定します。
 
 ```php
-
-interface TodoItemInterface
+interface PostItemInterface
 {
-    /**
-     * @return array{id: string, title: string}
-     */
-    #[DbQuery('user_item')]
-    public function __invoke(string $id): array;
+    #[WebQuery(method: 'GET', uri: 'https://{domain}/posts/{id}')]
+    public function get(string $id): array;
 }
 ```
 
-クエリーインターフェイス、またはのフォルダを指定して、モジュールをインストールします。
+メソッド名は任意で、複数指定できます。
+
+クエリーインターフェイスのフォルダを指定して、モジュールをインストールします。
 
 ```php
 protected function configure(): void
 {
     $queries = Queries::fromDir('path/to/Queries');
-    $this->install(new MediaQueryModule($queries, $this->sqlDir));
-    $this->install(new AuraSqlModule($this->dsn));
+    $domain = ['domain' => 'api.exmaple.com'];
+    $this->install(new MediaQueryModule($queries, $sqlDir, $domain));
+    $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
 }
 ```
+
+### 注入
 
 実装クラスを用意する必要はありません。生成され、インジェクトされます。
 
 ```php
-<?php
 class Todo
 {
     public function __construct(
-        private TodoAddInterface $todoAdd,
-        private TodoItemInterface $todoItem
+        private TodoAddInterface $todoAdd
     ) {}
 
     public function add(string $id, string $title): void
     {
-        ($this->todoAdd)($id, $title);
-    }
-
-    public function get(string $id): array
-    {
-        return ($this->todoItem)($id);
+        $this->todoAdd->add($id, $title);
     }
 }
 ```
 
+### DbQuery
+
 SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッドの引数でバインドして実行します。
 例えばIDが`todo_item`の指定では`todo_item.sql`SQL文に`['id => $id]`をバインドして実行します。
 
-* `$sqlDir/`ディレクトリにそれぞれのSQLを用意します。IDが`todo_add`なら`$sqlDir/todo_add.sql`です。
-* SQL実行が返すのが単一行なら`item`、複数行なら`list`のpostfixを付けます。
-* SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが実行結果になります。
+* `$sqlDir`ディレクトリにSQLファイルを用意します。
+* SQL実行の戻り値が単一行なら`item`、複数行なら`list`のpostfixを付けます。
+* SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが返り値になります。
 
-## パラメーターインジェクション
+### Web API
+
+* メソッドの引数が `uri`で指定されたURI templateにバインドされ、Web APIリクエストオブジェクトが生成されます。
+* 認証のためのヘッダーなどのカスタムはGuzzleの`ClinetInterface`をバインドして行います。
+
+```php
+$this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
+```
+
+## パラメーター
+
+### 日付時刻
 
 パラメーターにバリューオブジェクトを渡すことができます。
 例えば、`DateTimeInterface`オブジェクトをこのように指定できます。
@@ -86,11 +100,12 @@ SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッ
 ```php
 interface TaskAddInterface
 {
+    #[DbQuery('task_add')]
     public function __invoke(string $title, DateTimeInterface $cratedAt = null): void;
 }
 ```
 
-値は**SQL実行時に**日付フォーマットされた文字列に変換されます。
+値はSQL実行時やWeb APIリクエスト時に日付フォーマットされた文字列に変換されます。
 
 ```sql
 INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 00:00:00
@@ -99,13 +114,14 @@ INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 0
 値を渡さないとバインドされている現在時刻がインジェクションされます。
 SQL内部で`NOW()`とハードコーディングする事や、毎回現在時刻を渡す手間を省きます。
 
+### テスト時刻
 テストの時には以下のように`DateTimeInterface`の束縛を１つの時刻にする事もできます。
 
 ```php
 $this->bind(DateTimeInterface::class)->to(UnixEpochTime::class);
 ```
 
-## VO
+### VO
 
 `DateTime`以外のバリューオブジェクトが渡されると`toScalar`インターフェイスを実装した`ToScalar()`メソッド、もしくは`__toString()`メソッドの返り値が引数になります。
 
@@ -134,19 +150,23 @@ class UserId implements ToScalarInterface
 INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
 ```
 
-バリューオブジェクトの引数のデフォルトの値の`null`がSQLで使われることは無い事に注意してください。値が渡されないと、nullの代わりにインジェクトされたバリューオブジェクトのスカラー値が使われます。
+### パラメーターインジェクション
+
+バリューオブジェクトの引数のデフォルトの値の`null`がSQLやWebリクエストで使われることは無い事に注意してください。値が渡されないと、nullの代わりにパラメーターの型でインジェクトされたバリューオブジェクトのスカラー値が使われます。
+
+```php
+public function __invoke(Uuid $uuid = null): void; // UUIDが生成され渡される
+```
 
 ## ページネーション
 
-`#[Pager]`アノテーションで、SELECTクエリーをページングする事ができます。
+DBの場合、`#[Pager]`属性でSELECTクエリーをページングする事ができます。
 
 ```php
 interface TodoList
 {
     #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
-    public function __invoke(): Pages
-    {
-    }
+    public function __invoke(): Pages;
 }
 ```
 
@@ -210,31 +230,6 @@ $sqlQuery->exec('memo_add', ['memo' => 'run', 'created_at' => new DateTime()]);
 
 他のオブジェクトが渡されると`toScalar()`または`__toString()`の値に変換されます。
 
-# Web API
-
-インターフェイスをWebAPIリクエストにバインドするためには`WebQuery`の属性をつけ、`method`と`uri`を指定し`uri`はuri templateを指定します。メソッドの引数がuri templateにバインドされ、Web APIリクエストが行われるリクエストオブジェクトが生成されインジェクトされます。
-
-```php
-interface GetPostInterface
-{
-    #[WebQuery(method: 'GET', uri: 'https://{domain}/posts/{id}')]
-    public function __invoke(string $id): array;
-}
-```
-
-認証のためのヘッダーの指定などはGuzzleの`ClinetInterface`をバインドして行います。
-
-```php
-$this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
-```
-
-インストールは`MediaQueryModule`の3つ目の引数でアサインするドメインを指定します。
-
-```php
-$module = new MediaQueryModule($mediaQueries, $sqlDir,  ['domain' => 'httpbin.org']);
-```
-
-WebQueryの時と同じようにVOを渡す事もできます。
 
 ## プロファイラー
 
@@ -250,3 +245,14 @@ public function testAdd(): void
 
 独自の[MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php)を実装して、
 各メディアクエリーのベンチマークを行ったり、インジェクトしたPSRロガーでログをする事もできます。
+
+## Demo
+
+テストとデモを行うためには以下のようにします。
+
+```
+$ git clone https://github.com/ray-di/Ray.MediaQuery.git
+$ cd Ray.MediaQuery
+$ composer tests
+$ php demo/run.php
+```
