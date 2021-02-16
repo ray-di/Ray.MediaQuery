@@ -175,9 +175,7 @@ The `#[Pager]` annotation allows paging of SELECT queries.
 interface TodoList
 {
     #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
-    public function __invoke(): Pages
-    {
-    }
+    public function __invoke(): Pages;
 }
 ```
 
