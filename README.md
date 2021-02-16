@@ -56,8 +56,9 @@ Install the module by specifying the query interface or folder.
 protected function configure(): void
 {
     $queries = Queries::fromDir('path/to/Queries');
-    $this->install(new MediaQueryModule($queries, $this->sqlDir));
-    $this->install(new AuraSqlModule($this->dsn));
+    $domain = ['domain' => 'api.exmaple.com'];
+    $this->install(new MediaQueryModule($queries, $sqlDir, $domain));
+    $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
 }
 ```
 
