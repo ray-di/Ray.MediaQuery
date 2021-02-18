@@ -8,6 +8,10 @@ use DateTimeInterface;
 
 class FakeParamInjectMethod
 {
+    public function noInject(int $a): void
+    {
+    }
+
     public function paramInject(?DateTimeInterface $dateTime = null): void
     {
     }

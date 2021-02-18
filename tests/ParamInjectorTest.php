@@ -26,6 +26,12 @@ class ParamInjectorTest extends TestCase
         }));
     }
 
+    public function testNoInjection(): void
+    {
+        $namedArgs = $this->injector->getArgumentes(new ReflectiveMethodInvocation(new FakeParamInjectMethod(), 'noInject', [1]));
+        $this->assertSame(['a' => 1], $namedArgs);
+    }
+
     public function testGetArgumentes(): void
     {
         $namedArgs = $this->injector->getArgumentes(new ReflectiveMethodInvocation(new FakeParamInjectMethod(), 'paramInject', []));
