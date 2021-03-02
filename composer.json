@@ -13,7 +13,7 @@
         "ext-json": "*",
         "ext-pdo": "*",
         "aura/sql": "^3.0",
-        "doctrine/annotations": "^1.11",
+        "doctrine/annotations": "^1.12",
         "guzzlehttp/guzzle": "^6.3 || ^7.2",
         "pagerfanta/pagerfanta": "^1.1",
         "ray/aop": "^2.10.4",
