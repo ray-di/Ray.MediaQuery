@@ -14,7 +14,7 @@
         "ext-pdo": "*",
         "aura/sql": "^3.0",
         "doctrine/annotations": "^1.11",
-        "guzzlehttp/guzzle": "^7.2",
+        "guzzlehttp/guzzle": "^6.3 || ^7.2",
         "pagerfanta/pagerfanta": "^1.1",
         "ray/aop": "^2.10.4",
         "ray/aura-sql-module": "^1.10",
