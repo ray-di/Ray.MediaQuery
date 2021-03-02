@@ -38,5 +38,5 @@ interface SqlQueryInterface
     /**
      * @param array<string, mixed> $values
      */
-    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): Pages;
+    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): PagesInterface;
 }

@@ -76,7 +76,7 @@ class SqlQueryTest extends TestCase
         $this->assertSame([0 => $this->insertData], $result);
     }
 
-    public function testPager(): Pages
+    public function testPager(): PagesInterface
     {
         $walkTodo = ['id' => '2', 'title' => 'walk'];
         $this->sqlQuery->exec('todo_add', $walkTodo);

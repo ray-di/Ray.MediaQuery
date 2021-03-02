@@ -30,7 +30,7 @@ class DbQueryInterceptor implements MethodInterceptor
     }
 
     /**
-     * @return Pages|array<mixed>
+     * @return PagesInterface|array<mixed>
      */
     public function invoke(MethodInvocation $invocation)
     {
@@ -70,7 +70,7 @@ class DbQueryInterceptor implements MethodInterceptor
     /**
      * @param array<string, mixed> $values
      */
-    private function getPager(string $queryId, array $values, Pager $pager): Pages
+    private function getPager(string $queryId, array $values, Pager $pager): PagesInterface
     {
         $this->logger->start();
         $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);

@@ -4,18 +4,13 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use ArrayAccess;
 use Aura\Sql\ExtendedPdoInterface;
-use Countable;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\MediaQuery\Exception\LogicException;
 
-/**
- * @implements ArrayAccess<int, Page>
- */
-class Pages implements ArrayAccess, Countable
+class Pages implements PagesInterface
 {
     /** @var AuraSqlPagerInterface  */
     private $delegate;

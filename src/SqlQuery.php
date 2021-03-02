@@ -161,7 +161,7 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): Pages
+    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): PagesInterface
     {
         /** @psalm-suppress MixedArgumentTypeCoercion */
         $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $values, $perPage, $queryTemplate);
