@@ -172,10 +172,12 @@ public function __invoke(Uuid $uuid = null): void; // UUID is generated and pass
 The `#[Pager]` annotation allows paging of SELECT queries.
 
 ```php
+use Ray\MediaQuery\PagesInterface;
+
 interface TodoList
 {
     #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
-    public function __invoke(): Pages;
+    public function __invoke(): PagesInterface;
 }
 ```
 

@@ -163,10 +163,12 @@ public function __invoke(Uuid $uuid = null): void; // UUIDが生成され渡さ�
 DBの場合、`#[Pager]`属性でSELECTクエリーをページングする事ができます。
 
 ```php
+use Ray\MediaQuery\PagesInterface;
+
 interface TodoList
 {
     #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
-    public function __invoke(): Pages;
+    public function __invoke(): PagesInterface;
 }
 ```
 
