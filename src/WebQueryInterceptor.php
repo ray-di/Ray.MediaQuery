@@ -6,6 +6,7 @@ namespace Ray\MediaQuery;
 
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
+use Ray\Di\Di\Named;
 use Ray\MediaQuery\Annotation\WebQuery;
 
 class WebQueryInterceptor implements MethodInterceptor
@@ -16,10 +17,20 @@ class WebQueryInterceptor implements MethodInterceptor
     /** @var ParamInjectorInterface  */
     private $paramInjector;
 
-    public function __construct(WebApiQueryInterface $webApiQuery, ParamInjectorInterface $paramInjector)
+    /** @var array<string, array{method: string, path: string}> */
+    private $mediaQueryConfig;
+
+    /**
+     * @param array<string, array{method: string, path: string}> $mediaQueryConfig
+     *
+     * @Named("mediaQueryConfig=media_query_config")
+     */
+    #[Named('mediaQueryConfig=media_query_config')]
+    public function __construct(WebApiQueryInterface $webApiQuery, ParamInjectorInterface $paramInjector, array $mediaQueryConfig)
     {
         $this->webApiQuery = $webApiQuery;
         $this->paramInjector = $paramInjector;
+        $this->mediaQueryConfig = $mediaQueryConfig;
     }
 
     /**
@@ -32,7 +43,8 @@ class WebQueryInterceptor implements MethodInterceptor
         $webQuery = $method->getAnnotation(WebQuery::class);
         /** @var array<string, string> $values */
         $values = $this->paramInjector->getArgumentes($invocation);
+        $request = $this->mediaQueryConfig[$webQuery->id];
 
-        return $this->webApiQuery->request($webQuery->method, $webQuery->uri, $values);
+        return $this->webApiQuery->request($request['method'], $request['path'], $values);
     }
 }

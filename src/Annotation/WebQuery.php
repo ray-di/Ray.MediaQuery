@@ -16,14 +16,10 @@ use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
 final class WebQuery
 {
     /** @var string */
-    public $method;
+    public $id;
 
-    /** @var string */
-    public $uri;
-
-    public function __construct(string $method, string $uri)
+    public function __construct(string $id)
     {
-        $this->method = $method;
-        $this->uri = $uri;
+        $this->id = $id;
     }
 }

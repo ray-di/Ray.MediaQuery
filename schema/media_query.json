@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Ray.MediaQuery Schema",
+    "type": "object",
+    "readOnly": true,
+    "required": [
+        "webQuery"
+    ],
+    "properties": {
+        "webQuery": {
+            "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "WebMedia query ID"
+                        },
+                        "method": {
+                            "type": "string",
+                            "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "URL template path"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

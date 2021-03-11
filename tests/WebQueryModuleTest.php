@@ -27,7 +27,8 @@ class WebQueryModuleTest extends TestCase
         $mediaQueries = Queries::fromClasses([FooItemInterface::class]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $uriBindings = ['domain' => 'httpbin.org'];
-        $module = new MediaQueryModule($mediaQueries, $sqlDir, $uriBindings);
+        $mediaQueryJson = __DIR__ . '/Fake/web_query.json';
+        $module = new MediaQueryModule([new WebQueryConfig($mediaQueries, $mediaQueryJson)], new ApiDomainModule($uriBindings));
         $this->injector = new Injector($module);
         $this->logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
     }

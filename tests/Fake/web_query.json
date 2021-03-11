@@ -1,0 +1,6 @@
+{
+    "$schema": "../../schema/media_query.json",
+    "webQuery": [
+        {"id": "foo_item", "method": "GET", "path": "https://{domain}/anything/{id}"}
+    ]
+}
