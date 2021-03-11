@@ -40,7 +40,7 @@ interface PostItemInterface
 }
 ```
 
-APIパスのファイルを`web_query.json`として用意します。
+APIパスのファイルを`media_query.json`として用意します。
 
 ```json
 {
@@ -51,14 +51,22 @@ APIパスのファイルを`web_query.json`として用意します。
 }
 ```
 
-クエリーインターフェイスのフォルダを指定して、モジュールをインストールします。
+MediaQueryModuleは、`DbQueryConfig`や`WebQueryConfig`、またはその両方の設定を指定して、DBやWeb APIの設定を行います。
 
 ```php
 protected function configure(): void
 {
-    $queries = Queries::fromDir('path/to/Queries');
+    $dbQueries = Queries::fromDir('path/to/dbQueries');
+    $sqlDir = __DIR__ . '/sql';
+    $webQueries = Queries::fromDir('path/to/webQueries');
+    $mediaQuery = __DIR__ . '/media_query.json';
     $domain = ['domain' => 'api.exmaple.com'];
-    $this->install(new MediaQueryModule($queries, $sqlDir, $domain));
+    $this->install(
+        new MediaQueryModule(
+            [new DbQueryConfig($dbQueries, $sqlDir), new WebQueryConfig($webQueries, $mediaQuery)],
+            new ApiDomainModule($domain)
+        )
+    );
     $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
 }
 ```

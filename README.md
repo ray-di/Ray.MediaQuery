@@ -49,7 +49,7 @@ interface PostItemInterface
 }
 ```
 
-Create the API path file as `web_query.json`
+Create the API path file as `media_query.json`
 
 ```json
 {
@@ -70,14 +70,13 @@ protected function configure(): void
     $dbQueries = Queries::fromDir('path/to/dbQueries');
     $sqlDir = __DIR__ . '/sql';
     $webQueries = Queries::fromDir('path/to/webQueries');
-    $mediaQueryJson = __DIR__ . '/web_query.json';
+    $mediaQuery = __DIR__ . '/media_query.json';
     $domain = ['domain' => 'api.exmaple.com'];
     $this->install(
-        new MediaQueryModule([
-            new DbQueryConfig($dbQueries, $sqlDir),
-            new WebQueryConfig($webQueries, $mediaQueryJson)
-        ],
-        new ApiDomainModule($uriBindings)
+        new MediaQueryModule(
+            [new DbQueryConfig($dbQueries, $sqlDir), new WebQueryConfig($webQueries, $mediaQuery)],
+            new ApiDomainModule($domain)
+        )
     );
     $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
 }
