@@ -13,7 +13,6 @@ use Ray\Di\Scope;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\SqlDir;
 use Ray\MediaQuery\Annotation\WebQuery;
-use Ray\MediaQuery\WebApi\FooItemInterface;
 
 class MediaQueryModule extends AbstractModule
 {
@@ -31,7 +30,6 @@ class MediaQueryModule extends AbstractModule
 
     protected function configure(): void
     {
-        $this->bind(FooItemInterface::class)->toNull();
         $this->bind(MediaQueryLoggerInterface::class)->to(MediaQueryLogger::class)->in(Scope::SINGLETON);
         $this->bind(ParamInjectorInterface::class)->to(ParamInjector::class);
         $this->bind(ParamConverterInterface::class)->to(ParamConverter::class);
