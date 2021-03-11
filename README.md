@@ -49,9 +49,8 @@ interface PostItemInterface
 }
 ```
 
-Creat the API path file.
+Create the API path file as `web_query.json`
 
-web_query.json
 ```json
 {
     "$schema": "https://ray-di.github.io/Ray.MediaQuery/media_query.json",

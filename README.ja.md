@@ -40,9 +40,8 @@ interface PostItemInterface
 }
 ```
 
-以下のようにAPIパスのファイルを用意します。
+APIパスのファイルを`web_query.json`として用意します。
 
-web_query.json
 ```json
 {
     "$schema": "https://ray-di.github.io/Ray.MediaQuery/media_query.json",
