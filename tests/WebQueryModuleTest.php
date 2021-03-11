@@ -25,7 +25,6 @@ class WebQueryModuleTest extends TestCase
     protected function setUp(): void
     {
         $mediaQueries = Queries::fromClasses([FooItemInterface::class]);
-        $sqlDir = dirname(__DIR__) . '/tests/sql';
         $uriBindings = ['domain' => 'httpbin.org'];
         $mediaQueryJson = __DIR__ . '/Fake/web_query.json';
         $module = new MediaQueryModule([new WebQueryConfig($mediaQueries, $mediaQueryJson)], new ApiDomainModule($uriBindings));
