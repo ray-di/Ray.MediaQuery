@@ -41,6 +41,7 @@ class MediaQueryModule extends AbstractModule
                 $this->configureDbQuery($config);
                 continue;
             }
+
             $this->configureWebQuery($config);
         }
     }
