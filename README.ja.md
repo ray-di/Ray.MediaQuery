@@ -35,7 +35,7 @@ Web API IDIを指定します。
 ```php
 interface PostItemInterface
 {
-    #[WebQuery(id: 'user_item')]
+    #[WebQuery('user_item')]
     public function get(string $id): array;
 }
 ```
