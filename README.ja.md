@@ -30,17 +30,27 @@ interface TodoAddInterface
 
 ### Web APIの場合
 
-リクエストメソッドとURIを指定します。
+Web API IDIを指定します。
 
 ```php
 interface PostItemInterface
 {
-    #[WebQuery(method: 'GET', uri: 'https://{domain}/posts/{id}')]
+    #[WebQuery(id: 'user_item')]
     public function get(string $id): array;
 }
 ```
 
-メソッド名は任意で、複数指定できます。
+以下のようにAPIパスのファイルを用意します。
+
+web_query.json
+```json
+{
+    "$schema": "https://ray-di.github.io/Ray.MediaQuery/media_query.json",
+    "webQuery": [
+        {"id": "user_item", "method": "GET", "path": "https://{domain}/users/{id}"}
+    ]
+}
+```
 
 クエリーインターフェイスのフォルダを指定して、モジュールをインストールします。
 
