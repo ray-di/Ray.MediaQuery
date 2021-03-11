@@ -39,25 +39,45 @@ interface TodoAddInterface
 
 ### Web API
 
-Specify the method and URI.
+Specify the Web API.
 
 ```php
 interface PostItemInterface
 {
-    #[WebQuery(method: 'GET', uri: 'https://{domain}/posts/{id}')]
+    #[WebQuery('user_item')]
     public function get(string $id): array;
 }
 ```
+
+Create the API path file as `media_query.json`
+
+```json
+{
+    "$schema": "https://ray-di.github.io/Ray.MediaQuery/media_query.json",
+    "webQuery": [
+        {"id": "user_item", "method": "GET", "path": "https://{domain}/users/{id}"}
+    ]
+}
+```
+
 ### Module
 
-Install the module by specifying the query interface or folder.
+MediaQueryModule takes the configuration of `DbQueryConfig`, `WebQueryConfig` or both and configures the DB and Web API.
 
 ```php
 protected function configure(): void
 {
-    $queries = Queries::fromDir('path/to/Queries');
+    $dbQueries = Queries::fromDir('path/to/dbQueries');
+    $sqlDir = __DIR__ . '/sql';
+    $webQueries = Queries::fromDir('path/to/webQueries');
+    $mediaQuery = __DIR__ . '/media_query.json';
     $domain = ['domain' => 'api.exmaple.com'];
-    $this->install(new MediaQueryModule($queries, $sqlDir, $domain));
+    $this->install(
+        new MediaQueryModule(
+            [new DbQueryConfig($dbQueries, $sqlDir), new WebQueryConfig($webQueries, $mediaQuery)],
+            new ApiDomainModule($domain)
+        )
+    );
     $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
 }
 ```

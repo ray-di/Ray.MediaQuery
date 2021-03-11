@@ -16,26 +16,15 @@ use Ray\MediaQuery\Annotation\WebQuery;
 
 class MediaQueryModule extends AbstractModule
 {
-    /** @var string */
-    private $sqlDir;
-
-    /** @var list<class-string> */
-    private $mediaQueries;
-
-    /** @var array<string, string> */
-    private array $domainBindings;
+    /** @var list<DbQueryConfig|WebQueryConfig> */
+    private $configs;
 
     /**
-     * @param Queries               $mediaQueries
-     * @param string                $sqlDir
-     * @param array<string, string> $domainBindings
-     * @param AbstractModule|null   $module
+     * @param list<DbQueryConfig|WebQueryConfig> $configs
      */
-    public function __construct(Queries $mediaQueries, string $sqlDir, array $domainBindings = [], ?AbstractModule $module = null)
+    public function __construct(array $configs, ?AbstractModule $module = null)
     {
-        $this->mediaQueries = $mediaQueries->classes;
-        $this->sqlDir = $sqlDir;
-        $this->domainBindings = $domainBindings;
+        $this->configs = $configs;
         parent::__construct($module);
     }
 
@@ -45,19 +34,40 @@ class MediaQueryModule extends AbstractModule
         $this->bind(ParamInjectorInterface::class)->to(ParamInjector::class);
         $this->bind(ParamConverterInterface::class)->to(ParamConverter::class);
         $this->bind(DateTimeInterface::class)->to(DateTimeImmutable::class);
+        foreach ($this->configs as $config) {
+            if ($config instanceof DbQueryConfig) {
+                $this->configureDbQuery($config);
+                continue;
+            }
+
+            $this->configureWebQuery($config);
+        }
+    }
+
+    private function configureDbQuery(DbQueryConfig $dbQuery): void
+    {
         // Bind media query interface
-        foreach ($this->mediaQueries as $mediaQuery) {
-            $this->bind($mediaQuery)->toNull();
+        foreach ($dbQuery->mediaQueries->classes as $class) {
+            $this->bind($class)->toNull();
         }
 
-        // DbQuery
+        // DbQueryConfig
         $this->bind(SqlQueryInterface::class)->to(SqlQuery::class);
         $this->bindInterceptor(
             $this->matcher->any(),
             $this->matcher->annotatedWith(DbQuery::class),
             [DbQueryInterceptor::class]
         );
-        $this->bind()->annotatedWith(SqlDir::class)->toInstance($this->sqlDir);
+        $this->bind()->annotatedWith(SqlDir::class)->toInstance($dbQuery->sqlDir);
+    }
+
+    private function configureWebQuery(WebQueryConfig $webQueryConfig): void
+    {
+        // Bind web query interface
+        foreach ($webQueryConfig->queries->classes as $class) {
+            $this->bind($class)->toNull();
+        }
+
         // Web Query
         $this->bindInterceptor(
             $this->matcher->any(),
@@ -66,6 +76,15 @@ class MediaQueryModule extends AbstractModule
         );
         $this->bind(ClientInterface::class)->to(Client::class);
         $this->bind(WebApiQueryInterface::class)->to(WebApiQuery::class);
-        $this->bind()->annotatedWith('web_api_query_domain')->toInstance($this->domainBindings);
+        $config = [];
+        foreach ($webQueryConfig->apis as $id => $item) {
+            $config[$id] = ['method' => $item['method'], 'path' => $item['path']];
+        }
+
+        $this->bind()->annotatedWith('media_query_config')->toInstance($config);
+        // Bind media query interface
+        foreach ($webQueryConfig->queries->classes as $class) {
+            $this->bind($class)->toNull();
+        }
     }
 }
