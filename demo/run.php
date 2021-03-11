@@ -11,6 +11,7 @@ use Composer\Autoload\ClassLoader;
 use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
+use Ray\MediaQuery\DbQueryConfig;
 use Ray\MediaQuery\MediaQueryModule;
 use Ray\MediaQuery\Queries;
 
@@ -29,7 +30,7 @@ $injector = new Injector(new class($sqlDir, $dsn) extends AbstractModule {
             UserAddInterface::class,
             UserItemInterface::class
         ]);
-        $this->install(new MediaQueryModule($queries, $this->sqlDir));
+        $this->install(new MediaQueryModule([new DbQueryConfig($queries, $this->sqlDir)]));
         $this->install(new AuraSqlModule($this->dsn));
     }
 });
