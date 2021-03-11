@@ -9,8 +9,6 @@ use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\WebApi\FooItemInterface;
 
-use function dirname;
-
 class WebQueryModuleTest extends TestCase
 {
     /** @var AbstractModule */
