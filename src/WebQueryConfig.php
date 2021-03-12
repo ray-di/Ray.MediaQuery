@@ -12,15 +12,11 @@ use function property_exists;
 
 final class WebQueryConfig
 {
-    /** @var Queries */
-    public $queries;
-
     /** @var array<string, array{method: string, path: string}> */
     public $apis = [];
 
-    public function __construct(Queries $mediaQueries, string $mediaQueryJson)
+    public function __construct(string $mediaQueryJson)
     {
-        $this->queries = $mediaQueries;
         /** @var object $json */
         $json = json_decode((string) file_get_contents($mediaQueryJson));
         assert(property_exists($json, 'webQuery'));

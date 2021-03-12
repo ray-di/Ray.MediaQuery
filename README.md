@@ -27,7 +27,7 @@ Define the interface for media access.
 
 ### DB
 
-Specify the ID of the SQL with the attribute `DbQuery`.
+Specify the SQL ID with the attribute `DbQuery`.
 
 ```php
 interface TodoAddInterface
@@ -39,7 +39,7 @@ interface TodoAddInterface
 
 ### Web API
 
-Specify the Web API.
+Specify the Web request ID with the attribute `WebQuery`.
 
 ```php
 interface PostItemInterface
@@ -49,11 +49,11 @@ interface PostItemInterface
 }
 ```
 
-Create the API path file as `media_query.json`
+Create the web api path list file as `web_query.json`.
 
 ```json
 {
-    "$schema": "https://ray-di.github.io/Ray.MediaQuery/media_query.json",
+    "$schema": "https://ray-di.github.io/Ray.MediaQuery/schema/web_query.json",
     "webQuery": [
         {"id": "user_item", "method": "GET", "path": "https://{domain}/users/{id}"}
     ]
@@ -62,21 +62,24 @@ Create the API path file as `media_query.json`
 
 ### Module
 
-MediaQueryModule takes the configuration of `DbQueryConfig`, `WebQueryConfig` or both and configures the DB and Web API.
+MediaQueryModule binds the execution of SQL and Web API requests to an interface by setting `DbQueryConfig` or `WebQueryConfig` or both.
 
 ```php
+use Ray\AuraSqlModule\AuraSqlModule;
+use Ray\MediaQuery\ApiDomainModule;
+use Ray\MediaQuery\DbQueryConfig;
+use Ray\MediaQuery\MediaQueryModule;
+use Ray\MediaQuery\Queries;
+use Ray\MediaQuery\WebQueryConfig;
+
 protected function configure(): void
 {
-    $dbQueries = Queries::fromDir('path/to/dbQueries');
-    $sqlDir = __DIR__ . '/sql';
-    $webQueries = Queries::fromDir('path/to/webQueries');
-    $mediaQuery = __DIR__ . '/media_query.json';
-    $domain = ['domain' => 'api.exmaple.com'];
     $this->install(
         new MediaQueryModule(
-            [new DbQueryConfig($dbQueries, $sqlDir), new WebQueryConfig($webQueries, $mediaQuery)],
-            new ApiDomainModule($domain)
-        )
+            Queries::fromDir('/path/to/queryInterface'),
+            [new DbQueryConfig('/path/to/sql'), new WebQueryConfig('/path/to/web_query.json')],
+            new ApiDomainModule(['domain' => 'api.exmaple.com'])
+        ),
     );
     $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
 }

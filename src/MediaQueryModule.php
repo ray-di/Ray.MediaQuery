@@ -16,20 +16,28 @@ use Ray\MediaQuery\Annotation\WebQuery;
 
 class MediaQueryModule extends AbstractModule
 {
+    /** @var Queries */
+    private $queries;
+
     /** @var list<DbQueryConfig|WebQueryConfig> */
     private $configs;
 
     /**
      * @param list<DbQueryConfig|WebQueryConfig> $configs
      */
-    public function __construct(array $configs, ?AbstractModule $module = null)
+    public function __construct(Queries $queries, array $configs, ?AbstractModule $module = null)
     {
+        $this->queries = $queries;
         $this->configs = $configs;
         parent::__construct($module);
     }
 
     protected function configure(): void
     {
+        foreach ($this->queries->classes as $class) {
+            $this->bind($class)->toNull();
+        }
+
         $this->bind(MediaQueryLoggerInterface::class)->to(MediaQueryLogger::class)->in(Scope::SINGLETON);
         $this->bind(ParamInjectorInterface::class)->to(ParamInjector::class);
         $this->bind(ParamConverterInterface::class)->to(ParamConverter::class);
@@ -46,11 +54,6 @@ class MediaQueryModule extends AbstractModule
 
     private function configureDbQuery(DbQueryConfig $dbQuery): void
     {
-        // Bind media query interface
-        foreach ($dbQuery->mediaQueries->classes as $class) {
-            $this->bind($class)->toNull();
-        }
-
         // DbQueryConfig
         $this->bind(SqlQueryInterface::class)->to(SqlQuery::class);
         $this->bindInterceptor(
@@ -63,11 +66,6 @@ class MediaQueryModule extends AbstractModule
 
     private function configureWebQuery(WebQueryConfig $webQueryConfig): void
     {
-        // Bind web query interface
-        foreach ($webQueryConfig->queries->classes as $class) {
-            $this->bind($class)->toNull();
-        }
-
         // Web Query
         $this->bindInterceptor(
             $this->matcher->any(),
@@ -82,9 +80,5 @@ class MediaQueryModule extends AbstractModule
         }
 
         $this->bind()->annotatedWith('media_query_config')->toInstance($config);
-        // Bind media query interface
-        foreach ($webQueryConfig->queries->classes as $class) {
-            $this->bind($class)->toNull();
-        }
     }
 }
