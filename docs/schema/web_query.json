@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Ray.MediaQuery Schema",
+    "title": "Web query schema",
     "type": "object",
     "readOnly": true,
     "required": [
@@ -8,16 +8,18 @@
     ],
     "properties": {
         "webQuery": {
+            "description": "Web API request method/path  list",
             "type": "array",
                 "items": {
                     "type": "object",
                     "properties": {
                         "id": {
                             "type": "string",
-                            "description": "WebMedia query ID"
+                            "description": "Web api ID"
                         },
                         "method": {
                             "type": "string",
+                            "description": "Request method",
                             "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
                         },
                         "path": {
@@ -26,7 +28,13 @@
                         }
                     }
                 }
-            }
         }
-    }
+    },
+    "links": [
+        {
+            "href": "https://ray-di.github.io/Ray.MediaQuery/schema/web_query.json",
+            "method": "GET",
+            "rel": "self"
+        }
+    ]
 }
