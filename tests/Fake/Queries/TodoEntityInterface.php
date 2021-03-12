@@ -12,6 +12,7 @@ interface TodoEntityInterface
     #[DbQuery('todo_item', entity: Todo::class)]
     public function getItem(string $id): Todo;
 
+    /** @return list<Todo> */
     #[DbQuery('todo_list', entity: Todo::class)]
     public function getlist(): array;
 }
