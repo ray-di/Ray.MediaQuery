@@ -9,9 +9,7 @@
 
 `Ray.QueryModule` makes a query to an external media such as a database or Web API with a function object to be injected.
 
-
 ## Motivation
-
 
  * You can have a clear boundary between domain layer (usage code) and infrastructure layer (injected function) in code.
  * Execution objects are generated automatically so you do not need to write procedural code for execution.
@@ -261,6 +259,19 @@ public function testAdd(): void
 
 Implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) and run
 You can also implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) to benchmark each media query and log it with the injected PSR logger.
+
+## Annotations / Attributes
+
+You can use either [doctrine annotations](https://github.com/doctrine/annotations/) or [PHP8 attributes](https://www.php.net/manual/en/language.attributes.overview.php) can both be used. 
+The next two are the same.
+
+```php
+#[DbQuery('user_add')]
+public function add1(string $id, string $title): void;
+
+/** @DbQuery("user_add") */
+public function add2(string $id, string $title): void;
+```
 
 ## Testing Ray.MediaQuery
 

@@ -269,6 +269,18 @@ public function testAdd(): void
 独自の[MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php)を実装して、
 各メディアクエリーのベンチマークを行ったり、インジェクトしたPSRロガーでログをする事もできます。
 
+## アノテーション / アトリビュート
+
+属性を表すのに[doctrineアノテーション](https://github.com/doctrine/annotations/) 、[アトリビュート](https://www.php.net/manual/ja/language.attributes.overview.php) どちらも利用できます。 次の2つは同じものです。
+
+```php
+#[DbQuery('user_add')]
+public function add1(string $id, string $title): void;
+
+/** @DbQuery("user_add") */
+public function add2(string $id, string $title): void;
+```
+
 ## Demo
 
 テストとデモを行うためには以下のようにします。
