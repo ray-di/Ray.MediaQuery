@@ -54,18 +54,21 @@ APIパスのファイルを`media_query.json`として用意します。
 MediaQueryModuleは、`DbQueryConfig`や`WebQueryConfig`、またはその両方の設定を指定して、DBやWeb APIの設定を行います。
 
 ```php
+use Ray\AuraSqlModule\AuraSqlModule;
+use Ray\MediaQuery\ApiDomainModule;
+use Ray\MediaQuery\DbQueryConfig;
+use Ray\MediaQuery\MediaQueryModule;
+use Ray\MediaQuery\Queries;
+use Ray\MediaQuery\WebQueryConfig;
+
 protected function configure(): void
 {
-    $dbQueries = Queries::fromDir('path/to/dbQueries');
-    $sqlDir = __DIR__ . '/sql';
-    $webQueries = Queries::fromDir('path/to/webQueries');
-    $mediaQuery = __DIR__ . '/media_query.json';
-    $domain = ['domain' => 'api.exmaple.com'];
     $this->install(
         new MediaQueryModule(
-            [new DbQueryConfig($dbQueries, $sqlDir), new WebQueryConfig($webQueries, $mediaQuery)],
-            new ApiDomainModule($domain)
-        )
+            Queries::fromDir('/path/to/queryInterface'),
+            [new DbQueryConfig('/path/to/sql'), new WebQueryConfig('/path/to/web_query.json')],
+            new ApiDomainModule(['domain' => 'api.exmaple.com'])
+        ),
     );
     $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
 }
