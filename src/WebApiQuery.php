@@ -6,7 +6,7 @@ namespace Ray\MediaQuery;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
-use Ray\Di\Di\Named;
+use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
 use Ray\MediaQuery\Exception\WebApiRequestException;
 
 use function json_decode;
@@ -21,19 +21,19 @@ final class WebApiQuery implements WebApiQueryInterface
     private $logger;
 
     /** @var array<string, string>  */
-    private $domainBindings;
+    private $uriTemplateBindings;
 
     /**
-     * @param array<string, string> $domainBindings
+     * @param array<string, string> $uriTemplateBindings
      *
-     * @Named("'domainBindings=web_api_query_domain")
+     * @UriTemplateBindings("uriTemplateBindings")
      */
-    #[Named('domainBindings=web_api_query_domain')]
-    public function __construct(ClientInterface $client, MediaQueryLoggerInterface $logger, array $domainBindings)
+    #[UriTemplateBindings('uriTemplateBindings')]
+    public function __construct(ClientInterface $client, MediaQueryLoggerInterface $logger, array $uriTemplateBindings)
     {
         $this->client = $client;
         $this->logger = $logger;
-        $this->domainBindings = $domainBindings;
+        $this->uriTemplateBindings = $uriTemplateBindings;
     }
 
     /**
@@ -43,7 +43,7 @@ final class WebApiQuery implements WebApiQueryInterface
     {
         try {
             $this->logger->start();
-            $boundUri = uri_template($uri, $this->domainBindings + $query);
+            $boundUri = uri_template($uri, $this->uriTemplateBindings + $query);
             $response = $this->client->request($method, $boundUri, $query);
             $json = $response->getBody()->getContents();
             /** @var array<string, mixed> $body */

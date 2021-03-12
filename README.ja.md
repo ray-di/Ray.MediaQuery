@@ -65,9 +65,10 @@ protected function configure(): void
 {
     $this->install(
         new MediaQueryModule(
-            Queries::fromDir('/path/to/queryInterface'),
-            [new DbQueryConfig('/path/to/sql'), new WebQueryConfig('/path/to/web_query.json')],
-            new ApiDomainModule(['domain' => 'api.exmaple.com'])
+            Queries::fromDir('/path/to/queryInterface'),[
+                new DbQueryConfig('/path/to/sql'),
+                new WebQueryConfig('/path/to/web_query.json', ['domain' => 'api.exmaple.com'])
+            ],
         ),
     );
     $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
