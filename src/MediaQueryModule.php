@@ -11,6 +11,8 @@ use GuzzleHttp\ClientInterface;
 use Ray\Di\AbstractModule;
 use Ray\Di\Scope;
 use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
+use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
 use Ray\MediaQuery\Annotation\SqlDir;
 use Ray\MediaQuery\Annotation\WebQuery;
 
@@ -79,7 +81,7 @@ class MediaQueryModule extends AbstractModule
             $config[$id] = ['method' => $item['method'], 'path' => $item['path']];
         }
 
-        $this->bind()->annotatedWith('media_query_config')->toInstance($config);
-        $this->bind()->annotatedWith('web_api_query_domain')->toInstance($webQueryConfig->urlTemplateBindings);
+        $this->bind()->annotatedWith(WebApiList::class)->toInstance($config);
+        $this->bind()->annotatedWith(UriTemplateBindings::class)->toInstance($webQueryConfig->urlTemplateBindings);
     }
 }
