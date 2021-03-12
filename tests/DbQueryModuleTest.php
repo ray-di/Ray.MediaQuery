@@ -10,10 +10,12 @@ use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
+use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Queries\PromiseAddInterface;
 use Ray\MediaQuery\Queries\PromiseItemInterface;
 use Ray\MediaQuery\Queries\PromiseListInterface;
 use Ray\MediaQuery\Queries\TodoAddInterface;
+use Ray\MediaQuery\Queries\TodoEntityInterface;
 use Ray\MediaQuery\Queries\TodoItemInterface;
 use Ray\MediaQuery\Queries\TodoListInterface;
 
@@ -22,7 +24,7 @@ use function assert;
 use function dirname;
 use function file_get_contents;
 
-class MediaQueryModuleTest extends TestCase
+class DbQueryModuleTest extends TestCase
 {
     /** @var AbstractModule */
     protected $module;
@@ -42,6 +44,7 @@ class MediaQueryModuleTest extends TestCase
             PromiseAddInterface::class,
             PromiseItemInterface::class,
             PromiseListInterface::class,
+            TodoEntityInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
@@ -114,5 +117,15 @@ class MediaQueryModuleTest extends TestCase
         $foo->add();
         $item = $foo->get();
         $this->assertSame(['id', 'title', 'time'], array_keys($item));
+    }
+
+    public function testEntity(): void
+    {
+        /** @var TodoEntityInterface $todoList */
+        $todoList = $this->injector->getInstance(TodoEntityInterface::class);
+        $list = $todoList->getlist();
+        $this->assertInstanceOf(Todo::class, $list[0]);
+        $item = $todoList->getItem('1');
+        $this->assertInstanceOf(Todo::class, $item);
     }
 }

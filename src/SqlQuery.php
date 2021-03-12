@@ -18,6 +18,8 @@ use function explode;
 use function file;
 use function file_exists;
 use function file_get_contents;
+use function is_array;
+use function is_object;
 use function sprintf;
 use function stripos;
 use function strpos;
@@ -67,30 +69,30 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): void
+    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): void
     {
-        $this->perform($sqlId, $values, $fetchMode);
+        $this->perform($sqlId, $values, $fetchMode, $fetchArg);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array
+    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = '')
     {
-        $rowList = $this->perform($sqlId, $values, $fetchMode);
-        /** @var array<string, mixed> $row */
-        $row = (array) array_pop($rowList);
+        $rowList = $this->perform($sqlId, $values, $fetchMode, $fetchArg);
+        $item = $rowList[0];
+        assert(is_array($item) || is_object($item));
 
-        return $row;
+        return $item;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array
+    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): array
     {
         /** @var array<array<mixed>> $list */
-        $list =  $this->perform($sqlId, $values, $fetchMode);
+        $list =  $this->perform($sqlId, $values, $fetchMode, $fetchArg);
 
         return $list;
     }
@@ -105,10 +107,11 @@ class SqlQuery implements SqlQueryInterface
 
     /**
      * @param array<string, mixed> $values
+     * @param callable|int|string  $fetchArg
      *
      * @return array<mixed>
      */
-    private function perform(string $sqlId, array $values, int $fetchModode): array
+    private function perform(string $sqlId, array $values, int $fetchModode, $fetchArg = ''): array
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
@@ -122,10 +125,25 @@ class SqlQuery implements SqlQueryInterface
         assert($this->pdoStatement instanceof PDOStatement);
         $lastQuery = trim((string) $this->pdoStatement->queryString);
         $isSelect = stripos($lastQuery, 'select') === 0;
-        $result = $isSelect ? (array) $this->pdoStatement->fetchAll($fetchModode) : [];
+        $result = $isSelect ? $this->fetchAll($fetchModode, $fetchArg) : [];
         $this->logger->log($sqlId, $values);
 
         return $result;
+    }
+
+    /**
+     * @param callable|int|string $fetchArg
+     *
+     * @return array<mixed>
+     */
+    private function fetchAll(int $fetchModode, $fetchArg): array
+    {
+        assert($this->pdoStatement instanceof PDOStatement);
+        if ($fetchModode === PDO::FETCH_ASSOC) {
+            return (array) $this->pdoStatement->fetchAll($fetchModode);
+        }
+
+        return (array) $this->pdoStatement->fetchAll($fetchModode, $fetchArg);
     }
 
     /**

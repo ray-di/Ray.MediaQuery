@@ -113,6 +113,28 @@ For example, if the ID is `todo_item`, `todo_item.sql` SQL statement will be exe
 * Add a postfix of `item` if the return value of the SQL execution is a single line, or `list` if it is multiple lines.
 * The SQL file can contain multiple SQL statements. The last line of SELECT will be the return value.
 
+#### Entity
+
+* The SQL execution result can be hydrated to the entity class with `entity` parameter
+
+```php
+interface TodoItemInterface
+{
+    #[DbQuery('todo_item', entity: Todo::class)]
+    public function getItem(string $id): Todo;
+}
+```
+```php
+final class Todo
+{
+    /** @var string */
+    public $id;
+
+    /** @var string */
+    public $title;
+}
+```
+
 #### Web API
 
 * Customization such as header for authentication is done by binding Guzzle's `ClinetInterface`.
