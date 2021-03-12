@@ -4,4 +4,5 @@
 /composer.lock
 /phpunit.xml
 /.phpunit.result.cache
-.phpcs-cache
+/.phpcs-cache
+/coverage.xml
