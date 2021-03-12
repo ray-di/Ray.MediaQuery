@@ -80,5 +80,6 @@ class MediaQueryModule extends AbstractModule
         }
 
         $this->bind()->annotatedWith('media_query_config')->toInstance($config);
+        $this->bind()->annotatedWith('web_api_query_domain')->toInstance($webQueryConfig->urlTemplateBindings);
     }
 }

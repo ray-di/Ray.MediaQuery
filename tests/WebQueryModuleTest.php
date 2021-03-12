@@ -23,9 +23,8 @@ class WebQueryModuleTest extends TestCase
     protected function setUp(): void
     {
         $mediaQueries = Queries::fromClasses([FooItemInterface::class]);
-        $uriBindings = ['domain' => 'httpbin.org'];
         $mediaQueryJson = __DIR__ . '/Fake/web_query.json';
-        $module = new MediaQueryModule($mediaQueries, [new WebQueryConfig($mediaQueryJson)], new ApiDomainModule($uriBindings));
+        $module = new MediaQueryModule($mediaQueries, [new WebQueryConfig($mediaQueryJson, ['domain' => 'httpbin.org'])]);
         $this->injector = new Injector($module);
         $this->logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
     }

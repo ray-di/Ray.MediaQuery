@@ -15,8 +15,15 @@ final class WebQueryConfig
     /** @var array<string, array{method: string, path: string}> */
     public $apis = [];
 
-    public function __construct(string $mediaQueryJson)
+    /** @var array<string, string> */
+    public $urlTemplateBindings;
+
+    /**
+     * @param array<string, string> $urlTemplateBindings
+     */
+    public function __construct(string $mediaQueryJson, array $urlTemplateBindings = [])
     {
+        $this->urlTemplateBindings = $urlTemplateBindings;
         /** @var object $json */
         $json = json_decode((string) file_get_contents($mediaQueryJson));
         assert(property_exists($json, 'webQuery'));
