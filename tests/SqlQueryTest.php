@@ -111,7 +111,7 @@ class SqlQueryTest extends TestCase
     {
         $dateTime = '2011-10-17 17:47:46';
         $this->sqlQuery->exec('promise_add', ['id' => '1', 'title' => 'talk', 'time' => new DateTime($dateTime)]);
-        $item = $this->sqlQuery->getRow('promise_item', ['id' => 1]);
+        $item = (array) $this->sqlQuery->getRow('promise_item', ['id' => 1]);
         $this->assertContains($dateTime, $item);
 
         return $this->sqlQuery;

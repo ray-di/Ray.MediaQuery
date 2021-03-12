@@ -11,22 +11,25 @@ interface SqlQueryInterface
 {
     /**
      * @param array<string, mixed> $values
+     * @param int|string|callable  $fetchArg
      */
-    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): void;
+    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): void;
 
     /**
      * @param array<string, mixed> $values
+     * @param int|string|callable  $fetchArg
      *
-     * @return array<mixed>
+     * @return array<mixed>|object
      */
-    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array;
+    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = '');
 
     /**
      * @param array<string, mixed> $values
+     * @param int|string|callable  $fetchArg
      *
      * @return array<array<mixed>>
      */
-    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC): array;
+    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): array;
 
     /**
      * @param array<string, mixed> $values

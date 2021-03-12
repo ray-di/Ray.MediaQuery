@@ -18,8 +18,12 @@ final class DbQuery
     /** @var string */
     public $id;
 
-    public function __construct(string $id = '')
+    /** @var string */
+    public $entity;
+
+    public function __construct(string $id, string $entity = '')
     {
         $this->id = $id;
+        $this->entity = $entity;
     }
 }

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use PDO;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 
+use function class_exists;
 use function substr;
 
 class DbQueryInterceptor implements MethodInterceptor
@@ -30,7 +32,7 @@ class DbQueryInterceptor implements MethodInterceptor
     }
 
     /**
-     * @return PagesInterface|array<mixed>
+     * @return array<mixed>|object|PagesInterface
      */
     public function invoke(MethodInvocation $invocation)
     {
@@ -43,23 +45,26 @@ class DbQueryInterceptor implements MethodInterceptor
             return $this->getPager($dbQury->id, $values, $pager);
         }
 
-        return $this->sqlQuery($dbQury->id, $values);
+        $fetchStyle = class_exists($dbQury->entity) ? PDO::FETCH_CLASS : PDO::FETCH_ASSOC;
+
+        return $this->sqlQuery($dbQury->id, $values, $fetchStyle, $dbQury->entity);
     }
 
     /**
      * @param array<string, mixed> $values
+     * @param int|string|callable  $fetchArg
      *
-     * @return array<mixed>
+     * @return array<mixed>|object
      */
-    private function sqlQuery(string $queryId, array $values): array
+    private function sqlQuery(string $queryId, array $values, int $fetchStyle, $fetchArg)
     {
         $postFix = substr($queryId, -4);
         if ($postFix === 'list') {
-            return $this->sqlQuery->getRowList($queryId, $values);
+            return $this->sqlQuery->getRowList($queryId, $values, $fetchStyle, $fetchArg);
         }
 
         if ($postFix === 'item') {
-            return $this->sqlQuery->getRow($queryId, $values);
+            return $this->sqlQuery->getRow($queryId, $values, $fetchStyle, $fetchArg);
         }
 
         $this->sqlQuery->exec($queryId, $values);
