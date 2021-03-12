@@ -102,6 +102,28 @@ SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッ
 * SQL実行の戻り値が単一行なら`item`、複数行なら`list`のpostfixを付けます。
 * SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが返り値になります。
 
+#### Entity
+
+* SQL実行結果を用意したエンティティクラスを`entity`で指定して変換 (hydrate)することができます。
+
+```php
+interface TodoItemInterface
+{
+    #[DbQuery('todo_item', entity: Todo::class)]
+    public function getItem(string $id): Todo;
+}
+```
+```php
+final class Todo
+{
+    /** @var string */
+    public $id;
+
+    /** @var string */
+    public $title;
+}
+```
+
 ### Web API
 
 * メソッドの引数が `uri`で指定されたURI templateにバインドされ、Web APIリクエストオブジェクトが生成されます。
