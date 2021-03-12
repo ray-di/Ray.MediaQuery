@@ -27,7 +27,7 @@ Define the interface for media access.
 
 ### DB
 
-Specify the ID of the SQL with the attribute `DbQuery`.
+Specify the SQL ID with the attribute `DbQuery`.
 
 ```php
 interface TodoAddInterface
@@ -39,7 +39,7 @@ interface TodoAddInterface
 
 ### Web API
 
-Specify the Web API.
+Specify the Web request ID with the attribute `WebQuery`.
 
 ```php
 interface PostItemInterface
@@ -49,7 +49,7 @@ interface PostItemInterface
 }
 ```
 
-Create the API path list file as `web_query.json`
+Create the web api path list file as `web_query.json`.
 
 ```json
 {
@@ -62,7 +62,7 @@ Create the API path list file as `web_query.json`
 
 ### Module
 
-MediaQueryModule takes the configuration of `DbQueryConfig`, `WebQueryConfig` or both and configures the DB and Web API.
+MediaQueryModule binds the execution of SQL and Web API requests to an interface by setting `DbQueryConfig` or `WebQueryConfig` or both.
 
 ```php
 use Ray\AuraSqlModule\AuraSqlModule;

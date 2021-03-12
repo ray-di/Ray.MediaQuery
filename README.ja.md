@@ -18,7 +18,7 @@
 
 ### データベースの場合
 
-メソッドに`DbQuery`の属性をつけて、SQLのIDを指定します。
+`DbQuery`属性でSQLのIDを指定します。
 
 ```php
 interface TodoAddInterface
@@ -30,7 +30,7 @@ interface TodoAddInterface
 
 ### Web APIの場合
 
-Web API IDIを指定します。
+`WebQuery`属性でWeb APIのIDを指定します。
 
 ```php
 interface PostItemInterface
@@ -40,7 +40,7 @@ interface PostItemInterface
 }
 ```
 
-APIパスのファイルを`media_query.json`として用意します。
+APIパスリストのファイルを`media_query.json`として作成します。
 
 ```json
 {
@@ -51,7 +51,7 @@ APIパスのファイルを`media_query.json`として用意します。
 }
 ```
 
-MediaQueryModuleは、`DbQueryConfig`や`WebQueryConfig`、またはその両方の設定を指定して、DBやWeb APIの設定を行います。
+MediaQueryModuleは、`DbQueryConfig`や`WebQueryConfig`、またはその両方の設定でSQLやWeb APIリクエストの実行をインターフェイスに束縛します。
 
 ```php
 use Ray\AuraSqlModule\AuraSqlModule;
