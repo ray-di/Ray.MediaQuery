@@ -53,7 +53,7 @@ Create the web api path list file as `web_query.json`.
 
 ```json
 {
-    "$schema": "https://ray-di.github.io/Ray.MediaQuery/media_query.json",
+    "$schema": "https://ray-di.github.io/Ray.MediaQuery/schema/web_query.json",
     "webQuery": [
         {"id": "user_item", "method": "GET", "path": "https://{domain}/users/{id}"}
     ]
