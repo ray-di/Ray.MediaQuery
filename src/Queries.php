@@ -41,6 +41,13 @@ final class Queries
 
     public static function fromDir(string $queryDir): self
     {
+        /** @var array<string, Queries> $cache */
+        static $cache;
+
+        if (isset($cache[$queryDir])) {
+            return $cache[$queryDir];
+        }
+
         assert(is_dir($queryDir));
         $getClassName = new GetClassName();
         $classes = [];
@@ -54,8 +61,10 @@ final class Queries
         }
 
         sort($classes);
+        $queries = new self($classes);
+        $cache[$queryDir] = $queries;
 
-        return new self($classes);
+        return $queries;
     }
 
     private static function files(string $dir): RegexIterator
