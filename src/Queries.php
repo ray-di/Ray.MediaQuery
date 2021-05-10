@@ -45,7 +45,7 @@ final class Queries
         static $cache;
 
         if (isset($cache[$queryDir])) {
-            return$cache[$queryDir];
+            return $cache[$queryDir];
         }
 
         assert(is_dir($queryDir));
