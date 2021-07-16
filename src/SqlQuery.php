@@ -20,6 +20,7 @@ use function file_exists;
 use function file_get_contents;
 use function is_array;
 use function is_object;
+use function preg_replace;
 use function sprintf;
 use function stripos;
 use function strpos;
@@ -123,8 +124,9 @@ class SqlQuery implements SqlQueryInterface
         }
 
         assert($this->pdoStatement instanceof PDOStatement);
-        $lastQuery = trim((string) $this->pdoStatement->queryString);
-        $isSelect = stripos($lastQuery, 'select') === 0;
+        $lastQuery = (string) $this->pdoStatement->queryString;
+        $query = trim((string) preg_replace('/\/\*(.*?)\*\//u', '', $lastQuery));
+        $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
         $result = $isSelect ? $this->fetchAll($fetchModode, $fetchArg) : [];
         $this->logger->log($sqlId, $values);
 
