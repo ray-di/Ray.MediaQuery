@@ -36,6 +36,7 @@ class SqlQuery implements SqlQueryInterface
 
     /** @var string */
     private $sqlDir;
+    private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
 
     /**
      * @var ?PDOStatement
@@ -125,7 +126,7 @@ class SqlQuery implements SqlQueryInterface
 
         assert($this->pdoStatement instanceof PDOStatement);
         $lastQuery = (string) $this->pdoStatement->queryString;
-        $query = trim((string) preg_replace('/\/\*(.*?)\*\//u', '', $lastQuery));
+        $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
         $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
         $result = $isSelect ? $this->fetchAll($fetchModode, $fetchArg) : [];
         $this->logger->log($sqlId, $values);
