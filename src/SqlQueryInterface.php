@@ -36,7 +36,7 @@ interface SqlQueryInterface
      */
     public function getCount(string $sqlId, array $values): int;
 
-    public function getStatement(): ?PDOStatement;
+    public function getStatement(): ?PDOStatement; // @phpstan-ignore-line
 
     /**
      * @param array<string, mixed> $values
