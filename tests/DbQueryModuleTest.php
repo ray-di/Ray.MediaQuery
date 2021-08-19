@@ -11,10 +11,12 @@ use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\Entity\Todo;
+use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Queries\PromiseAddInterface;
 use Ray\MediaQuery\Queries\PromiseItemInterface;
 use Ray\MediaQuery\Queries\PromiseListInterface;
 use Ray\MediaQuery\Queries\TodoAddInterface;
+use Ray\MediaQuery\Queries\TodoConstcuctEntityInterface;
 use Ray\MediaQuery\Queries\TodoEntityInterface;
 use Ray\MediaQuery\Queries\TodoItemInterface;
 use Ray\MediaQuery\Queries\TodoListInterface;
@@ -45,6 +47,7 @@ class DbQueryModuleTest extends TestCase
             PromiseItemInterface::class,
             PromiseListInterface::class,
             TodoEntityInterface::class,
+            TodoConstcuctEntityInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
@@ -125,7 +128,19 @@ class DbQueryModuleTest extends TestCase
         $todoList = $this->injector->getInstance(TodoEntityInterface::class);
         $list = $todoList->getlist();
         $this->assertInstanceOf(Todo::class, $list[0]);
+        $this->assertSame('run', $list[0]->title);
         $item = $todoList->getItem('1');
         $this->assertInstanceOf(Todo::class, $item);
+    }
+
+    public function testEntityWithConstructor(): void
+    {
+        /** @var TodoEntityInterface $todoList */
+        $todoList = $this->injector->getInstance(TodoConstcuctEntityInterface::class);
+        $list = $todoList->getlist();
+        $this->assertInstanceOf(TodoConstruct::class, $list[0]);
+        $this->assertSame('run', $list[0]->title);
+        $item = $todoList->getItem('1');
+        $this->assertInstanceOf(TodoConstruct::class, $item);
     }
 }
