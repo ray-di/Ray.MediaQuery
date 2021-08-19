@@ -14,12 +14,14 @@ use Ray\MediaQuery\Exception\InvalidSqlException;
 
 use function array_pop;
 use function assert;
+use function class_exists;
 use function explode;
 use function file;
 use function file_exists;
 use function file_get_contents;
 use function is_array;
 use function is_object;
+use function is_string;
 use function preg_replace;
 use function sprintf;
 use function stripos;
@@ -108,8 +110,9 @@ class SqlQuery implements SqlQueryInterface
     }
 
     /**
-     * @param array<string, mixed> $values
-     * @param callable|int|string  $fetchArg
+     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchModode
+     * @param array<string, mixed>                              $values
+     * @param callable|int|string                               $fetchArg
      *
      * @return array<mixed>
      */
@@ -135,7 +138,8 @@ class SqlQuery implements SqlQueryInterface
     }
 
     /**
-     * @param callable|int|string $fetchArg
+     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchModode
+     * @param callable|int|string                               $fetchArg
      *
      * @return array<mixed>
      */
@@ -146,7 +150,17 @@ class SqlQuery implements SqlQueryInterface
             return (array) $this->pdoStatement->fetchAll($fetchModode);
         }
 
-        return (array) $this->pdoStatement->fetchAll($fetchModode, $fetchArg);
+        if ($fetchModode === PDO::FETCH_CLASS) {
+            return (array) $this->pdoStatement->fetchAll($fetchModode, $fetchArg);
+        }
+
+        // PDO::FETCH_FUNC
+        return (array) $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, /** @param list<mixed> $args */static function (...$args) use ($fetchArg) {
+            assert(is_string($fetchArg) && class_exists($fetchArg));
+
+            /** @psalm-suppress MixedMethodCall */
+            return new $fetchArg(...$args);
+        });
     }
 
     /**

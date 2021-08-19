@@ -10,22 +10,25 @@ use PDOStatement;
 interface SqlQueryInterface
 {
     /**
-     * @param array<string, mixed> $values
-     * @param int|string|callable  $fetchArg
+     * @param array<string, mixed>                              $values
+     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchMode
+     * @param int|string|callable                               $fetchArg
      */
     public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): void;
 
     /**
-     * @param array<string, mixed> $values
-     * @param int|string|callable  $fetchArg
+     * @param array<string, mixed>                              $values
+     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchMode
+     * @param int|string|callable                               $fetchArg
      *
      * @return array<mixed>|object
      */
     public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = '');
 
     /**
-     * @param array<string, mixed> $values
-     * @param int|string|callable  $fetchArg
+     * @param array<string, mixed>                              $values
+     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchMode
+     * @param int|string|callable                               $fetchArg
      *
      * @return array<array<mixed>>
      */
