@@ -132,6 +132,19 @@ final class Todo
 }
 ```
 
+Use `CameCaseTrait` to convert a property to camelCase.
+
+```php
+use Ray\MediaQuery\CamelCaseTrait;
+
+class Invoice
+{
+    use CamelCaseTrait;
+
+    public $userName;
+}
+```
+
 If the entity has a constructor, the constructor will be called with the fetched data.
 
 ```php
@@ -209,7 +222,7 @@ class UserId implements ToScalarInterface
 ```
 
 ```sql
-INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
+INSERT INTO memo (user_id, memo) VALUES (:user_id, :memo);
 ```
 
 ### Parameter Injection

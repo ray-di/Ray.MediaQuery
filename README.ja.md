@@ -121,6 +121,19 @@ final class Todo
 }
 ```
 
+プロパティをキャメルケースに変換する場合には`CameCaseTrait`を使います。
+
+```php
+use Ray\MediaQuery\CamelCaseTrait;
+
+class Invoice
+{
+    use CamelCaseTrait;
+
+    public $userName;
+}
+```
+
 コンストラクタがあると、フェッチしたデータでコールされます。
 
 ```php
@@ -199,7 +212,7 @@ class UserId implements ToScalarInterface
 ```
 
 ```sql
-INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
+INSERT INTO memo (user_id, memo) VALUES (:user_id, :memo);
 ```
 
 ### パラメーターインジェクション
