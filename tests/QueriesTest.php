@@ -25,4 +25,13 @@ class QueriesTest extends TestCase
             TodoItemInterface::class,
         ], $mediaQueries->classes);
     }
+
+    public function testFromDirCache(): void
+    {
+        $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDir');
+        $this->assertSame([
+            TodoAddInterface::class,
+            TodoItemInterface::class,
+        ], $mediaQueries->classes);
+    }
 }
