@@ -127,11 +127,33 @@ interface TodoItemInterface
 ```php
 final class Todo
 {
-    /** @var string */
-    public $id;
+    public string $id;
+    public string $title;
+}
+```
 
-    /** @var string */
-    public $title;
+Use `CameCaseTrait` to convert a property to camelCase.
+
+```php
+use Ray\MediaQuery\CamelCaseTrait;
+
+class Invoice
+{
+    use CamelCaseTrait;
+
+    public $userName;
+}
+```
+
+If the entity has a constructor, the constructor will be called with the fetched data.
+
+```php
+final class Todo
+{
+    public function __construct(
+        public string $id,
+        public string $title
+    ) {}
 }
 ```
 
@@ -160,7 +182,7 @@ interface TaskAddInterface
 The value will be converted to a date formatted string at SQL execution time or Web API request time.
 
 ```sql
-INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 00:00:00
+INSERT INTO task (title, created_at) VALUES (:title, :createdAt); # 2021-2-14 00:00:00
 ```
 
 If no value is passed, the bound current time will be injected.
@@ -200,7 +222,7 @@ class UserId implements ToScalarInterface
 ```
 
 ```sql
-INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
+INSERT INTO memo (user_id, memo) VALUES (:user_id, :memo);
 ```
 
 ### Parameter Injection
@@ -288,6 +310,8 @@ You can use either [doctrine annotations](https://github.com/doctrine/annotation
 The next two are the same.
 
 ```php
+use Ray\MediaQuery\Annotation\DbQuery;
+
 #[DbQuery('user_add')]
 public function add1(string $id, string $title): void;
 

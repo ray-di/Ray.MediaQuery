@@ -11,6 +11,7 @@ use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 
 use function class_exists;
+use function method_exists;
 use function substr;
 
 class DbQueryInterceptor implements MethodInterceptor
@@ -45,14 +46,31 @@ class DbQueryInterceptor implements MethodInterceptor
             return $this->getPager($dbQury->id, $values, $pager);
         }
 
-        $fetchStyle = class_exists($dbQury->entity) ? PDO::FETCH_CLASS : PDO::FETCH_ASSOC;
+        $fetchStyle = $this->getFetchMode($dbQury);
 
         return $this->sqlQuery($dbQury->id, $values, $fetchStyle, $dbQury->entity);
     }
 
     /**
-     * @param array<string, mixed> $values
-     * @param int|string|callable  $fetchArg
+     * @return  PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
+     */
+    private function getFetchMode(DbQuery $dbQuery): int
+    {
+        if (! class_exists($dbQuery->entity)) {
+            return PDO::FETCH_ASSOC;
+        }
+
+        if (method_exists($dbQuery->entity, '__construct')) {
+            return PDO::FETCH_FUNC;
+        }
+
+        return PDO::FETCH_CLASS;
+    }
+
+    /**
+     * @param array<string, mixed>                              $values
+     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
+     * @param int|string|callable                               $fetchArg
      *
      * @return array<mixed>|object
      */

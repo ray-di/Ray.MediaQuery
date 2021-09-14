@@ -116,11 +116,33 @@ interface TodoItemInterface
 ```php
 final class Todo
 {
-    /** @var string */
-    public $id;
+    public string $id;
+    public string $title;
+}
+```
 
-    /** @var string */
-    public $title;
+プロパティをキャメルケースに変換する場合には`CameCaseTrait`を使います。
+
+```php
+use Ray\MediaQuery\CamelCaseTrait;
+
+class Invoice
+{
+    use CamelCaseTrait;
+
+    public $userName;
+}
+```
+
+コンストラクタがあると、フェッチしたデータでコールされます。
+
+```php
+final class Todo
+{
+    public function __construct(
+        public string $id,
+        public string $title
+    ) {}
 }
 ```
 
@@ -151,7 +173,7 @@ interface TaskAddInterface
 値はSQL実行時やWeb APIリクエスト時に日付フォーマットされた文字列に変換されます。
 
 ```sql
-INSERT INTO task (title, created_at) VALUES (:title, :createdAt); // 2021-2-14 00:00:00
+INSERT INTO task (title, created_at) VALUES (:title, :createdAt); # 2021-2-14 00:00:00
 ```
 
 値を渡さないとバインドされている現在時刻がインジェクションされます。
@@ -190,7 +212,7 @@ class UserId implements ToScalarInterface
 ```
 
 ```sql
-INSERT INTO  memo (user_id, memo) VALUES (:user_id, :memo);
+INSERT INTO memo (user_id, memo) VALUES (:user_id, :memo);
 ```
 
 ### パラメーターインジェクション
@@ -296,6 +318,8 @@ public function testAdd(): void
 属性を表すのに[doctrineアノテーション](https://github.com/doctrine/annotations/) 、[アトリビュート](https://www.php.net/manual/ja/language.attributes.overview.php) どちらも利用できます。 次の2つは同じものです。
 
 ```php
+use Ray\MediaQuery\Annotation\DbQuery;
+
 #[DbQuery('user_add')]
 public function add1(string $id, string $title): void;
 
