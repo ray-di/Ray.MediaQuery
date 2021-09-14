@@ -8,10 +8,10 @@ use Ray\MediaQuery\Queries\PromiseItemInterface;
 class FakeFoo
 {
     /** @var PromiseAddInterface */
-    private PromiseAddInterface $promiseAdd;
+    private $promiseAdd;
 
     /** @var PromiseItemInterface  */
-    private PromiseItemInterface $promiseItem;
+    private $promiseItem;
 
     public function __construct(PromiseAddInterface $promiseAdd, PromiseItemInterface $promiseItem)
     {

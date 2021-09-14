@@ -9,6 +9,10 @@ use Ray\MediaQuery\Annotation\DbQuery;
 
 interface TodoAddInterface
 {
+    /**
+     * @DbQuery("todo_add")
+     * @Transactional
+     */
     #[DbQuery('todo_add'), Transactional]
     public function __invoke(string $id, string $title): void;
 }
