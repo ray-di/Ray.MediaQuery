@@ -42,7 +42,7 @@ class SqlQuery implements SqlQueryInterface
      * @var ?PDOStatement
      * @psalm-readonly
      */
-    private $pdoStatement; // @phpstan-ignore-line
+    private $pdoStatement;
 
     /** @var AuraSqlPagerFactoryInterface */
     private $pagerFactory;
@@ -172,7 +172,6 @@ class SqlQuery implements SqlQueryInterface
         return $sqls;
     }
 
-    /** @phpstan-ignore-next-line */
     public function getStatement(): PDOStatement
     {
         assert($this->pdoStatement instanceof PDOStatement);

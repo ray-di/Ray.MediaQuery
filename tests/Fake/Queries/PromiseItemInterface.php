@@ -9,6 +9,7 @@ use Ray\MediaQuery\Annotation\DbQuery;
 interface PromiseItemInterface
 {
     /**
+     * @DbQuery("promise_item")
      * @return array{id: string, title: string, time: string}
      */
     #[DbQuery('promise_item')]
