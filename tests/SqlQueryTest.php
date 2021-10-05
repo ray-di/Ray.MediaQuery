@@ -70,6 +70,16 @@ class SqlQueryTest extends TestCase
     /**
      * @depends testExec
      */
+    public function testGetRowNotFound(): void
+    {
+        $result = $this->sqlQuery->getRow('todo_item', ['id' => '__invalid__']);
+
+        $this->assertSame([], $result);
+    }
+
+    /**
+     * @depends testExec
+     */
     public function testGetRowList(): void
     {
         $result = $this->sqlQuery->getRowList('todo_list', []);
