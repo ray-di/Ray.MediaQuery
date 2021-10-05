@@ -15,6 +15,7 @@ use Ray\MediaQuery\Exception\InvalidSqlException;
 use function array_pop;
 use function assert;
 use function class_exists;
+use function count;
 use function explode;
 use function file;
 use function file_exists;
@@ -84,6 +85,10 @@ class SqlQuery implements SqlQueryInterface
     public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = '')
     {
         $rowList = $this->perform($sqlId, $values, $fetchMode, $fetchArg);
+        if (! count($rowList)) {
+            return [];
+        }
+
         $item = $rowList[0];
         assert(is_array($item) || is_object($item));
 
