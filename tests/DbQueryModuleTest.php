@@ -52,7 +52,7 @@ class DbQueryModuleTest extends TestCase
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
         $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:'));
-        $this->injector = new Injector($module);
+        $this->injector = new Injector($module, __DIR__ . '/tmp');
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
