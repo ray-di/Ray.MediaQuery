@@ -21,7 +21,7 @@ interface SqlQueryInterface
      * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchMode
      * @param int|string|callable                               $fetchArg
      *
-     * @return array<mixed>|object
+     * @return array<mixed>|object|null
      */
     public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = '');
 

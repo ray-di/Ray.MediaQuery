@@ -33,7 +33,7 @@ class DbQueryInterceptor implements MethodInterceptor
     }
 
     /**
-     * @return array<mixed>|object|PagesInterface
+     * @return array<mixed>|object|PagesInterface|null
      */
     public function invoke(MethodInvocation $invocation)
     {
@@ -72,7 +72,7 @@ class DbQueryInterceptor implements MethodInterceptor
      * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
      * @param int|string|callable                               $fetchArg
      *
-     * @return array<mixed>|object
+     * @return array<mixed>|object|null
      */
     private function sqlQuery(string $queryId, array $values, int $fetchStyle, $fetchArg)
     {

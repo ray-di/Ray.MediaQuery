@@ -86,7 +86,7 @@ class SqlQuery implements SqlQueryInterface
     {
         $rowList = $this->perform($sqlId, $values, $fetchMode, $fetchArg);
         if (! count($rowList)) {
-            return [];
+            return null;
         }
 
         $item = $rowList[0];
