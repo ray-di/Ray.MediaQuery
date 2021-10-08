@@ -74,7 +74,7 @@ class SqlQueryTest extends TestCase
     {
         $result = $this->sqlQuery->getRow('todo_item', ['id' => '__invalid__']);
 
-        $this->assertSame([], $result);
+        $this->assertNull($result);
     }
 
     /**
