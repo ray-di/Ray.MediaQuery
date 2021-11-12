@@ -51,6 +51,7 @@ final class ClassesInDirectories
 
             return;
         }
+
         /** @psalm-suppress all */
         foreach ((new ClassReflector($sourceLocator))->getAllClasses() as $class) { // @phpstan-ignore-line
             yield $class->getName();
