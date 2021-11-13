@@ -18,7 +18,8 @@
         "pagerfanta/pagerfanta": "^1.1",
         "ray/aop": "^2.10.4",
         "ray/aura-sql-module": "^1.10",
-        "ray/di": "^2.12"
+        "ray/di": "^2.12",
+        "roave/better-reflection": "^4.0 || 5.0.x-dev"
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.4",
@@ -50,8 +51,8 @@
             "./vendor/bin/psalm --clear-cache"
         ],
         "sa": [
-            "./vendor/bin/phpstan analyse -c phpstan.neon",
-            "psalm --show-info=true"
+            "psalm --show-info=true",
+            "./vendor/bin/phpstan analyse -c phpstan.neon"
         ],
         "tests": [
             "@cs",

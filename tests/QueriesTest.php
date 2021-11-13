@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use Ray\MediaQuery\FromDir\TodoAddInterface;
 use Ray\MediaQuery\FromDir\TodoItemInterface;
 
+use function sort;
+
 class QueriesTest extends TestCase
 {
     public function testFromClasses(): void
@@ -20,6 +22,7 @@ class QueriesTest extends TestCase
     public function testFromDir(): void
     {
         $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDir');
+        sort($mediaQueries->classes);
         $this->assertSame([
             TodoAddInterface::class,
             TodoItemInterface::class,
@@ -29,6 +32,7 @@ class QueriesTest extends TestCase
     public function testFromDirCache(): void
     {
         $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDir');
+        sort($mediaQueries->classes);
         $this->assertSame([
             TodoAddInterface::class,
             TodoItemInterface::class,

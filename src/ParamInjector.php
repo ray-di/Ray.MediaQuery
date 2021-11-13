@@ -4,16 +4,12 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use DateTimeInterface;
 use Ray\Aop\MethodInvocation;
 use Ray\Di\InjectorInterface;
-use Ray\MediaQuery\Exception\CouldNotBeConvertedException;
 use ReflectionNamedType;
 use ReflectionParameter;
+
 use function count;
-use function get_class;
-use function is_object;
-use function method_exists;
 
 final class ParamInjector implements ParamInjectorInterface
 {
@@ -60,8 +56,7 @@ final class ParamInjector implements ParamInjectorInterface
             return $parameter->getDefaultValue();
         }
 
-        $object = $this->injector->getInstance($type->getName());
-        assert(is_object($object));
+        $object = $this->injector->getInstance($type = $type->getName()); // @phpstan-ignore-line
 
         return $object;
     }
