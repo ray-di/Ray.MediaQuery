@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use function WyriHaximus\listClassesInDirectory;
+
 final class Queries
 {
     /**
@@ -30,9 +32,11 @@ final class Queries
 
     public static function fromDir(string $queryDir): self
     {
+        $listClass = listClassesInDirectory($queryDir);
+        /** @var list<class-string> $classes */
         $classes = [];
-        $genClasses = ClassesInDirectories::list($queryDir);
-        foreach ($genClasses as $class) {
+        foreach ($listClass as $class) {
+            /** @var class-string $class */
             $classes[] = $class;
         }
 
