@@ -14,6 +14,9 @@ use Roave\BetterReflection\SourceLocator\Type\DirectoriesSourceLocator;
 
 use const PHP_VERSION_ID;
 
+/**
+ * @psalm-suppress all
+ */
 final class ClassesInDirectories
 {
     /**
@@ -46,7 +49,7 @@ final class ClassesInDirectories
 
         if (PHP_VERSION_ID >= 80000) {
             foreach ((new DefaultReflector($sourceLocator))->reflectAllClasses() as $class) {
-                yield $class->getName();
+                yield $class->getName(); // @phpstan-ignore-line
             }
 
             return;
