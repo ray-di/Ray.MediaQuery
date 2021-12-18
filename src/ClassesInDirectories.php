@@ -46,11 +46,12 @@ final class ClassesInDirectories
 
         if (PHP_VERSION_ID >= 80000) {
             foreach ((new DefaultReflector($sourceLocator))->reflectAllClasses() as $class) {
-                yield $class->getName();
+                yield $class->getName(); // @phpstan-ignore-line
             }
 
             return;
         }
+
         /** @psalm-suppress all */
         foreach ((new ClassReflector($sourceLocator))->getAllClasses() as $class) { // @phpstan-ignore-line
             yield $class->getName();
