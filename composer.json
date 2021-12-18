@@ -19,7 +19,7 @@
         "ray/aop": "^2.10.4",
         "ray/aura-sql-module": "^1.10",
         "ray/di": "^2.12",
-        "roave/better-reflection": "^4.0 || 5.0.x-dev"
+        "wyrihaximus/list-classes-in-directory": "^1.4"
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.4",
