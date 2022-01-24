@@ -12,11 +12,12 @@ use Roave\BetterReflection\SourceLocator\Type\AggregateSourceLocator;
 use Roave\BetterReflection\SourceLocator\Type\AutoloadSourceLocator;
 use Roave\BetterReflection\SourceLocator\Type\DirectoriesSourceLocator;
 
+use function assert;
+use function class_exists;
+use function interface_exists;
+
 use const PHP_VERSION_ID;
 
-/**
- * @psalm-suppress all
- */
 final class ClassesInDirectories
 {
     /**
@@ -49,7 +50,10 @@ final class ClassesInDirectories
 
         if (PHP_VERSION_ID >= 80000) {
             foreach ((new DefaultReflector($sourceLocator))->reflectAllClasses() as $class) {
-                yield $class->getName(); // @phpstan-ignore-line
+                $className = $class->getName();
+                assert(class_exists($className) || interface_exists($className));
+
+                yield $className;
             }
 
             return;
