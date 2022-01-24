@@ -7,6 +7,7 @@ namespace Ray\MediaQuery;
 use Aura\Sql\ExtendedPdo;
 use DateTime;
 use Pagerfanta\View\DefaultView;
+use PDO;
 use PdoStatement;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
@@ -33,7 +34,7 @@ class SqlQueryTest extends TestCase
     protected function setUp(): void
     {
         $sqlDir = __DIR__ . '/sql';
-        $pdo = new ExtendedPdo('sqlite::memory:');
+        $pdo = new ExtendedPdo('sqlite::memory:', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true]);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
         $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), $this->insertData);
