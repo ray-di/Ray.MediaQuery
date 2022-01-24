@@ -17,7 +17,6 @@ use function assert;
 use function class_exists;
 use function count;
 use function explode;
-use function file;
 use function file_exists;
 use function file_get_contents;
 use function is_array;
@@ -212,9 +211,8 @@ class SqlQuery implements SqlQueryInterface
     private function getSql(string $sqlId): string
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
-        $file = (array) file($sqlFile);
-        $firstRow = (string) $file[0];
+        $sql = file_get_contents($sqlFile);
 
-        return trim($firstRow, "; \n\r\t\v\0");
+        return trim($sql, "; \n\r\t\v\0");
     }
 }
