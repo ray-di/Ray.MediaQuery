@@ -211,7 +211,7 @@ class SqlQuery implements SqlQueryInterface
     private function getSql(string $sqlId): string
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
-        $sql = file_get_contents($sqlFile);
+        $sql = (string) file_get_contents($sqlFile);
 
         return trim($sql, "; \n\r\t\v\0");
     }
