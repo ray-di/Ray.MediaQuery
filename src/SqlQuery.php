@@ -6,11 +6,13 @@ namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
 use PDO;
+use PDOException;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\Di\Di\Named;
 use Ray\MediaQuery\Exception\InvalidSqlException;
+use Ray\MediaQuery\Exception\PdoPerformException;
 
 use function array_pop;
 use function assert;
@@ -22,6 +24,7 @@ use function file_get_contents;
 use function is_array;
 use function is_object;
 use function is_string;
+use function json_encode;
 use function preg_replace;
 use function sprintf;
 use function stripos;
@@ -128,7 +131,13 @@ class SqlQuery implements SqlQueryInterface
         ($this->paramConverter)($values);
         foreach ($sqls as $sql) {
             /** @psalm-suppress InaccessibleProperty */
-            $this->pdoStatement = $this->pdo->perform($sql, $values);
+            try {
+                $this->pdoStatement = $this->pdo->perform($sql, $values);
+            } catch (PDOException $e) {
+                $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values));
+
+                throw new PdoPerformException($msg);
+            }
         }
 
         assert($this->pdoStatement instanceof PDOStatement);
