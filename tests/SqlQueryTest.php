@@ -15,6 +15,7 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\LogicException;
+use Ray\MediaQuery\Exception\PdoPerformException;
 
 use function assert;
 use function count;
@@ -172,5 +173,11 @@ class SqlQueryTest extends TestCase
     {
         $this->expectException(LogicException::class);
         unset($pages[1]);
+    }
+
+    public function testWrongSql(): void
+    {
+        $this->expectException(PdoPerformException::class);
+        $this->sqlQuery->getRowList('error_list', []);
     }
 }
