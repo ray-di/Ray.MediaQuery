@@ -11,7 +11,7 @@ use Ray\MediaQuery\Entity\TodoConstruct;
 interface TodoConstcuctEntityInterface
 {
     /**
-     * @DbQuery(id="todo_item", entity=TodoConstruct::class)
+     * @DbQuery(id="todo_item", entity=TodoConstruct::class, type="row")
      */
     #[DbQuery('todo_item', entity: TodoConstruct::class)]
     public function getItem(string $id): TodoConstruct;
