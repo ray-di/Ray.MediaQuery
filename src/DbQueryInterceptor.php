@@ -12,7 +12,6 @@ use Ray\MediaQuery\Annotation\Pager;
 
 use function class_exists;
 use function method_exists;
-use function substr;
 
 class DbQueryInterceptor implements MethodInterceptor
 {
@@ -48,7 +47,7 @@ class DbQueryInterceptor implements MethodInterceptor
 
         $fetchStyle = $this->getFetchMode($dbQury);
 
-        return $this->sqlQuery($dbQury->id, $values, $fetchStyle, $dbQury->entity);
+        return $this->sqlQuery($dbQury, $values, $fetchStyle, $dbQury->entity);
     }
 
     /**
@@ -74,18 +73,17 @@ class DbQueryInterceptor implements MethodInterceptor
      *
      * @return array<mixed>|object|null
      */
-    private function sqlQuery(string $queryId, array $values, int $fetchStyle, $fetchArg)
+    private function sqlQuery(DbQuery $dbQuery, array $values, int $fetchStyle, $fetchArg)
     {
-        $postFix = substr($queryId, -4);
-        if ($postFix === 'list') {
-            return $this->sqlQuery->getRowList($queryId, $values, $fetchStyle, $fetchArg);
+        if ($dbQuery->type === 'row_list') {
+            return $this->sqlQuery->getRowList($dbQuery->id, $values, $fetchStyle, $fetchArg);
         }
 
-        if ($postFix === 'item') {
-            return $this->sqlQuery->getRow($queryId, $values, $fetchStyle, $fetchArg);
+        if ($dbQuery->type === 'row') {
+            return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchStyle, $fetchArg);
         }
 
-        $this->sqlQuery->exec($queryId, $values);
+        $this->sqlQuery->exec($dbQuery->id, $values);
 
         return [];
     }

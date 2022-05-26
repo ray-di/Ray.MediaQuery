@@ -10,9 +10,9 @@ use Ray\MediaQuery\Entity\Todo;
 interface TodoEntityInterface
 {
     /**
-     * @DbQuery(id="todo_item", entity=Todo::class)
+     * @DbQuery(id="todo_item", entity=Todo::class, type="row")
      */
-    #[DbQuery('todo_item', entity: Todo::class)]
+    #[DbQuery('todo_item', entity: Todo::class, type:'row')]
     public function getItem(string $id): Todo;
 
     /**

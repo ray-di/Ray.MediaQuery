@@ -21,9 +21,19 @@ final class DbQuery
     /** @var string */
     public $entity;
 
-    public function __construct(string $id, string $entity = '')
+    /**
+     * @Enum({"row", "row_list", "exec"})
+     * @var 'row'|'row_list'|'exec'
+     */
+    public $type = 'row_list';
+
+    /**
+     * @param 'row'|'row_list'|'exec' $type
+     */
+    public function __construct(string $id, string $entity = '', string $type = 'row_list')
     {
         $this->id = $id;
         $this->entity = $entity;
+        $this->type = $type;
     }
 }
