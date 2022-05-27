@@ -21,6 +21,7 @@ use Ray\MediaQuery\Queries\TodoConstcuctEntityInterface;
 use Ray\MediaQuery\Queries\TodoEntityInterface;
 use Ray\MediaQuery\Queries\TodoItemInterface;
 use Ray\MediaQuery\Queries\TodoListInterface;
+use Ray\MediaQuery\Queries\TodoListRowInterface;
 
 use function array_keys;
 use function assert;
@@ -44,6 +45,7 @@ class DbQueryModuleTest extends TestCase
             TodoAddInterface::class,
             TodoItemInterface::class,
             TodoListInterface::class,
+            TodoListRowInterface::class,
             PromiseAddInterface::class,
             PromiseItemInterface::class,
             PromiseListInterface::class,
@@ -70,6 +72,7 @@ class DbQueryModuleTest extends TestCase
         $todoAdd = $this->injector->getInstance(TodoAddInterface::class);
         assert($todoAdd instanceof TodoAddInterface);
         $todoAdd('1', 'run');
+        $todoAdd('2', 'walk');
         $log = (string) $this->logger;
         $this->assertStringContainsString('query: todo_add', $log);
         $todoItem = $this->injector->getInstance(TodoItemInterface::class);
@@ -79,6 +82,9 @@ class DbQueryModuleTest extends TestCase
         $this->assertSame(['id' => '1', 'title' => 'run'], $item);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query: todo_item', $log);
+        $todoListRow = $this->injector->getInstance(TodoListRowInterface::class);
+        $listRow = $todoListRow();
+        $this->assertSame(['id' => '1', 'title' => 'run'], $listRow);
     }
 
     public function testSelectItem(): void
