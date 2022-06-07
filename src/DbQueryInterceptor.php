@@ -95,6 +95,7 @@ class DbQueryInterceptor implements MethodInterceptor
             $values = $this->getDynamicPerPage($pager, $values);
         }
 
+        assert(is_int($pager->perPage));
         $this->logger->start();
         $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);
         $this->logger->log($queryId, $values);
@@ -111,7 +112,7 @@ class DbQueryInterceptor implements MethodInterceptor
     {
         $perPage = $pager->perPage;
         if (! isset($values[$perPage])) {
-            throw new InvalidPerPageVarNameException($perPage);
+            throw new InvalidPerPageVarNameException((string) $perPage);
         }
 
         $perPageInValues = $values[$perPage];
