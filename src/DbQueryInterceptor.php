@@ -10,7 +10,10 @@ use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 
+use function assert;
 use function class_exists;
+use function is_int;
+use function is_string;
 use function method_exists;
 
 class DbQueryInterceptor implements MethodInterceptor
@@ -37,17 +40,17 @@ class DbQueryInterceptor implements MethodInterceptor
     public function invoke(MethodInvocation $invocation)
     {
         $method = $invocation->getMethod();
-        /** @var DbQuery $dbQury */
-        $dbQury = $method->getAnnotation(DbQuery::class);
+        /** @var DbQuery $dbQuery */
+        $dbQuery = $method->getAnnotation(DbQuery::class);
         $pager = $method->getAnnotation(Pager::class);
         $values = $this->paramInjector->getArgumentes($invocation);
         if ($pager instanceof Pager) {
-            return $this->getPager($dbQury->id, $values, $pager);
+            return $this->getPager($dbQuery->id, $values, $pager);
         }
 
-        $fetchStyle = $this->getFetchMode($dbQury);
+        $fetchStyle = $this->getFetchMode($dbQuery);
 
-        return $this->sqlQuery($dbQury, $values, $fetchStyle, $dbQury->entity);
+        return $this->sqlQuery($dbQuery, $values, $fetchStyle, $dbQuery->entity);
     }
 
     /**
@@ -87,6 +90,14 @@ class DbQueryInterceptor implements MethodInterceptor
      */
     private function getPager(string $queryId, array $values, Pager $pager): PagesInterface
     {
+        if (is_string($pager->perPage)) {
+            $perPage = $pager->perPage;
+            $perPageInValues = $values[$perPage];
+            assert(is_int($perPageInValues));
+            $pager->perPage = $perPageInValues;
+            unset($values[$perPage]);
+        }
+
         $this->logger->start();
         $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);
         $this->logger->log($queryId, $values);
