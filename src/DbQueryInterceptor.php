@@ -9,6 +9,7 @@ use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
+use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 
 use function assert;
 use function class_exists;
@@ -91,11 +92,7 @@ class DbQueryInterceptor implements MethodInterceptor
     private function getPager(string $queryId, array $values, Pager $pager): PagesInterface
     {
         if (is_string($pager->perPage)) {
-            $perPage = $pager->perPage;
-            $perPageInValues = $values[$perPage];
-            assert(is_int($perPageInValues));
-            $pager->perPage = $perPageInValues;
-            unset($values[$perPage]);
+            $values = $this->getDynamicPerPage($pager, $values);
         }
 
         $this->logger->start();
@@ -103,5 +100,25 @@ class DbQueryInterceptor implements MethodInterceptor
         $this->logger->log($queryId, $values);
 
         return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     *
+     * @return array<string, mixed> $values
+     */
+    private function getDynamicPerPage(Pager $pager, array $values): array
+    {
+        $perPage = $pager->perPage;
+        if (! isset($values[$perPage])) {
+            throw new InvalidPerPageVarNameException($perPage);
+        }
+
+        $perPageInValues = $values[$perPage];
+        assert(is_int($perPageInValues));
+        $pager->perPage = $perPageInValues;
+        unset($values[$perPage]);
+
+        return $values;
     }
 }

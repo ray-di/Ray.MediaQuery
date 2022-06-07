@@ -13,7 +13,9 @@ use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
+use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Queries\DynamicPerPageInterface;
+use Ray\MediaQuery\Queries\DynamicPerPageInvalidInterface;
 use Ray\MediaQuery\Queries\PromiseAddInterface;
 use Ray\MediaQuery\Queries\PromiseItemInterface;
 use Ray\MediaQuery\Queries\PromiseListInterface;
@@ -51,6 +53,7 @@ class DbQueryModuleTest extends TestCase
             TodoEntityInterface::class,
             TodoConstcuctEntityInterface::class,
             DynamicPerPageInterface::class,
+            DynamicPerPageInvalidInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
@@ -158,5 +161,13 @@ class DbQueryModuleTest extends TestCase
         $this->assertSame(2, $page->maxPerPage);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query: todo_list', $log);
+    }
+
+    public function testDynamicPerPageVariableNameNotGiven(): void
+    {
+        $this->expectException(InvalidPerPageVarNameException::class);
+        $todoList = $this->injector->getInstance(DynamicPerPageInvalidInterface::class);
+        assert($todoList instanceof DynamicPerPageInvalidInterface);
+        ($todoList)(1);
     }
 }
