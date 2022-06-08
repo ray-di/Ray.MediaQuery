@@ -75,17 +75,11 @@ class DbQueryInterceptor implements MethodInterceptor
      */
     private function sqlQuery(DbQuery $dbQuery, array $values, int $fetchStyle, $fetchArg)
     {
-        if ($dbQuery->type === 'row_list') {
-            return $this->sqlQuery->getRowList($dbQuery->id, $values, $fetchStyle, $fetchArg);
-        }
-
         if ($dbQuery->type === 'row') {
             return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchStyle, $fetchArg);
         }
 
-        $this->sqlQuery->exec($dbQuery->id, $values);
-
-        return [];
+        return $this->sqlQuery->getRowList($dbQuery->id, $values, $fetchStyle, $fetchArg);
     }
 
     /**
