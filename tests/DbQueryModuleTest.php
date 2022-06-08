@@ -14,8 +14,10 @@ use Ray\Di\Injector;
 use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
+use Ray\MediaQuery\Exception\PerPageNotTypeNotInt;
 use Ray\MediaQuery\Queries\DynamicPerPageInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidInterface;
+use Ray\MediaQuery\Queries\DynamicPerPageInvalidType;
 use Ray\MediaQuery\Queries\PromiseAddInterface;
 use Ray\MediaQuery\Queries\PromiseItemInterface;
 use Ray\MediaQuery\Queries\PromiseListInterface;
@@ -54,6 +56,7 @@ class DbQueryModuleTest extends TestCase
             TodoConstcuctEntityInterface::class,
             DynamicPerPageInterface::class,
             DynamicPerPageInvalidInterface::class,
+            DynamicPerPageInvalidType::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
@@ -169,5 +172,12 @@ class DbQueryModuleTest extends TestCase
         $todoList = $this->injector->getInstance(DynamicPerPageInvalidInterface::class);
         assert($todoList instanceof DynamicPerPageInvalidInterface);
         ($todoList)(1);
+    }
+
+    public function testGivenPerPageShouldBeInt(): void
+    {
+        $this->expectException(PerPageNotTypeNotInt::class);
+        $todoList = $this->injector->getInstance(DynamicPerPageInvalidType::class);
+        $todoList('1'); // @phpstan-ignore-line
     }
 }
