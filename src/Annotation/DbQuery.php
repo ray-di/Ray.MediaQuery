@@ -28,7 +28,7 @@ final class DbQuery
     public $type = 'row_list';
 
     /**
-     * @param 'row'|'row_list'|'exec' $type
+     * @param 'row'|'row_list' $type
      */
     public function __construct(string $id, string $entity = '', string $type = 'row_list')
     {

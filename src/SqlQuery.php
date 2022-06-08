@@ -160,15 +160,15 @@ class SqlQuery implements SqlQueryInterface
     {
         assert($this->pdoStatement instanceof PDOStatement);
         if ($fetchModode === PDO::FETCH_ASSOC) {
-            return (array) $this->pdoStatement->fetchAll($fetchModode);
+            return $this->pdoStatement->fetchAll($fetchModode);
         }
 
         if ($fetchModode === PDO::FETCH_CLASS) {
-            return (array) $this->pdoStatement->fetchAll($fetchModode, $fetchArg);
+            return $this->pdoStatement->fetchAll($fetchModode, $fetchArg);
         }
 
         // PDO::FETCH_FUNC
-        return (array) $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, /** @param list<mixed> $args */static function (...$args) use ($fetchArg) {
+        return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, /** @param list<mixed> $args */static function (...$args) use ($fetchArg) {
             assert(is_string($fetchArg) && class_exists($fetchArg));
 
             /** @psalm-suppress MixedMethodCall */
