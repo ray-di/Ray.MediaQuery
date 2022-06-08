@@ -14,7 +14,7 @@ use Ray\Di\Injector;
 use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
-use Ray\MediaQuery\Exception\PerPageNotTypeNotInt;
+use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
 use Ray\MediaQuery\Queries\DynamicPerPageInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidType;
@@ -176,7 +176,7 @@ class DbQueryModuleTest extends TestCase
 
     public function testGivenPerPageShouldBeInt(): void
     {
-        $this->expectException(PerPageNotTypeNotInt::class);
+        $this->expectException(PerPageNotIntTypeException::class);
         $todoList = $this->injector->getInstance(DynamicPerPageInvalidType::class);
         $todoList('1'); // @phpstan-ignore-line
     }

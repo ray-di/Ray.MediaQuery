@@ -10,7 +10,7 @@ use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
-use Ray\MediaQuery\Exception\PerPageNotTypeNotInt;
+use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
 
 use function assert;
 use function class_exists;
@@ -117,7 +117,7 @@ class DbQueryInterceptor implements MethodInterceptor
         }
 
         if (! is_int($values[$perPage])) {
-            throw new PerPageNotTypeNotInt((string) $perPage);
+            throw new PerPageNotIntTypeException((string) $perPage);
         }
 
         $perPageInValues = $values[$perPage];

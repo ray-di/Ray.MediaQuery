@@ -7,6 +7,6 @@ namespace Ray\MediaQuery\Exception;
 /**
  * PerPage type should be int
  */
-class PerPageNotTypeNotInt extends LogicException
+class PerPageNotIntTypeException extends LogicException
 {
 }
