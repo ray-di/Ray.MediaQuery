@@ -22,8 +22,8 @@ final class DbQuery
     public $entity;
 
     /**
-     * @Enum({"row", "row_list", "exec"})
-     * @var 'row'|'row_list'|'exec'
+     * @Enum({"row", "row_list"})
+     * @var 'row'|'row_list'
      */
     public $type = 'row_list';
 
