@@ -12,8 +12,8 @@ interface DynamicPerPageInterface
 {
     /**
      * @DbQuery("todo_list")
-     * @Pager(perPage="num", template="/{?page}")
+     * @Pager(perPage="perPage", template="/{?page}")
      */
-    #[DbQuery('todo_list'), Pager(perPage: 'num', template: '/{?page}')]
-    public function __invoke(int $num): Pages;
+    #[DbQuery('todo_list'), Pager(perPage: 'perPage', template: '/{?page}')]
+    public function __invoke(int $perPage): Pages;
 }
