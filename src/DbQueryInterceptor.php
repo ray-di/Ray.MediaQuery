@@ -52,7 +52,7 @@ class DbQueryInterceptor implements MethodInterceptor
 
         $fetchStyle = $this->getFetchMode($dbQuery);
 
-        return $this->sqlQuery($dbQuery, $values, $fetchStyle, $dbQuery->entity);
+        return $this->sqlQuery($dbQuery, $values, $fetchStyle, (string) $dbQuery->entity);
     }
 
     /**
@@ -64,7 +64,7 @@ class DbQueryInterceptor implements MethodInterceptor
             return PDO::FETCH_ASSOC;
         }
 
-        if (method_exists($dbQuery->entity, '__construct')) {
+        if (is_string($dbQuery->entity) && method_exists($dbQuery->entity, '__construct')) {
             return PDO::FETCH_FUNC;
         }
 
