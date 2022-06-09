@@ -90,7 +90,7 @@ class DbQueryInterceptor implements MethodInterceptor
     /**
      * @param array<string, mixed> $values
      */
-    private function getPager(string $queryId, array $values, Pager $pager, string $entity): PagesInterface
+    private function getPager(string $queryId, array $values, Pager $pager, ?string $entity): PagesInterface
     {
         if (is_string($pager->perPage)) {
             $values = $this->getDynamicPerPage($pager, $values);
@@ -98,6 +98,7 @@ class DbQueryInterceptor implements MethodInterceptor
 
         assert(is_int($pager->perPage));
         $this->logger->start();
+        /** @var ?class-string $entity */
         $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template, $entity);
         $this->logger->log($queryId, $values);
 
