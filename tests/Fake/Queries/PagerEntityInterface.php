@@ -15,6 +15,6 @@ interface PagerEntityInterface
      * @DbQuery(id="todo_list", entity=TodoConstruct::class)
      * @Pager(perPage=10, template="/{?page}",)
      */
-    #[DbQuery('todo_list'), Pager(perPage: 10, template: '/{?page}')]
+    #[DbQuery('todo_list', entity: TodoConstruct::class), Pager(perPage: 10, template: '/{?page}')]
     public function __invoke(): Pages;
 }
