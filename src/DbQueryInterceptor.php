@@ -60,7 +60,7 @@ class DbQueryInterceptor implements MethodInterceptor
      */
     private function getFetchMode(DbQuery $dbQuery): int
     {
-        if (! class_exists($dbQuery->entity)) {
+        if (! class_exists((string) $dbQuery->entity)) {
             return PDO::FETCH_ASSOC;
         }
 
