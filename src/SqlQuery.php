@@ -209,10 +209,10 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): PagesInterface
+    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', ?string $entity = null): PagesInterface
     {
         /** @var array<array<array-key, int|string>|int|string> $values */
-        $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $values, $perPage, $queryTemplate);
+        $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $values, $perPage, $queryTemplate, $entity);
 
         /** @var array<string, mixed> $values */
         return new Pages($pager, $this->pdo, $this->getSql($sqlId), $values);

@@ -43,6 +43,7 @@ interface SqlQueryInterface
 
     /**
      * @param array<string, mixed> $values
+     * @param ?class-string        $entity
      */
-    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}'): PagesInterface;
+    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', ?string $entity = null): PagesInterface;
 }
