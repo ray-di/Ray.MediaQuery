@@ -13,6 +13,11 @@ use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
+use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
+use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+use Ray\MediaQuery\Queries\DynamicPerPageInterface;
+use Ray\MediaQuery\Queries\DynamicPerPageInvalidInterface;
+use Ray\MediaQuery\Queries\DynamicPerPageInvalidType;
 use Ray\MediaQuery\Queries\PromiseAddInterface;
 use Ray\MediaQuery\Queries\PromiseItemInterface;
 use Ray\MediaQuery\Queries\PromiseListInterface;
@@ -49,6 +54,9 @@ class DbQueryModuleTest extends TestCase
             PromiseListInterface::class,
             TodoEntityInterface::class,
             TodoConstcuctEntityInterface::class,
+            DynamicPerPageInterface::class,
+            DynamicPerPageInvalidInterface::class,
+            DynamicPerPageInvalidType::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
@@ -143,5 +151,33 @@ class DbQueryModuleTest extends TestCase
         $this->assertSame('run', $list[0]->title);
         $item = $todoList->getItem('1');
         $this->assertInstanceOf(TodoConstruct::class, $item);
+    }
+
+    public function testDynamicPerPage(): void
+    {
+        $todoList = $this->injector->getInstance(DynamicPerPageInterface::class);
+        assert($todoList instanceof DynamicPerPageInterface);
+        $list = ($todoList)(2);
+        /** @var Page $page */
+        $page = $list[1];
+        $this->assertSame([['id' => '1', 'title' => 'run']], $page->data);
+        $this->assertSame(2, $page->maxPerPage);
+        $log = (string) $this->logger;
+        $this->assertStringContainsString('query: todo_list', $log);
+    }
+
+    public function testDynamicPerPageVariableNameNotGiven(): void
+    {
+        $this->expectException(InvalidPerPageVarNameException::class);
+        $todoList = $this->injector->getInstance(DynamicPerPageInvalidInterface::class);
+        assert($todoList instanceof DynamicPerPageInvalidInterface);
+        ($todoList)(1);
+    }
+
+    public function testGivenPerPageShouldBeInt(): void
+    {
+        $this->expectException(PerPageNotIntTypeException::class);
+        $todoList = $this->injector->getInstance(DynamicPerPageInvalidType::class);
+        $todoList('1'); // @phpstan-ignore-line
     }
 }

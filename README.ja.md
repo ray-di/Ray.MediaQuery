@@ -237,6 +237,12 @@ interface TodoList
 }
 ```
 
+ページ毎のアイテム数をperPageで指定しますが、動的な値の場合は以下のようにページ数を表す引数の名前を文字列を指定します。
+```php
+    #[DbQuery, Pager(perPage: 'pageNum', template: '/{?page}')]
+    public function __invoke($pageNum): PagesInterface;
+```
+
 `count()`で件数が取得でき、ページ番号で配列アクセスをするとページオブジェクトが取得できます。
 `Pages`はSQL遅延実行オブジェクトです。
 

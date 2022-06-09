@@ -250,6 +250,13 @@ interface TodoList
 You can get the number of pages with `count()`, and you can get the page object with array access by page number.
 `Pages` is a SQL lazy execution object.
 
+The number of items per page is specified by `perPage`, but for dynamic values, specify a string with the name of the argument representing the number of pages as follows
+
+```php
+    #[DbQuery, Pager(perPage: 'pageNum', template: '/{?page}')]
+    public function __invoke($pageNum): PagesInterface;
+```
+
 ```php
 $pages = ($todoList)();
 $cnt = count($page); // When count() is called, the count SQL is generated and queried.

@@ -9,8 +9,13 @@ use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
+use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
+use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
 
+use function assert;
 use function class_exists;
+use function is_int;
+use function is_string;
 use function method_exists;
 
 class DbQueryInterceptor implements MethodInterceptor
@@ -37,17 +42,17 @@ class DbQueryInterceptor implements MethodInterceptor
     public function invoke(MethodInvocation $invocation)
     {
         $method = $invocation->getMethod();
-        /** @var DbQuery $dbQury */
-        $dbQury = $method->getAnnotation(DbQuery::class);
+        /** @var DbQuery $dbQuery */
+        $dbQuery = $method->getAnnotation(DbQuery::class);
         $pager = $method->getAnnotation(Pager::class);
         $values = $this->paramInjector->getArgumentes($invocation);
         if ($pager instanceof Pager) {
-            return $this->getPager($dbQury->id, $values, $pager);
+            return $this->getPager($dbQuery->id, $values, $pager);
         }
 
-        $fetchStyle = $this->getFetchMode($dbQury);
+        $fetchStyle = $this->getFetchMode($dbQuery);
 
-        return $this->sqlQuery($dbQury, $values, $fetchStyle, $dbQury->entity);
+        return $this->sqlQuery($dbQuery, $values, $fetchStyle, $dbQuery->entity);
     }
 
     /**
@@ -87,10 +92,38 @@ class DbQueryInterceptor implements MethodInterceptor
      */
     private function getPager(string $queryId, array $values, Pager $pager): PagesInterface
     {
+        if (is_string($pager->perPage)) {
+            $values = $this->getDynamicPerPage($pager, $values);
+        }
+
+        assert(is_int($pager->perPage));
         $this->logger->start();
         $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);
         $this->logger->log($queryId, $values);
 
         return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     *
+     * @return array<string, mixed>
+     */
+    private function getDynamicPerPage(Pager $pager, array $values): array
+    {
+        $perPage = $pager->perPage;
+        if (! isset($values[$perPage])) {
+            throw new InvalidPerPageVarNameException((string) $perPage);
+        }
+
+        if (! is_int($values[$perPage])) {
+            throw new PerPageNotIntTypeException((string) $perPage);
+        }
+
+        $perPageInValues = $values[$perPage];
+        $pager->perPage = $perPageInValues;
+        unset($values[$perPage]);
+
+        return $values;
     }
 }
