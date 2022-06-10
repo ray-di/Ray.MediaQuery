@@ -18,6 +18,7 @@ use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
 use Ray\MediaQuery\Queries\DynamicPerPageInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidType;
+use Ray\MediaQuery\Queries\PagerEntityInterface;
 use Ray\MediaQuery\Queries\PromiseAddInterface;
 use Ray\MediaQuery\Queries\PromiseItemInterface;
 use Ray\MediaQuery\Queries\PromiseListInterface;
@@ -31,6 +32,7 @@ use function array_keys;
 use function assert;
 use function dirname;
 use function file_get_contents;
+use function is_array;
 
 class DbQueryModuleTest extends TestCase
 {
@@ -57,6 +59,7 @@ class DbQueryModuleTest extends TestCase
             DynamicPerPageInterface::class,
             DynamicPerPageInvalidInterface::class,
             DynamicPerPageInvalidType::class,
+            PagerEntityInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
@@ -179,5 +182,18 @@ class DbQueryModuleTest extends TestCase
         $this->expectException(PerPageNotIntTypeException::class);
         $todoList = $this->injector->getInstance(DynamicPerPageInvalidType::class);
         $todoList('1'); // @phpstan-ignore-line
+    }
+
+    public function testSelectPagerEntity(): void
+    {
+        $todoList = $this->injector->getInstance(PagerEntityInterface::class);
+        assert($todoList instanceof PagerEntityInterface);
+        $list = ($todoList)();
+        $page = $list[1];
+        assert($page instanceof Page);
+        assert(is_array($page->data));
+        $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
+        $log = (string) $this->logger;
+        $this->assertStringContainsString('query: todo_list', $log);
     }
 }

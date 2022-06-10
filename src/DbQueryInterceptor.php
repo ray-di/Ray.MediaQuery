@@ -47,12 +47,12 @@ class DbQueryInterceptor implements MethodInterceptor
         $pager = $method->getAnnotation(Pager::class);
         $values = $this->paramInjector->getArgumentes($invocation);
         if ($pager instanceof Pager) {
-            return $this->getPager($dbQuery->id, $values, $pager);
+            return $this->getPager($dbQuery->id, $values, $pager, $dbQuery->entity);
         }
 
         $fetchStyle = $this->getFetchMode($dbQuery);
 
-        return $this->sqlQuery($dbQuery, $values, $fetchStyle, $dbQuery->entity);
+        return $this->sqlQuery($dbQuery, $values, $fetchStyle, (string) $dbQuery->entity);
     }
 
     /**
@@ -60,11 +60,11 @@ class DbQueryInterceptor implements MethodInterceptor
      */
     private function getFetchMode(DbQuery $dbQuery): int
     {
-        if (! class_exists($dbQuery->entity)) {
+        if (! class_exists((string) $dbQuery->entity)) {
             return PDO::FETCH_ASSOC;
         }
 
-        if (method_exists($dbQuery->entity, '__construct')) {
+        if (is_string($dbQuery->entity) && method_exists($dbQuery->entity, '__construct')) {
             return PDO::FETCH_FUNC;
         }
 
@@ -90,7 +90,7 @@ class DbQueryInterceptor implements MethodInterceptor
     /**
      * @param array<string, mixed> $values
      */
-    private function getPager(string $queryId, array $values, Pager $pager): PagesInterface
+    private function getPager(string $queryId, array $values, Pager $pager, ?string $entity): PagesInterface
     {
         if (is_string($pager->perPage)) {
             $values = $this->getDynamicPerPage($pager, $values);
@@ -98,7 +98,8 @@ class DbQueryInterceptor implements MethodInterceptor
 
         assert(is_int($pager->perPage));
         $this->logger->start();
-        $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template);
+        /** @var ?class-string $entity */
+        $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template, $entity);
         $this->logger->log($queryId, $values);
 
         return $result;

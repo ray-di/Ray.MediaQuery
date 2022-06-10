@@ -7,6 +7,9 @@ namespace Ray\MediaQuery\Annotation;
 use Attribute;
 use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
 
+use function assert;
+use function class_exists;
+
 /**
  * @Annotation
  * @Target("METHOD")
@@ -18,7 +21,7 @@ final class DbQuery
     /** @var string */
     public $id;
 
-    /** @var string */
+    /** @var ?class-string */
     public $entity;
 
     /**
@@ -30,8 +33,9 @@ final class DbQuery
     /**
      * @param 'row'|'row_list' $type
      */
-    public function __construct(string $id, string $entity = '', string $type = 'row_list')
+    public function __construct(string $id, string $type = 'row_list', ?string $entity = null)
     {
+        assert($entity === null || class_exists($entity));
         $this->id = $id;
         $this->entity = $entity;
         $this->type = $type;
