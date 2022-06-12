@@ -6,7 +6,7 @@ namespace Ray\MediaQuery\Queries;
 
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
-use Ray\MediaQuery\Pages;
+use Ray\MediaQuery\DbQuery\Pages;
 
 interface DynamicPerPageInvalidInterface
 {

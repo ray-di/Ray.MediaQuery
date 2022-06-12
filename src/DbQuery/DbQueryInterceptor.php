@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery;
+namespace Ray\MediaQuery\DbQuery;
 
 use PDO;
 use Ray\Aop\MethodInterceptor;
@@ -11,6 +11,8 @@ use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+use Ray\MediaQuery\MediaQueryLoggerInterface;
+use Ray\MediaQuery\ParamInjectorInterface;
 
 use function assert;
 use function class_exists;

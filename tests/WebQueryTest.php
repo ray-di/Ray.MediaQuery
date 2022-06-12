@@ -7,6 +7,7 @@ namespace Ray\MediaQuery;
 use GuzzleHttp\Client;
 use PHPUnit\Framework\TestCase;
 use Ray\MediaQuery\Exception\WebApiRequestException;
+use Ray\MediaQuery\WebQuery\WebApiQuery;
 
 class WebQueryTest extends TestCase
 {

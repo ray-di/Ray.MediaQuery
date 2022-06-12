@@ -7,7 +7,9 @@ namespace Ray\MediaQuery;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
+use Ray\MediaQuery\DbQuery\Queries;
 use Ray\MediaQuery\WebApi\FooItemInterface;
+use Ray\MediaQuery\WebQuery\WebQueryConfig;
 
 use function assert;
 use function is_callable;

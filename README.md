@@ -63,12 +63,7 @@ Create the web api path list file as `web_query.json`.
 MediaQueryModule binds the execution of SQL and Web API requests to an interface by setting `DbQueryConfig` or `WebQueryConfig` or both.
 
 ```php
-use Ray\AuraSqlModule\AuraSqlModule;
-use Ray\MediaQuery\ApiDomainModule;
-use Ray\MediaQuery\DbQueryConfig;
-use Ray\MediaQuery\MediaQueryModule;
-use Ray\MediaQuery\Queries;
-use Ray\MediaQuery\WebQueryConfig;
+use Ray\AuraSqlModule\AuraSqlModule;use Ray\MediaQuery\ApiDomainModule;use Ray\MediaQuery\DbQuery\DbQueryConfig;use Ray\MediaQuery\DbQuery\Queries;use Ray\MediaQuery\MediaQueryModule;use Ray\MediaQuery\WebQuery\WebQueryConfig;
 
 protected function configure(): void
 {
@@ -238,7 +233,7 @@ public function __invoke(Uuid $uuid = null): void; // UUID is generated and pass
 The `#[Pager]` annotation allows paging of SELECT queries.
 
 ```php
-use Ray\MediaQuery\PagesInterface;
+use Ray\MediaQuery\DbQuery\PagesInterface;
 
 interface TodoList
 {

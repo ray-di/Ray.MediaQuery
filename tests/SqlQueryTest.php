@@ -8,11 +8,15 @@ use Aura\Sql\ExtendedPdo;
 use DateTime;
 use Pagerfanta\View\DefaultView;
 use PDO;
-use PdoStatement;
+use PDOStatement;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\DbQuery\Pages;
+use Ray\MediaQuery\DbQuery\PagesInterface;
+use Ray\MediaQuery\DbQuery\SqlQuery;
+use Ray\MediaQuery\DbQuery\SqlQueryInterface;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\LogicException;
 use Ray\MediaQuery\Exception\PdoPerformException;
@@ -146,7 +150,7 @@ class SqlQueryTest extends TestCase
      */
     public function testGetStatement(SqlQuery $sqlQuery): void
     {
-        $this->assertInstanceOf(PdoStatement::class, $sqlQuery->getStatement());
+        $this->assertInstanceOf(PDOStatement::class, $sqlQuery->getStatement());
     }
 
     /**

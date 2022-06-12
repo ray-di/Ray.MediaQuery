@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery;
+namespace Ray\MediaQuery\DbQuery;
 
 use Aura\Sql\ExtendedPdo;
 use Pagerfanta\View\DefaultView;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
+use Ray\MediaQuery\MediaQueryLogger;
+use Ray\MediaQuery\MediaQueryLoggerInterface;
+use Ray\MediaQuery\ParamConverter;
 
 class SqlQueryFactory
 {

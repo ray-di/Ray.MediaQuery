@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use PHPUnit\Framework\TestCase;
+use Ray\MediaQuery\DbQuery\Queries;
 use Ray\MediaQuery\FromDir\TodoAddInterface;
 use Ray\MediaQuery\FromDir\TodoItemInterface;
 

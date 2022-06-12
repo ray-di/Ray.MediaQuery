@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use PHPUnit\Framework\TestCase;
+use Ray\MediaQuery\DbQuery\SqlQueryFactory;
+use Ray\MediaQuery\DbQuery\SqlQueryInterface;
 
 class SqlQueryFactoryTest extends TestCase
 {

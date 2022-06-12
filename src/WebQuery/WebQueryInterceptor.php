@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery;
+namespace Ray\MediaQuery\WebQuery;
 
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
 use Ray\MediaQuery\Annotation\WebQuery;
+use Ray\MediaQuery\DbQuery\Pages;
+use Ray\MediaQuery\ParamInjectorInterface;
 
 class WebQueryInterceptor implements MethodInterceptor
 {

@@ -54,12 +54,7 @@ APIパスリストのファイルを`media_query.json`として作成します�
 MediaQueryModuleは、`DbQueryConfig`や`WebQueryConfig`、またはその両方の設定でSQLやWeb APIリクエストの実行をインターフェイスに束縛します。
 
 ```php
-use Ray\AuraSqlModule\AuraSqlModule;
-use Ray\MediaQuery\ApiDomainModule;
-use Ray\MediaQuery\DbQueryConfig;
-use Ray\MediaQuery\MediaQueryModule;
-use Ray\MediaQuery\Queries;
-use Ray\MediaQuery\WebQueryConfig;
+use Ray\AuraSqlModule\AuraSqlModule;use Ray\MediaQuery\ApiDomainModule;use Ray\MediaQuery\DbQuery\DbQueryConfig;use Ray\MediaQuery\DbQuery\Queries;use Ray\MediaQuery\MediaQueryModule;use Ray\MediaQuery\WebQuery\WebQueryConfig;
 
 protected function configure(): void
 {
@@ -228,7 +223,7 @@ public function __invoke(Uuid $uuid = null): void; // UUIDが生成され渡さ�
 DBの場合、`#[Pager]`属性でSELECTクエリーをページングする事ができます。
 
 ```php
-use Ray\MediaQuery\PagesInterface;
+use Ray\MediaQuery\DbQuery\PagesInterface;
 
 interface TodoList
 {
