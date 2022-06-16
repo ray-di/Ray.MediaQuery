@@ -11,8 +11,6 @@ use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
-use Ray\MediaQuery\DbQuery\DbQueryConfig;
-use Ray\MediaQuery\DbQuery\Queries;
 use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;

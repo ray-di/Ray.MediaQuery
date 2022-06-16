@@ -56,10 +56,10 @@ MediaQueryModuleは、`DbQueryConfig`や`WebQueryConfig`、またはその両方
 ```php
 use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\MediaQuery\ApiDomainModule;
-use Ray\MediaQuery\DbQuery\DbQueryConfig;
-use Ray\MediaQuery\DbQuery\Queries;
+use Ray\MediaQuery\DbQueryConfig;
 use Ray\MediaQuery\MediaQueryModule;
-use Ray\MediaQuery\WebQuery\WebQueryConfig;
+use Ray\MediaQuery\Queries;
+use Ray\MediaQuery\WebQueryConfig;
 
 protected function configure(): void
 {
@@ -228,7 +228,7 @@ public function __invoke(Uuid $uuid = null): void; // UUIDが生成され渡さ�
 DBの場合、`#[Pager]`属性でSELECTクエリーをページングする事ができます。
 
 ```php
-use Ray\MediaQuery\DbQuery\PagesInterface;
+use Ray\MediaQuery\PagesInterface;
 
 interface TodoList
 {

@@ -65,10 +65,10 @@ MediaQueryModule binds the execution of SQL and Web API requests to an interface
 ```php
 use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\MediaQuery\ApiDomainModule;
-use Ray\MediaQuery\DbQuery\DbQueryConfig;
-use Ray\MediaQuery\DbQuery\Queries;
+use Ray\MediaQuery\DbQueryConfig;
 use Ray\MediaQuery\MediaQueryModule;
-use Ray\MediaQuery\WebQuery\WebQueryConfig;
+use Ray\MediaQuery\Queries;
+use Ray\MediaQuery\WebQueryConfig;
 
 protected function configure(): void
 {
@@ -238,7 +238,7 @@ public function __invoke(Uuid $uuid = null): void; // UUID is generated and pass
 The `#[Pager]` annotation allows paging of SELECT queries.
 
 ```php
-use Ray\MediaQuery\DbQuery\PagesInterface;
+use Ray\MediaQuery\PagesInterface;
 
 interface TodoList
 {

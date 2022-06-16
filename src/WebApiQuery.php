@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery\WebQuery;
+namespace Ray\MediaQuery;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
 use Ray\MediaQuery\Exception\WebApiRequestException;
-use Ray\MediaQuery\MediaQueryLoggerInterface;
 
 use function json_decode;
 use function uri_template;

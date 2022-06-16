@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery\DbQuery;
+namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
 use PDO;
@@ -13,8 +13,6 @@ use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\Di\Di\Named;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
-use Ray\MediaQuery\MediaQueryLoggerInterface;
-use Ray\MediaQuery\ParamConverterInterface;
 
 use function array_pop;
 use function assert;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery\WebQuery;
+namespace Ray\MediaQuery;
 
 use function assert;
 use function file_get_contents;

@@ -7,10 +7,6 @@ namespace Ray\MediaQuery;
 use Ray\Di\AbstractModule;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\SqlDir;
-use Ray\MediaQuery\DbQuery\DbQueryConfig;
-use Ray\MediaQuery\DbQuery\DbQueryInterceptor;
-use Ray\MediaQuery\DbQuery\SqlQuery;
-use Ray\MediaQuery\DbQuery\SqlQueryInterface;
 
 class MediaQueryDbModule extends AbstractModule
 {

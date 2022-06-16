@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery\DbQuery;
+namespace Ray\MediaQuery;
 
 final class DbQueryConfig
 {

@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ray\MediaQuery\DbQuery;
-
-use Ray\MediaQuery\ClassesInDirectories;
+namespace Ray\MediaQuery;
 
 final class Queries
 {

@@ -11,9 +11,9 @@ use Composer\Autoload\ClassLoader;
 use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
-use Ray\MediaQuery\DbQuery\DbQueryConfig;
-use Ray\MediaQuery\DbQuery\Queries;
+use Ray\MediaQuery\DbQueryConfig;
 use Ray\MediaQuery\MediaQueryModule;
+use Ray\MediaQuery\Queries;
 
 $sqlDir = __DIR__ . '/sql';
 $dsn = 'sqlite::memory:';

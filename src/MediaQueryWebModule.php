@@ -10,10 +10,6 @@ use Ray\Di\AbstractModule;
 use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
 use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
 use Ray\MediaQuery\Annotation\WebQuery;
-use Ray\MediaQuery\WebQuery\WebApiQuery;
-use Ray\MediaQuery\WebQuery\WebApiQueryInterface;
-use Ray\MediaQuery\WebQuery\WebQueryConfig;
-use Ray\MediaQuery\WebQuery\WebQueryInterceptor;
 
 class MediaQueryWebModule extends AbstractModule
 {

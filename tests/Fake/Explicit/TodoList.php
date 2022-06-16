@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery\Explicit;
 
-use Ray\MediaQuery\DbQuery\Pages;
-use Ray\MediaQuery\DbQuery\SqlQueryInterface;
+use Ray\MediaQuery\Pages;
 use Ray\MediaQuery\Queries\TodoListInterface;
+use Ray\MediaQuery\SqlQueryInterface;
 
 class TodoList implements TodoListInterface
 {

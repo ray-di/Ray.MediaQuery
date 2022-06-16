@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Ray\Di\AbstractModule;
-use Ray\MediaQuery\DbQuery\DbQueryConfig;
-use Ray\MediaQuery\DbQuery\Queries;
-use Ray\MediaQuery\WebQuery\WebQueryConfig;
 
 class MediaQueryModule extends AbstractModule
 {

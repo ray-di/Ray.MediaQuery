@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Ray\Di\AbstractModule;
 use Ray\Di\Scope;
-use Ray\MediaQuery\DbQuery\Queries;
 
 class MediaQueryBaseModule extends AbstractModule
 {
