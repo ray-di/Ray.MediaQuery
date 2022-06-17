@@ -6,8 +6,8 @@ namespace Ray\MediaQuery\Queries;
 
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
-use Ray\MediaQuery\Pages;
 use Ray\MediaQuery\Entity\TodoConstruct;
+use Ray\MediaQuery\Pages;
 
 interface PagerEntityInterface
 {

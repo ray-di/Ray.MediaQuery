@@ -4,17 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use DateTimeImmutable;
-use DateTimeInterface;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
 use Ray\Di\AbstractModule;
-use Ray\Di\Scope;
-use Ray\MediaQuery\Annotation\DbQuery;
-use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
-use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
-use Ray\MediaQuery\Annotation\SqlDir;
-use Ray\MediaQuery\Annotation\WebQuery;
 
 class MediaQueryModule extends AbstractModule
 {
@@ -36,52 +26,14 @@ class MediaQueryModule extends AbstractModule
 
     protected function configure(): void
     {
-        foreach ($this->queries->classes as $class) {
-            $this->bind($class)->toNull();
-        }
-
-        $this->bind(MediaQueryLoggerInterface::class)->to(MediaQueryLogger::class)->in(Scope::SINGLETON);
-        $this->bind(ParamInjectorInterface::class)->to(ParamInjector::class);
-        $this->bind(ParamConverterInterface::class)->to(ParamConverter::class);
-        $this->bind(DateTimeInterface::class)->to(DateTimeImmutable::class);
+        $this->install(new MediaQueryBaseModule($this->queries));
         foreach ($this->configs as $config) {
             if ($config instanceof DbQueryConfig) {
-                $this->configureDbQuery($config);
+                $this->install(new MediaQueryDbModule($config));
                 continue;
             }
 
-            $this->configureWebQuery($config);
+            $this->install(new MediaQueryWebModule($config));
         }
-    }
-
-    private function configureDbQuery(DbQueryConfig $dbQuery): void
-    {
-        // DbQueryConfig
-        $this->bind(SqlQueryInterface::class)->to(SqlQuery::class);
-        $this->bindInterceptor(
-            $this->matcher->any(),
-            $this->matcher->annotatedWith(DbQuery::class),
-            [DbQueryInterceptor::class]
-        );
-        $this->bind()->annotatedWith(SqlDir::class)->toInstance($dbQuery->sqlDir);
-    }
-
-    private function configureWebQuery(WebQueryConfig $webQueryConfig): void
-    {
-        // Web Query
-        $this->bindInterceptor(
-            $this->matcher->any(),
-            $this->matcher->annotatedWith(WebQuery::class),
-            [WebQueryInterceptor::class]
-        );
-        $this->bind(ClientInterface::class)->to(Client::class);
-        $this->bind(WebApiQueryInterface::class)->to(WebApiQuery::class);
-        $config = [];
-        foreach ($webQueryConfig->apis as $id => $item) {
-            $config[$id] = ['method' => $item['method'], 'path' => $item['path']];
-        }
-
-        $this->bind()->annotatedWith(WebApiList::class)->toInstance($config);
-        $this->bind()->annotatedWith(UriTemplateBindings::class)->toInstance($webQueryConfig->urlTemplateBindings);
     }
 }
