@@ -45,8 +45,6 @@ class Pages implements PagesInterface
 
     /**
      * @param int $pageIndex
-     *
-     * @return ?Page
      */
     public function offsetGet($pageIndex): ?Page
     {
