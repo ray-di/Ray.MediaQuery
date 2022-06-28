@@ -13,7 +13,7 @@ interface TodoConstcuctEntityInterface
     /**
      * @DbQuery(id="todo_item", entity=TodoConstruct::class, type="row")
      */
-    #[DbQuery('todo_item', entity: TodoConstruct::class)]
+    #[DbQuery('todo_item', entity: TodoConstruct::class, type: "row")]
     public function getItem(string $id): TodoConstruct;
 
     /**
