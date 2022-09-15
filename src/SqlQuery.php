@@ -25,6 +25,7 @@ use function is_array;
 use function is_object;
 use function is_string;
 use function json_encode;
+use function method_exists;
 use function preg_replace;
 use function sprintf;
 use function stripos;
@@ -211,6 +212,23 @@ class SqlQuery implements SqlQueryInterface
      */
     public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', ?string $entity = null): PagesInterface
     {
+        foreach ($values as &$value) {
+            if (! is_object($value)) {
+                continue;
+            }
+
+            if (method_exists($value, '__toString')) {
+                $value = (string) $value;
+                continue;
+            }
+
+            if ($value instanceof ToScalarInterface) {
+                $value = $value->toScalar();
+            }
+        }
+
+        unset($value);
+
         /** @var array<array<array-key, int|string>|int|string> $values */
         $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $values, $perPage, $queryTemplate, $entity);
 

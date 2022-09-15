@@ -138,7 +138,7 @@ class DbQueryModuleTest extends TestCase
     {
         /** @var TodoEntityInterface $todoList */
         $todoList = $this->injector->getInstance(TodoEntityInterface::class);
-        $list = $todoList->getlist();
+        $list = $todoList->getList();
         $this->assertInstanceOf(Todo::class, $list[0]);
         $this->assertSame('run', $list[0]->title);
         $item = $todoList->getItem('1');
@@ -149,7 +149,7 @@ class DbQueryModuleTest extends TestCase
     {
         /** @var TodoEntityInterface $todoList */
         $todoList = $this->injector->getInstance(TodoConstcuctEntityInterface::class);
-        $list = $todoList->getlist();
+        $list = $todoList->getList();
         $this->assertInstanceOf(TodoConstruct::class, $list[0]);
         $this->assertSame('run', $list[0]->title);
         $item = $todoList->getItem('1');
@@ -160,13 +160,39 @@ class DbQueryModuleTest extends TestCase
     {
         $todoList = $this->injector->getInstance(DynamicPerPageInterface::class);
         assert($todoList instanceof DynamicPerPageInterface);
-        $list = ($todoList)(2);
+        $list = $todoList->get(2);
         /** @var Page $page */
         $page = $list[1];
         $this->assertSame([['id' => '1', 'title' => 'run']], $page->data);
         $this->assertSame(2, $page->maxPerPage);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query: todo_list', $log);
+    }
+
+    public function testDynamicPerPageWithParameterInjection(): void
+    {
+        $todoList = $this->injector->getInstance(DynamicPerPageInterface::class);
+        assert($todoList instanceof DynamicPerPageInterface);
+
+        $list = $todoList->getWithScalarParam(2);
+        /** @var Page $page */
+        $page = $list[1];
+        $this->assertSame([['id' => '1', 'title' => 'run']], $page->data);
+        $this->assertSame(2, $page->maxPerPage);
+        $log = (string) $this->logger;
+        $this->assertStringContainsString('query: todo_list', $log);
+
+        $list = $todoList->getWithFakeStringParam(2);
+        /** @var Page $page */
+        $page = $list[1];
+        $this->assertSame([['id' => '1', 'title' => 'run']], $page->data);
+        $this->assertSame(2, $page->maxPerPage);
+
+        $list = $todoList->getWithFakeBoolParam(2);
+        /** @var Page $page */
+        $page = $list[1];
+        $this->assertSame([['id' => '1', 'title' => 'run']], $page->data);
+        $this->assertSame(2, $page->maxPerPage);
     }
 
     public function testDynamicPerPageVariableNameNotGiven(): void
@@ -181,7 +207,7 @@ class DbQueryModuleTest extends TestCase
     {
         $this->expectException(PerPageNotIntTypeException::class);
         $todoList = $this->injector->getInstance(DynamicPerPageInvalidType::class);
-        $todoList('1'); // @phpstan-ignore-line
+        $todoList('1');
     }
 
     public function testSelectPagerEntity(): void

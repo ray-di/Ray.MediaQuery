@@ -20,5 +20,5 @@ interface TodoEntityInterface
      * @return list<Todo>
      */
     #[DbQuery('todo_list', entity: Todo::class)]
-    public function getlist(): array;
+    public function getList(): array;
 }
