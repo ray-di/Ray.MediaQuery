@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ray\MediaQuery\Queries;
 
 use Ray\MediaQuery\Annotation\DbQuery;
-use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 
 interface TodoConstcuctEntityInterface
@@ -20,5 +19,5 @@ interface TodoConstcuctEntityInterface
      * @DbQuery(id="todo_list", entity=TodoConstruct::class)
      */
     #[DbQuery('todo_list', entity: TodoConstruct::class)]
-    public function getlist(): array;
+    public function getList(): array;
 }
