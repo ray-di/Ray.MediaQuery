@@ -17,7 +17,7 @@ class ParamConverterTest extends TestCase
         $this->assertSame(['date_val' => UnixEpocTime::TEXT, 'bool_val' => true, 'string_val' => 'a'], $values);
     }
 
-    public function testInvaliParam(): void
+    public function testInvalidParam(): void
     {
         $this->expectException(CouldNotBeConvertedException::class);
         $values = ['invalid' => new stdClass()];
