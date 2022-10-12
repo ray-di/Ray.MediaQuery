@@ -11,6 +11,7 @@
   <testsuites>
     <testsuite name="Ray.MediaQuery test suite" >
       <directory>tests</directory>
+      <directory phpVersion="8.1.0" phpVersionOperator=">=">tests-php81</directory>
     </testsuite>
   </testsuites>
   <php>

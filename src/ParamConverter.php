@@ -7,9 +7,14 @@ namespace Ray\MediaQuery;
 use DateTimeInterface;
 use Ray\MediaQuery\Exception\CouldNotBeConvertedException;
 
+use function assert;
+use function enum_exists;
+use function function_exists;
+use function get_class;
 use function is_object;
 use function method_exists;
 use function print_r;
+use function property_exists;
 
 class ParamConverter implements ParamConverterInterface
 {
@@ -38,6 +43,12 @@ class ParamConverter implements ParamConverterInterface
 
             if ($value instanceof ToScalarInterface) {
                 $value = $value->toScalar();
+                continue;
+            }
+
+            if (function_exists('enum_exists') && enum_exists(get_class($value))) {
+                assert(property_exists($value, 'name'));
+                $value = $value->name;
                 continue;
             }
 
