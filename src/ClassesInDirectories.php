@@ -6,7 +6,6 @@ namespace Ray\MediaQuery;
 
 use Generator;
 use Roave\BetterReflection\BetterReflection;
-use Roave\BetterReflection\Reflector\ClassReflector;
 use Roave\BetterReflection\Reflector\DefaultReflector;
 use Roave\BetterReflection\SourceLocator\Type\AggregateSourceLocator;
 use Roave\BetterReflection\SourceLocator\Type\AutoloadSourceLocator;
@@ -15,8 +14,6 @@ use Roave\BetterReflection\SourceLocator\Type\DirectoriesSourceLocator;
 use function assert;
 use function class_exists;
 use function interface_exists;
-
-use const PHP_VERSION_ID;
 
 final class ClassesInDirectories
 {
@@ -48,20 +45,11 @@ final class ClassesInDirectories
             new AutoloadSourceLocator((new BetterReflection())->astLocator()),
         ]);
 
-        if (PHP_VERSION_ID >= 80000) {
-            foreach ((new DefaultReflector($sourceLocator))->reflectAllClasses() as $class) {
-                $className = $class->getName();
-                assert(class_exists($className) || interface_exists($className));
+        foreach ((new DefaultReflector($sourceLocator))->reflectAllClasses() as $class) {
+            $className = $class->getName();
+            assert(class_exists($className) || interface_exists($className));
 
-                yield $className;
-            }
-
-            return;
-        }
-
-        /** @psalm-suppress all */
-        foreach ((new ClassReflector($sourceLocator))->getAllClasses() as $class) { // @phpstan-ignore-line
-            yield $class->getName();
+            yield $className;
         }
     }
 }
