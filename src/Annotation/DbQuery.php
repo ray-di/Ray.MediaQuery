@@ -6,11 +6,6 @@ namespace Ray\MediaQuery\Annotation;
 
 use Attribute;
 
-/**
- * @Annotation
- * @Target("METHOD")
- * @NamedArgumentConstructor
- */
 #[Attribute(Attribute::TARGET_METHOD)]
 final class DbQuery
 {

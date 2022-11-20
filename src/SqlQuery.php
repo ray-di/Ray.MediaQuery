@@ -33,7 +33,7 @@ use function trim;
 
 use const JSON_THROW_ON_ERROR;
 
-class SqlQuery implements SqlQueryInterface
+final class SqlQuery implements SqlQueryInterface
 {
     private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
 

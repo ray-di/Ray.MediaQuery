@@ -9,7 +9,7 @@ use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
 use Ray\MediaQuery\Annotation\WebQuery;
 
-class WebQueryInterceptor implements MethodInterceptor
+final class WebQueryInterceptor implements MethodInterceptor
 {
     /** @param array<string, array{method: string, path: string}> $webApiList */
     public function __construct(

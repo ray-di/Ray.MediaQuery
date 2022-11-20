@@ -10,7 +10,7 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 
-class SqlQueryFactory
+final class SqlQueryFactory
 {
     /** @param array<string, mixed> $options */
     public static function getInstance(

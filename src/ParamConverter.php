@@ -15,7 +15,7 @@ use function method_exists;
 use function print_r;
 use function property_exists;
 
-class ParamConverter implements ParamConverterInterface
+final class ParamConverter implements ParamConverterInterface
 {
     private const MYSQL_DATETIME = 'Y-m-d H:i:s';
 
