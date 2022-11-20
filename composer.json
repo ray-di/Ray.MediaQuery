@@ -1,6 +1,6 @@
 {
     "name": "ray/media-query",
-    "description": "database",
+    "description": "Media access mapping Framework",
     "license": "MIT",
     "authors": [
         {
