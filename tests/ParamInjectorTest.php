@@ -13,8 +13,7 @@ use Ray\Di\Injector;
 
 class ParamInjectorTest extends TestCase
 {
-    /** @var ParamInjector  */
-    private $injector;
+    private ParamInjector $injector;
 
     protected function setUp(): void
     {

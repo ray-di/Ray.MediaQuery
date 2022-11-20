@@ -23,14 +23,11 @@ use function file_get_contents;
 
 class SqlQueryTest extends TestCase
 {
-    /** @var SqlQuery */
-    private $sqlQuery;
-
-    /** @var MediaQueryLogger */
-    private $log;
+    private SqlQuery $sqlQuery;
+    private MediaQueryLogger $log;
 
     /** @var array<string, mixed> */
-    private $insertData = ['id' => '1', 'title' => 'run'];
+    private array $insertData = ['id' => '1', 'title' => 'run'];
 
     protected function setUp(): void
     {
