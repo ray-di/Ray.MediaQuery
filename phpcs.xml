@@ -23,16 +23,8 @@
     <rule ref="PSR12"/>
 
     <!-- Exclude NativeTypeHintrule from interface and abstract class -->
-    <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint">
-        <exclude-pattern>*/src/*Interface.php</exclude-pattern>
-        <exclude-pattern>*/src/Abstract*.php</exclude-pattern>
-        <exclude-pattern>*/src/ResourceObject.php</exclude-pattern>
-    </rule>
-    <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint">
-        <exclude-pattern>*/src/*Interface.php</exclude-pattern>
-        <exclude-pattern>*/src/Abstract*.php</exclude-pattern>
-        <exclude-pattern>*/src/ResourceObject.php</exclude-pattern>
-    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint" />
+    <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint" />
     <!-- Doctrine Coding Standard -->
     <rule ref="Doctrine">
         <!-- Inapplicable for this project -->

@@ -10,10 +10,6 @@ use Ray\MediaQuery\Pages;
 
 interface DynamicPerPageInvalidInterface
 {
-    /**
-     * @DbQuery("todo_list")
-     * @Pager(perPage="__not_exsits_", template="/{?page}")
-     */
     #[DbQuery('todo_list'), Pager(perPage: '__not_exsits_', template: '/{?page}')]
     public function __invoke(int $num): Pages;
 }

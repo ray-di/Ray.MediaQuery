@@ -8,19 +8,12 @@ use Ray\Di\AbstractModule;
 
 class MediaQueryModule extends AbstractModule
 {
-    /** @var Queries */
-    private $queries;
-
-    /** @var list<DbQueryConfig|WebQueryConfig> */
-    private $configs;
-
-    /**
-     * @param list<DbQueryConfig|WebQueryConfig> $configs
-     */
-    public function __construct(Queries $queries, array $configs, ?AbstractModule $module = null)
-    {
-        $this->queries = $queries;
-        $this->configs = $configs;
+    /** @param list<DbQueryConfig|WebQueryConfig> $configs */
+    public function __construct(
+        private Queries $queries,
+        private array $configs,
+        AbstractModule|null $module = null,
+    ) {
         parent::__construct($module);
     }
 

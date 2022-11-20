@@ -6,23 +6,14 @@ namespace Ray\MediaQuery;
 
 final class Queries
 {
-    /**
-     * @var list<class-string>
-     * @readonly
-     */
-    public $classes;
-
-    /**
-     * @param list<class-string> $mediaQueryClasses
-     */
-    private function __construct(array $mediaQueryClasses)
-    {
-        $this->classes = $mediaQueryClasses;
+    /** @param list<class-string> $classes */
+    private function __construct(
+        /** @readonly */
+        public array $classes,
+    ) {
     }
 
-    /**
-     * @param list<class-string> $mediaQueryClasses
-     */
+    /** @param list<class-string> $mediaQueryClasses */
     public static function fromClasses(array $mediaQueryClasses): self
     {
         return new self($mediaQueryClasses);

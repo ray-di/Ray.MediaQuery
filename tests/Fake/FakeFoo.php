@@ -7,16 +7,10 @@ use Ray\MediaQuery\Queries\PromiseItemInterface;
 
 class FakeFoo
 {
-    /** @var PromiseAddInterface */
-    private $promiseAdd;
-
-    /** @var PromiseItemInterface  */
-    private $promiseItem;
-
-    public function __construct(PromiseAddInterface $promiseAdd, PromiseItemInterface $promiseItem)
-    {
-        $this->promiseAdd = $promiseAdd;
-        $this->promiseItem = $promiseItem;
+    public function __construct(
+        private PromiseAddInterface $promiseAdd,
+        private PromiseItemInterface $promiseItem
+    ){
     }
 
     public function add(): void

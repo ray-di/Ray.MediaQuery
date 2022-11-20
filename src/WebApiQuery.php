@@ -12,28 +12,16 @@ use Ray\MediaQuery\Exception\WebApiRequestException;
 use function json_decode;
 use function uri_template;
 
+use const JSON_THROW_ON_ERROR;
+
 final class WebApiQuery implements WebApiQueryInterface
 {
-    /** @var ClientInterface */
-    private $client;
-
-    /** @var MediaQueryLoggerInterface  */
-    private $logger;
-
-    /** @var array<string, string>  */
-    private $uriTemplateBindings;
-
-    /**
-     * @param array<string, string> $uriTemplateBindings
-     *
-     * @UriTemplateBindings("uriTemplateBindings")
-     */
-    #[UriTemplateBindings('uriTemplateBindings')]
-    public function __construct(ClientInterface $client, MediaQueryLoggerInterface $logger, array $uriTemplateBindings)
-    {
-        $this->client = $client;
-        $this->logger = $logger;
-        $this->uriTemplateBindings = $uriTemplateBindings;
+    /** @param array<string, string> $uriTemplateBindings */
+    public function __construct(
+        private ClientInterface $client,
+        private MediaQueryLoggerInterface $logger,
+        #[UriTemplateBindings] private array $uriTemplateBindings,
+    ) {
     }
 
     /**
@@ -47,7 +35,7 @@ final class WebApiQuery implements WebApiQueryInterface
             $response = $this->client->request($method, $boundUri, $query);
             $json = $response->getBody()->getContents();
             /** @var array<string, mixed> $body */
-            $body = json_decode($json, true);
+            $body = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
             $this->logger->log($boundUri, $query);
 
             return $body;

@@ -12,11 +12,11 @@ class FakeParamInjectMethod
     {
     }
 
-    public function paramInject(?DateTimeInterface $dateTime = null): void
+    public function paramInject(DateTimeInterface|null $dateTime = null): void
     {
     }
 
-    public function paramConvert(?FakeBool $bool = null, ?FakeString $string = null, ?DateTimeInterface $dateTime = null): void
+    public function paramConvert(FakeBool|null $bool = null, FakeString|null $string = null, DateTimeInterface|null $dateTime = null): void
     {
     }
 

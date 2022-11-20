@@ -13,12 +13,9 @@ use function count;
 
 final class ParamInjector implements ParamInjectorInterface
 {
-    /** @var InjectorInterface */
-    private $injector;
-
-    public function __construct(InjectorInterface $injector)
-    {
-        $this->injector = $injector;
+    public function __construct(
+        private InjectorInterface $injector
+    ){
     }
 
     /**

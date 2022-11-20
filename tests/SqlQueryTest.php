@@ -42,7 +42,7 @@ class SqlQueryTest extends TestCase
             __DIR__ . '/sql',
             $this->log,
             new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), [])),
-            new ParamConverter()
+            new ParamConverter(),
         );
     }
 
@@ -57,18 +57,14 @@ class SqlQueryTest extends TestCase
         $this->assertStringContainsString('query: todo_add({"id":"1","title":"run"})', (string) $this->log);
     }
 
-    /**
-     * @depends testExec
-     */
+    /** @depends testExec */
     public function testGetRow(): void
     {
         $result = $this->sqlQuery->getRow('todo_item', ['id' => '1']);
         $this->assertSame($this->insertData, $result);
     }
 
-    /**
-     * @depends testExec
-     */
+    /** @depends testExec */
     public function testGetRowNotFound(): void
     {
         $result = $this->sqlQuery->getRow('todo_item', ['id' => '__invalid__']);
@@ -76,9 +72,7 @@ class SqlQueryTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @depends testExec
-     */
+    /** @depends testExec */
     public function testGetRowList(): void
     {
         $result = $this->sqlQuery->getRowList('todo_list', []);
@@ -101,9 +95,7 @@ class SqlQueryTest extends TestCase
         return $pages;
     }
 
-    /**
-     * @depends testPager
-     */
+    /** @depends testPager */
     public function testPagerCount(Pages $pages): void
     {
         $this->assertSame(2, count($pages));
@@ -138,34 +130,26 @@ class SqlQueryTest extends TestCase
         $this->sqlQuery->exec('__not_exists', []);
     }
 
-    /**
-     * @depends testDateTime
-     */
+    /** @depends testDateTime */
     public function testGetStatement(SqlQuery $sqlQuery): void
     {
         $this->assertInstanceOf(PDOStatement::class, $sqlQuery->getStatement());
     }
 
-    /**
-     * @depends testPager
-     */
+    /** @depends testPager */
     public function testOffsetExists(Pages $pages): void
     {
         $this->assertTrue(isset($pages[1]));
     }
 
-    /**
-     * @depends testPager
-     */
+    /** @depends testPager */
     public function testOffsetSet(Pages $pages): void
     {
         $this->expectException(LogicException::class);
         $pages[1] = '';
     }
 
-    /**
-     * @depends testPager
-     */
+    /** @depends testPager */
     public function testOffsetUnset(Pages $pages): void
     {
         $this->expectException(LogicException::class);

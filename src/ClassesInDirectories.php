@@ -42,7 +42,7 @@ final class ClassesInDirectories
         $sourceLocator = new AggregateSourceLocator([
             new DirectoriesSourceLocator(
                 $directories,
-                (new BetterReflection())->astLocator()
+                (new BetterReflection())->astLocator(),
             ),
             // ↓ required to autoload parent classes/interface from another directory than /src (e.g. /vendor)
             new AutoloadSourceLocator((new BetterReflection())->astLocator()),

@@ -7,9 +7,7 @@ namespace Ray\MediaQuery;
 use ArrayAccess;
 use Countable;
 
-/**
- * @extends ArrayAccess<int, mixed>
- */
+/** @extends ArrayAccess<int, mixed> */
 interface PagesInterface extends ArrayAccess, Countable
 {
 }

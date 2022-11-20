@@ -10,12 +10,9 @@ use Ray\MediaQuery\SqlQueryInterface;
 
 class TodoList implements TodoListInterface
 {
-    /** @var SqlQueryInterface */
-    private $sqlQuery;
-
-    public function __construct(SqlQueryInterface $sqlQuery)
-    {
-        $this->sqlQuery = $sqlQuery;
+    public function __construct(
+        private SqlQueryInterface $sqlQuery
+    ){
     }
 
     public function __invoke(): Pages

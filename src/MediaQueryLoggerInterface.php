@@ -8,9 +8,7 @@ interface MediaQueryLoggerInterface
 {
     public function start(): void;
 
-    /**
-     * @param array<string, mixed> $values
-     */
+    /** @param array<string, mixed> $values */
     public function log(string $queryId, array $values): void;
 
     public function __toString(): string;

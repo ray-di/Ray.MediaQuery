@@ -10,7 +10,7 @@ use PDOException;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
-use Ray\Di\Di\Named;
+use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
 
@@ -31,46 +31,22 @@ use function stripos;
 use function strpos;
 use function trim;
 
+use const JSON_THROW_ON_ERROR;
+
 class SqlQuery implements SqlQueryInterface
 {
-    /** @var ExtendedPdoInterface  */
-    private $pdo;
-
-    /** @var MediaQueryLoggerInterface  */
-    private $logger;
-
-    /** @var string */
-    private $sqlDir;
     private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
 
-    /**
-     * @var ?PDOStatement
-     * @psalm-readonly
-     */
-    private $pdoStatement;
+    /** @psalm-readonly */
+    private PDOStatement|null $pdoStatement = null;
 
-    /** @var AuraSqlPagerFactoryInterface */
-    private $pagerFactory;
-
-    /** @var ParamConverterInterface  */
-    private $paramConverter;
-
-    /**
-     * @Named("sqlDir=Ray\MediaQuery\Annotation\SqlDir")
-     */
-    #[Named('sqlDir=Ray\MediaQuery\Annotation\SqlDir')]
     public function __construct(
-        ExtendedPdoInterface $pdo,
-        string $sqlDir,
-        MediaQueryLoggerInterface $logger,
-        AuraSqlPagerFactoryInterface $pagerFactory,
-        ParamConverterInterface $paramConverter
+        private ExtendedPdoInterface $pdo,
+        #[SqlDir] private string $sqlDir,
+        private MediaQueryLoggerInterface $logger,
+        private AuraSqlPagerFactoryInterface $pagerFactory,
+        private ParamConverterInterface $paramConverter,
     ) {
-        $this->pdo = $pdo;
-        $this->logger = $logger;
-        $this->sqlDir = $sqlDir;
-        $this->pagerFactory = $pagerFactory;
-        $this->paramConverter = $paramConverter;
     }
 
     /**
@@ -84,7 +60,7 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = '')
+    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, int|string|callable $fetchArg = ''): array|object|null
     {
         $rowList = $this->perform($sqlId, $values, $fetchMode, $fetchArg);
         if (! count($rowList)) {
@@ -119,11 +95,10 @@ class SqlQuery implements SqlQueryInterface
     /**
      * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchModode
      * @param array<string, mixed>                              $values
-     * @param callable|int|string                               $fetchArg
      *
      * @return array<mixed>
      */
-    private function perform(string $sqlId, array $values, int $fetchModode, $fetchArg = ''): array
+    private function perform(string $sqlId, array $values, int $fetchModode, callable|int|string $fetchArg = ''): array
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
@@ -134,7 +109,7 @@ class SqlQuery implements SqlQueryInterface
             try {
                 $this->pdoStatement = $this->pdo->perform($sql, $values);
             } catch (PDOException $e) {
-                $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values));
+                $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
 
                 throw new PdoPerformException($msg);
             }
@@ -152,11 +127,10 @@ class SqlQuery implements SqlQueryInterface
 
     /**
      * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchModode
-     * @param callable|int|string                               $fetchArg
      *
      * @return array<mixed>
      */
-    private function fetchAll(int $fetchModode, $fetchArg): array
+    private function fetchAll(int $fetchModode, callable|int|string $fetchArg): array
     {
         assert($this->pdoStatement instanceof PDOStatement);
         if ($fetchModode === PDO::FETCH_ASSOC) {
@@ -176,9 +150,7 @@ class SqlQuery implements SqlQueryInterface
         });
     }
 
-    /**
-     * @return array<string>
-     */
+    /** @return array<string> */
     private function getSqls(string $sqlFile): array
     {
         if (! file_exists($sqlFile)) {
@@ -209,7 +181,7 @@ class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', ?string $entity = null): PagesInterface
+    public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', string|null $entity = null): PagesInterface
     {
         ($this->paramConverter)($values);
 
