@@ -35,12 +35,12 @@ class Pages implements PagesInterface
         $this->params = $values;
     }
 
-    public function offsetExists(int $pageIndex): bool
+    public function offsetExists($pageIndex): bool
     {
         return (bool) $this->offsetGet($pageIndex);
     }
 
-    public function offsetGet(int $pageIndex): ?Page
+    public function offsetGet($pageIndex): ?Page
     {
         return $this->delegate->offsetGet($pageIndex);
     }
@@ -51,7 +51,7 @@ class Pages implements PagesInterface
      *
      * @codeCoverageIgnore
      */
-    public function offsetSet(int $offset, $value): void
+    public function offsetSet($offset, $value): void
     {
         unset($offset, $value);
 
