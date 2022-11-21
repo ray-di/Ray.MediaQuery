@@ -43,6 +43,7 @@
         "psr-4": {
             "Ray\\MediaQuery\\": [
                 "tests/",
+                "tests-php81/",
                 "tests/Fake"
             ]
         }

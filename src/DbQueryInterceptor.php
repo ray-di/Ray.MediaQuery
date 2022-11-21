@@ -61,7 +61,6 @@ class DbQueryInterceptor implements MethodInterceptor
     /**
      * @param array<string, mixed>                              $values
      * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
-     * @param int|string|callable                               $fetchArg
      *
      * @return array<mixed>|object|null
      */
