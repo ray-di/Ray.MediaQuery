@@ -13,12 +13,10 @@ use Ray\MediaQuery\Annotation\WebQuery;
 
 class MediaQueryWebModule extends AbstractModule
 {
-    /** @var WebQueryConfig */
-    private $config;
-
-    public function __construct(WebQueryConfig $config, ?AbstractModule $module = null)
-    {
-        $this->config = $config;
+    public function __construct(
+        private WebQueryConfig $config,
+        AbstractModule|null $module = null,
+    ) {
         parent::__construct($module);
     }
 
@@ -27,7 +25,7 @@ class MediaQueryWebModule extends AbstractModule
         $this->bindInterceptor(
             $this->matcher->any(),
             $this->matcher->annotatedWith(WebQuery::class),
-            [WebQueryInterceptor::class]
+            [WebQueryInterceptor::class],
         );
         $this->bind(ClientInterface::class)->to(Client::class);
         $this->bind(WebApiQueryInterface::class)->to(WebApiQuery::class);

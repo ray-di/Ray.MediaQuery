@@ -2,7 +2,7 @@
 
 namespace Ray\MediaQuery;
 
-class FakeString
+class FakeString implements \Stringable
 {
     public function __toString(): string
     {

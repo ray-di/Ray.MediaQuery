@@ -4,7 +4,8 @@
     "static", "self", "parent",
     "array", "string", "int", "float", "bool", "iterable", "callable", "void", "object", "mixed", "never",
     "Roave\\BetterReflection\\Reflector\\DefaultReflector",
-    "Roave\\BetterReflection\\Reflector\\ClassReflector"
+    "Roave\\BetterReflection\\Reflector\\ClassReflector",
+    "json_decode", "json_encode", "JSON_THROW_ON_ERROR"
   ],
   "php-core-extensions" : [
     "Core",

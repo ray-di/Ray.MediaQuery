@@ -14,14 +14,9 @@ use function is_callable;
 
 class WebQueryModuleTest extends TestCase
 {
-    /** @var AbstractModule */
-    protected $module;
-
-    /** @var MediaQueryLoggerInterface */
-    private $logger;
-
-    /** @var Injector */
-    private $injector;
+    protected AbstractModule $module;
+    private MediaQueryLoggerInterface $logger;
+    private Injector $injector;
 
     protected function setUp(): void
     {

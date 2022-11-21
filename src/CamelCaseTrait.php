@@ -10,10 +10,7 @@ use function ucwords;
 
 trait CamelCaseTrait
 {
-    /**
-     * @param mixed $value
-     */
-    public function __set(string $name, $value): void
+    public function __set(string $name, mixed $value): void
     {
         $propName =  lcfirst(str_replace('_', '', ucwords($name, '_')));
         $this->{$propName} = $value;

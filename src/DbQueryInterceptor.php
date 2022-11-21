@@ -20,26 +20,15 @@ use function method_exists;
 
 class DbQueryInterceptor implements MethodInterceptor
 {
-    /** @var SqlQueryInterface */
-    private $sqlQuery;
-
-    /** @var MediaQueryLoggerInterface */
-    private $logger;
-
-    /** @var ParamInjectorInterface  */
-    private $paramInjector;
-
-    public function __construct(SqlQueryInterface $sqlQuery, MediaQueryLoggerInterface $logger, ParamInjectorInterface $paramInjector)
-    {
-        $this->sqlQuery = $sqlQuery;
-        $this->logger = $logger;
-        $this->paramInjector = $paramInjector;
+    public function __construct(
+        private SqlQueryInterface $sqlQuery,
+        private MediaQueryLoggerInterface $logger,
+        private ParamInjectorInterface $paramInjector,
+    ) {
     }
 
-    /**
-     * @return array<mixed>|object|PagesInterface|null
-     */
-    public function invoke(MethodInvocation $invocation)
+    /** @return array<mixed>|object|null */
+    public function invoke(MethodInvocation $invocation): array|object|null
     {
         $method = $invocation->getMethod();
         /** @var DbQuery $dbQuery */
@@ -55,9 +44,7 @@ class DbQueryInterceptor implements MethodInterceptor
         return $this->sqlQuery($dbQuery, $values, $fetchStyle, (string) $dbQuery->entity);
     }
 
-    /**
-     * @return  PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
-     */
+    /** @return  PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle */
     private function getFetchMode(DbQuery $dbQuery): int
     {
         if (! class_exists((string) $dbQuery->entity)) {
@@ -74,11 +61,10 @@ class DbQueryInterceptor implements MethodInterceptor
     /**
      * @param array<string, mixed>                              $values
      * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
-     * @param int|string|callable                               $fetchArg
      *
      * @return array<mixed>|object|null
      */
-    private function sqlQuery(DbQuery $dbQuery, array $values, int $fetchStyle, $fetchArg)
+    private function sqlQuery(DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
     {
         if ($dbQuery->type === 'row') {
             return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchStyle, $fetchArg);
@@ -87,10 +73,8 @@ class DbQueryInterceptor implements MethodInterceptor
         return $this->sqlQuery->getRowList($dbQuery->id, $values, $fetchStyle, $fetchArg);
     }
 
-    /**
-     * @param array<string, mixed> $values
-     */
-    private function getPager(string $queryId, array $values, Pager $pager, ?string $entity): PagesInterface
+    /** @param array<string, mixed> $values */
+    private function getPager(string $queryId, array $values, Pager $pager, string|null $entity): PagesInterface
     {
         if (is_string($pager->perPage)) {
             $values = $this->getDynamicPerPage($pager, $values);

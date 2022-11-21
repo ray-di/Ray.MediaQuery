@@ -6,16 +6,14 @@ namespace Ray\MediaQuery;
 
 use Ray\Di\AbstractModule;
 use Ray\MediaQuery\Annotation\DbQuery;
-use Ray\MediaQuery\Annotation\SqlDir;
+use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 
 class MediaQueryDbModule extends AbstractModule
 {
-    /** @var DbQueryConfig */
-    private $configs;
-
-    public function __construct(DbQueryConfig $config, ?AbstractModule $module = null)
-    {
-        $this->configs = $config;
+    public function __construct(
+        private DbQueryConfig $configs,
+        AbstractModule|null $module = null,
+    ) {
         parent::__construct($module);
     }
 
@@ -25,7 +23,7 @@ class MediaQueryDbModule extends AbstractModule
         $this->bindInterceptor(
             $this->matcher->any(),
             $this->matcher->annotatedWith(DbQuery::class),
-            [DbQueryInterceptor::class]
+            [DbQueryInterceptor::class],
         );
         $this->bind()->annotatedWith(SqlDir::class)->toInstance($this->configs->sqlDir);
     }

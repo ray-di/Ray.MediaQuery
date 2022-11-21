@@ -15,11 +15,8 @@ use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
 #[Attribute(Attribute::TARGET_METHOD)]
 final class WebQuery
 {
-    /** @var string */
-    public $id;
-
-    public function __construct(string $id)
-    {
-        $this->id = $id;
+    public function __construct(
+        public string $id,
+    ) {
     }
 }

@@ -11,12 +11,10 @@ use Ray\Di\Scope;
 
 class MediaQueryBaseModule extends AbstractModule
 {
-    /** @var Queries */
-    private $queries;
-
-    public function __construct(Queries $queries, ?AbstractModule $module = null)
-    {
-        $this->queries = $queries;
+    public function __construct(
+        private Queries $queries,
+        AbstractModule|null $module = null,
+    ) {
         parent::__construct($module);
     }
 

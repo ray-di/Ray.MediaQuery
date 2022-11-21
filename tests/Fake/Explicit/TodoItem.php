@@ -9,12 +9,9 @@ use Ray\MediaQuery\SqlQueryInterface;
 
 class TodoItem implements TodoItemInterface
 {
-    /** @var SqlQueryInterface */
-    private $sqlQuery;
-
-    public function __construct(SqlQueryInterface $sqlQuery)
-    {
-        $this->sqlQuery = $sqlQuery;
+    public function __construct(
+        private SqlQueryInterface $sqlQuery
+    ){
     }
 
     public function __invoke(string $id): array

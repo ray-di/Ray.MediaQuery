@@ -10,22 +10,20 @@ use function is_string;
 use function json_decode;
 use function property_exists;
 
+use const JSON_THROW_ON_ERROR;
+
 final class WebQueryConfig
 {
     /** @var array<string, array{method: string, path: string}> */
     public $apis = [];
 
-    /** @var array<string, string> */
-    public $urlTemplateBindings;
-
-    /**
-     * @param array<string, string> $urlTemplateBindings
-     */
-    public function __construct(string $mediaQueryJson, array $urlTemplateBindings = [])
-    {
-        $this->urlTemplateBindings = $urlTemplateBindings;
+    /** @param array<string, string> $urlTemplateBindings */
+    public function __construct(
+        string $mediaQueryJson,
+        public array $urlTemplateBindings = [],
+    ) {
         /** @var object $json */
-        $json = json_decode((string) file_get_contents($mediaQueryJson));
+        $json = json_decode((string) file_get_contents($mediaQueryJson), null, 512, JSON_THROW_ON_ERROR);
         assert(property_exists($json, 'webQuery'));
         /** @var object $item */
         foreach ($json->webQuery as $item) {

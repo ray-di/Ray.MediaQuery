@@ -9,16 +9,9 @@ use Ray\MediaQuery\Entity\Todo;
 
 interface TodoEntityInterface
 {
-    /**
-     * @DbQuery(id="todo_item", entity=Todo::class, type="row")
-     */
     #[DbQuery('todo_item', entity: Todo::class, type:'row')]
     public function getItem(string $id): Todo;
 
-    /**
-     * @DbQuery(id="todo_list",entity=Todo::class)
-     * @return list<Todo>
-     */
     #[DbQuery('todo_list', entity: Todo::class)]
     public function getList(): array;
 }

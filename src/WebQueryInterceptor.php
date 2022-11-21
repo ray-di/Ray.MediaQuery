@@ -9,34 +9,18 @@ use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
 use Ray\MediaQuery\Annotation\WebQuery;
 
-class WebQueryInterceptor implements MethodInterceptor
+final class WebQueryInterceptor implements MethodInterceptor
 {
-    /** @var WebApiQueryInterface */
-    private $webApiQuery;
-
-    /** @var ParamInjectorInterface  */
-    private $paramInjector;
-
-    /** @var array<string, array{method: string, path: string}> */
-    private $webApiList;
-
-    /**
-     * @param array<string, array{method: string, path: string}> $webApiList
-     *
-     * @WebApiList("webApiList")
-     */
-    #[WebApiList('webApiList')]
-    public function __construct(WebApiQueryInterface $webApiQuery, ParamInjectorInterface $paramInjector, array $webApiList)
-    {
-        $this->webApiQuery = $webApiQuery;
-        $this->paramInjector = $paramInjector;
-        $this->webApiList = $webApiList;
+    /** @param array<string, array{method: string, path: string}> $webApiList */
+    public function __construct(
+        private WebApiQueryInterface $webApiQuery,
+        private ParamInjectorInterface $paramInjector,
+        #[WebApiList] private array $webApiList,
+    ) {
     }
 
-    /**
-     * @return Pages|array<mixed>
-     */
-    public function invoke(MethodInvocation $invocation)
+    /** @return Pages|array<mixed> */
+    public function invoke(MethodInvocation $invocation): Pages|array
     {
         $method = $invocation->getMethod();
         /** @var WebQuery $webQuery */
