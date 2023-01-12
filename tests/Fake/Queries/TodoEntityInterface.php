@@ -9,7 +9,7 @@ use Ray\MediaQuery\Entity\Todo;
 
 interface TodoEntityInterface
 {
-    #[DbQuery('todo_item', entity: Todo::class, type:'row')]
+    #[DbQuery('todo_item', entity: Todo::class)]
     public function getItem(string $id): Todo;
 
     #[DbQuery('todo_list', entity: Todo::class)]

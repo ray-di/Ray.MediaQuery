@@ -11,6 +11,7 @@ use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+use ReflectionNamedType;
 
 use function assert;
 use function class_exists;
@@ -41,7 +42,10 @@ class DbQueryInterceptor implements MethodInterceptor
 
         $fetchStyle = $this->getFetchMode($dbQuery);
 
-        return $this->sqlQuery($dbQuery, $values, $fetchStyle, (string) $dbQuery->entity);
+        /** @var ReflectionNamedType|null $returnType */
+        $returnType = $invocation->getMethod()->getReturnType();
+
+        return $this->sqlQuery($returnType, $dbQuery, $values, $fetchStyle, (string) $dbQuery->entity);
     }
 
     /** @return  PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle */
@@ -64,9 +68,9 @@ class DbQueryInterceptor implements MethodInterceptor
      *
      * @return array<mixed>|object|null
      */
-    private function sqlQuery(DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
+    private function sqlQuery(ReflectionNamedType|null $returnType, DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
     {
-        if ($dbQuery->type === 'row') {
+        if ($dbQuery->type === 'row' || $returnType && class_exists($returnType->getName())) {
             return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchStyle, $fetchArg);
         }
 
