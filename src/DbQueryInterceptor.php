@@ -38,15 +38,15 @@ class DbQueryInterceptor implements MethodInterceptor
         $values = $this->paramInjector->getArgumentes($invocation);
         $entity = (new ReturnEntity($method))->type;
         if ($pager instanceof Pager) {
-            return $this->getPager($dbQuery->id, $values, $pager, $dbQuery->entity);
+            return $this->getPager($dbQuery->id, $values, $pager, $entity);
         }
 
-        $fetchStyle = $this->getFetchMode($entity);
+        $fetchStyle = $this->getFetchMode((string) $entity);
 
         /** @var ReflectionNamedType|null $returnType */
         $returnType = $invocation->getMethod()->getReturnType();
 
-        return $this->sqlQuery($returnType, $dbQuery, $values, $fetchStyle, (string) $dbQuery->entity);
+        return $this->sqlQuery($returnType, $dbQuery, $values, $fetchStyle, (string) $entity);
     }
 
     /**
@@ -71,7 +71,7 @@ class DbQueryInterceptor implements MethodInterceptor
      */
     private function sqlQuery(ReflectionNamedType|null $returnType, DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
     {
-        if ($dbQuery->type === 'row' || $returnType && class_exists($returnType->getName())) {
+        if ($dbQuery->type === 'row' || ($returnType && class_exists($returnType->getName()))) {
             return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchStyle, $fetchArg);
         }
 

@@ -7,6 +7,7 @@ namespace Ray\MediaQuery;
 use phpDocumentor\Reflection\DocBlock\Tags\Return_;
 use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\Types\Array_;
+use phpDocumentor\Reflection\Types\Collection;
 use phpDocumentor\Reflection\Types\ContextFactory;
 use phpDocumentor\Reflection\Types\Object_;
 use ReflectionMethod;
@@ -17,8 +18,8 @@ use function substr;
 
 final class ReturnEntity
 {
-    /** @var class-string  */
-    public string|null $type = '';
+    /** @var ?class-string  */
+    public string|null $type = null;
 
     public function __construct(ReflectionMethod $method)
     {
@@ -28,7 +29,7 @@ final class ReturnEntity
         }
 
         $returnTypeClass = $returnType->getName();
-        if (class_exists($returnTypeClass)) {
+        if (class_exists($returnTypeClass) && $returnTypeClass !== Pages::class) {
             $this->type = $returnTypeClass;
 
             return;
@@ -50,7 +51,7 @@ final class ReturnEntity
         $return = $returns[0];
         assert($return instanceof Return_);
         $type = $return->getType();
-        if (! $type instanceof Array_) {
+        if (! $type instanceof Array_ && ! $type instanceof Collection) {
             return;
         }
 

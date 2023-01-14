@@ -11,6 +11,9 @@ use Ray\MediaQuery\Pages;
 
 interface PagerEntityInterface
 {
-    #[DbQuery('todo_list', entity: TodoConstruct::class), Pager(perPage: 10, template: '/{?page}')]
+    #[DbQuery('todo_list'), Pager(perPage: 10, template: '/{?page}')]
+    /**
+     * @return Pages<TodoConstruct>
+     */
     public function __invoke(): Pages;
 }

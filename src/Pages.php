@@ -10,6 +10,7 @@ use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\MediaQuery\Exception\LogicException;
 
+/** @template T of ?class-string */
 class Pages implements PagesInterface
 {
     /** @param array<string, mixed> $params */
