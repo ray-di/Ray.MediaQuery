@@ -13,5 +13,8 @@ interface TodoConstcuctEntityInterface
     public function getItem(string $id): TodoConstruct;
 
     #[DbQuery('todo_list', entity: TodoConstruct::class)]
+    /**
+     * @return array<TodoConstruct>
+     */
     public function getList(): array;
 }

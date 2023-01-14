@@ -36,11 +36,12 @@ class DbQueryInterceptor implements MethodInterceptor
         $dbQuery = $method->getAnnotation(DbQuery::class);
         $pager = $method->getAnnotation(Pager::class);
         $values = $this->paramInjector->getArgumentes($invocation);
+        $entity = (new ReturnEntity($method))->type;
         if ($pager instanceof Pager) {
             return $this->getPager($dbQuery->id, $values, $pager, $dbQuery->entity);
         }
 
-        $fetchStyle = $this->getFetchMode($dbQuery);
+        $fetchStyle = $this->getFetchMode($entity);
 
         /** @var ReflectionNamedType|null $returnType */
         $returnType = $invocation->getMethod()->getReturnType();
@@ -48,18 +49,18 @@ class DbQueryInterceptor implements MethodInterceptor
         return $this->sqlQuery($returnType, $dbQuery, $values, $fetchStyle, (string) $dbQuery->entity);
     }
 
-    /** @return  PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle */
-    private function getFetchMode(DbQuery $dbQuery): int
+    /**
+     * @param ?class-string $entity
+     *
+     * @return  PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
+     */
+    private function getFetchMode(string $entity): int
     {
-        if (! class_exists((string) $dbQuery->entity)) {
+        if (! class_exists($entity)) {
             return PDO::FETCH_ASSOC;
         }
 
-        if (is_string($dbQuery->entity) && method_exists($dbQuery->entity, '__construct')) {
-            return PDO::FETCH_FUNC;
-        }
-
-        return PDO::FETCH_CLASS;
+        return method_exists($entity, '__construct') ? PDO::FETCH_FUNC : PDO::FETCH_CLASS;
     }
 
     /**
