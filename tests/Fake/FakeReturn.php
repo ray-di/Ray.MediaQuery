@@ -26,4 +26,40 @@ final class FakeReturn
     {
         return [];
     }
+
+    public function noReturn()
+    {
+    }
+
+    public function noPhpDoc(): Pages
+    {
+    }
+
+    /**
+     * @todo Add return type!
+     */
+    public function noReturnDoc(): Pages
+    {
+    }
+
+    /**
+     * @return array<int>
+     */
+    public function nonEntityGeneric(): array
+    {
+    }
+
+    /**
+     * @return int
+     */
+    public function invalidReturnType(): array
+    {
+    }
+
+    /**
+     * @return array<array<string, string>>
+     */
+    public function returnArray(): array
+    {
+    }
 }

@@ -67,10 +67,6 @@ final class ReturnEntity
 
         $fqsen = (string) $valueType->getFqsen();
 
-        if (! class_exists($fqsen)) {
-            return;
-        }
-
         $classString = substr($fqsen, 1);
         assert(class_exists($classString));
 
