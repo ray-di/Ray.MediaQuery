@@ -35,6 +35,11 @@ final class ReturnEntity
             return;
         }
 
+        $this->docblock($method);
+    }
+
+    private function docblock(ReflectionMethod $method): void
+    {
         $factory = DocBlockFactory::createInstance();
         $context = (new ContextFactory())->createFromReflector($method);
         $docComment = $method->getDocComment();
