@@ -90,7 +90,7 @@ Note: MediaQueryModule requires AuraSqlModule to be installed.
 
 ### Request object injection
 
-You don't need to provide any implementation classes. It will be generated and injected.
+You do not need to prepare an implementation class. It is generated and injected from the interface.
 
 ```php
 class Todo
@@ -106,33 +106,47 @@ class Todo
 }
 ```
 
-### Notes
+### DbQuery
 
-#### DbQuery
-
-SQL execution is mapped to a method, and the SQL specified by ID is bound and executed by the method argument.
-For example, if the ID is `todo_item`, `todo_item.sql` SQL statement will be executed with `['id => $id]` bound.
-
-* Prepare the SQL file in the `$sqlDir` directory.
-* Add a postfix of `item` if the return value of the SQL execution is a single line, or `list` if it is multiple lines.
-* The SQL file can contain multiple SQL statements. The last line of SELECT will be the return value.
-
-#### Entity
-
-* The SQL execution result can be hydrated to the entity class with `entity` parameter
+When the method is called, the SQL specified by the ID is bound with the method argument and executed.
+For example, if the ID is `todo_item`, the `todo_item.sql` SQL statement is bound with `['id => $id]` and executed.
 
 ```php
 interface TodoItemInterface
 {
-    #[DbQuery('todo_item', entity: Todo::class)]
-    public function getItem(string $id): Todo;
+    #[DbQuery('todo_item', type: 'row')]
+    public function item(string $id): array;
+
+    #[DbQuery('todo_list')]
+    /** @return array<Todo> */
+    public function list(string $id): array;
 }
 ```
+
+* If the result is a `row`(`array<string, scalar>>`), specify `type:'row'`. The type is not necessary for `row_list`(`array<int, array<string, scalar>>`).
+* SQL files can contain multiple SQL statements. In that case, the return value is the last line of the SELECT.
+
+#### Entity
+
+When the return value of a method is an entity class, the result of the SQL execution is hydrated.
+
+```php
+interface TodoItemInterface
+{
+    #[DbQuery('todo_item')]
+    public function item(string $id): Todo;
+
+    #[DbQuery('todo_list')]
+    /** @return array<Todo> */
+    public function list(string $id): array;
+}
+```
+
 ```php
 final class Todo
 {
-    public string $id;
-    public string $title;
+    public readonly string $id;
+    public readonly string $title;
 }
 ```
 
@@ -155,8 +169,8 @@ If the entity has a constructor, the constructor will be called with the fetched
 final class Todo
 {
     public function __construct(
-        public string $id,
-        public string $title
+        public readonly string $id,
+        public readonly string $title
     ) {}
 }
 ```
@@ -258,7 +272,7 @@ The number of items per page is specified by `perPage`, but for dynamic values, 
 
 ```php
     #[DbQuery, Pager(perPage: 'pageNum', template: '/{?page}')]
-    public function __invoke($pageNum): PagesInterface;
+    public function __invoke($pageNum): Pages;
 ```
 
 ```php
@@ -273,6 +287,14 @@ $page = $pages[2]; // A page query is executed when an array access is made.
 // $page->hasPrevious
 // $page->maxPerPage;
 // (string) $page // pager html
+```
+
+Use `@return` to specify hydration to the entity class.
+
+```php
+    #[DbQuery, Pager(perPage: 'pageNum', template: '/{?page}')]
+    /** @return array<Todo> */
+    public function __invoke($pageNum): Pages;
 ```
 
 # SqlQuery
