@@ -16,53 +16,50 @@ use function assert;
 use function class_exists;
 use function substr;
 
-final class ReturnEntity
+final class ReturnEntity implements ReturnEntityInterface
 {
-    /** @var ?class-string  */
-    public string|null $type = null;
-
-    public function __construct(ReflectionMethod $method)
+    /** @inheritDoc  */
+    public function __invoke(ReflectionMethod $method): string|null
     {
         $returnType = $method->getReturnType();
         if ($returnType === null) {
-            return;
+            return null;
         }
 
         $returnTypeClass = (string) $returnType;
         if (class_exists($returnTypeClass) && $returnTypeClass !== Pages::class) {
-            $this->type = $returnTypeClass;
-
-            return;
+            return $returnTypeClass;
         }
 
-        $this->docblock($method);
+        return $this->docblock($method);
     }
 
-    private function docblock(ReflectionMethod $method): void
+    /** @return ?class-string  */
+    private function docblock(ReflectionMethod $method): string|null
     {
         $factory = DocBlockFactory::createInstance();
         $context = (new ContextFactory())->createFromReflector($method);
         $docComment = $method->getDocComment();
         if ($docComment === false) {
-            return;
+            return null;
         }
 
         $docblock = $factory->create($docComment, $context);
         $returns = $docblock->getTagsByName('return');
         if (! isset($returns[0])) {
-            return;
+            return null;
         }
 
         $return = $returns[0];
         assert($return instanceof Return_);
         $type = $return->getType();
         if (! $type instanceof Array_ && ! $type instanceof Collection) {
-            return;
+            return null;
         }
 
         $valueType = $type->getValueType();
         if (! $valueType instanceof Object_) {
-            return;
+            return null;
         }
 
         $fqsen = (string) $valueType->getFqsen();
@@ -70,6 +67,6 @@ final class ReturnEntity
         $classString = substr($fqsen, 1);
         assert(class_exists($classString));
 
-        $this->type = $classString;
+        return $classString;
     }
 }

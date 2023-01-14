@@ -25,6 +25,7 @@ class DbQueryInterceptor implements MethodInterceptor
         private SqlQueryInterface $sqlQuery,
         private MediaQueryLoggerInterface $logger,
         private ParamInjectorInterface $paramInjector,
+        private ReturnEntityInterface $returnEntity,
     ) {
     }
 
@@ -36,7 +37,7 @@ class DbQueryInterceptor implements MethodInterceptor
         $dbQuery = $method->getAnnotation(DbQuery::class);
         $pager = $method->getAnnotation(Pager::class);
         $values = $this->paramInjector->getArgumentes($invocation);
-        $entity = (new ReturnEntity($method))->type;
+        $entity = ($this->returnEntity)($method);
         if ($pager instanceof Pager) {
             return $this->getPager($dbQuery->id, $values, $pager, $entity);
         }
