@@ -20,7 +20,6 @@ final class DbQuery
         public string $id,
         public string $type = 'row_list',
         /** @var ?class-string */
-        public string|null $entity = null,
     ) {
     }
 }
