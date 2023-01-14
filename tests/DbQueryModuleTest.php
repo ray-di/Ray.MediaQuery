@@ -33,6 +33,7 @@ use function assert;
 use function dirname;
 use function file_get_contents;
 use function is_array;
+use function is_callable;
 
 class DbQueryModuleTest extends TestCase
 {
@@ -58,7 +59,6 @@ class DbQueryModuleTest extends TestCase
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
-        /** @phpstan-ignore-next-line  */
         $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true]));
         $this->injector = new Injector($module, __DIR__ . '/tmp');
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
@@ -203,6 +203,7 @@ class DbQueryModuleTest extends TestCase
     {
         $this->expectException(PerPageNotIntTypeException::class);
         $todoList = $this->injector->getInstance(DynamicPerPageInvalidType::class);
+        assert(is_callable($todoList));
         $todoList('1');
     }
 
