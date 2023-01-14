@@ -41,7 +41,7 @@ class DbQueryInterceptor implements MethodInterceptor
             return $this->getPager($dbQuery->id, $values, $pager, $entity);
         }
 
-        $fetchStyle = $this->getFetchMode((string) $entity);
+        $fetchStyle = $this->getFetchMode($entity);
 
         /** @var ReflectionNamedType|null $returnType */
         $returnType = $invocation->getMethod()->getReturnType();
@@ -52,11 +52,11 @@ class DbQueryInterceptor implements MethodInterceptor
     /**
      * @param ?class-string $entity
      *
-     * @return  PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
+     * @return PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
      */
-    private function getFetchMode(string $entity): int
+    private function getFetchMode(string|null $entity): int
     {
-        if (! class_exists($entity)) {
+        if ($entity === null) {
             return PDO::FETCH_ASSOC;
         }
 

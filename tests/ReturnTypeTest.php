@@ -8,9 +8,6 @@ use PHPUnit\Framework\TestCase;
 use Ray\MediaQuery\Entity\FakeEntity;
 use ReflectionMethod;
 
-class Foo
-{
-}
 class ReturnTypeTest extends TestCase
 {
     public function testReturnItem(): void

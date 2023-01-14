@@ -28,7 +28,7 @@ final class ReturnEntity
             return;
         }
 
-        $returnTypeClass = $returnType->getName();
+        $returnTypeClass = (string) $returnType;
         if (class_exists($returnTypeClass) && $returnTypeClass !== Pages::class) {
             $this->type = $returnTypeClass;
 
@@ -66,6 +66,9 @@ final class ReturnEntity
             return;
         }
 
-        $this->type = substr($fqsen, 1);
+        $classString = substr($fqsen, 1);
+        assert(class_exists($classString));
+
+        $this->type = $classString;
     }
 }

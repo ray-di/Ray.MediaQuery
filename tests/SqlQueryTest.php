@@ -95,7 +95,11 @@ class SqlQueryTest extends TestCase
         return $pages;
     }
 
-    /** @depends testPager */
+    /**
+     * @param Pages<mixed> $pages
+     *
+     * @depends testPager
+     */
     public function testPagerCount(Pages $pages): void
     {
         $this->assertSame(2, count($pages));
@@ -136,20 +140,32 @@ class SqlQueryTest extends TestCase
         $this->assertInstanceOf(PDOStatement::class, $sqlQuery->getStatement());
     }
 
-    /** @depends testPager */
+    /**
+     * @param Pages<mixed> $pages
+     *
+     * @depends testPager
+     */
     public function testOffsetExists(Pages $pages): void
     {
         $this->assertTrue(isset($pages[1]));
     }
 
-    /** @depends testPager */
+    /**
+     * @param Pages<mixed> $pages
+     *
+     * @depends testPager
+     */
     public function testOffsetSet(Pages $pages): void
     {
         $this->expectException(LogicException::class);
         $pages[1] = '';
     }
 
-    /** @depends testPager */
+    /**
+     * @param Pages<mixed> $pages
+     *
+     * @depends testPager
+     */
     public function testOffsetUnset(Pages $pages): void
     {
         $this->expectException(LogicException::class);
