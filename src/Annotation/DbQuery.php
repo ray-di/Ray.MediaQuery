@@ -18,7 +18,7 @@ final class DbQuery
     /** @param 'row'|'row_list' $type */
     public function __construct(
         public string $id,
-        public string $ty2pe = 'row_list',
+        public string $type = 'row_list',
     ) {
     }
 }
