@@ -22,6 +22,7 @@ use function explode;
 use function file_exists;
 use function file_get_contents;
 use function is_array;
+use function is_callable;
 use function is_object;
 use function is_string;
 use function json_encode;
@@ -141,7 +142,12 @@ final class SqlQuery implements SqlQueryInterface
             return $this->pdoStatement->fetchAll($fetchModode, $fetchArg);
         }
 
-        // PDO::FETCH_FUNC
+        // 'factory' attribute
+        if (is_callable($fetchArg)) {
+            return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, $fetchArg);
+        }
+
+        // constuructor call
         return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, /** @param list<mixed> $args */static function (...$args) use ($fetchArg) {
             assert(is_string($fetchArg) && class_exists($fetchArg));
 

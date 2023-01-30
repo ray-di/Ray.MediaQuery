@@ -15,6 +15,7 @@ use ReflectionNamedType;
 
 use function assert;
 use function class_exists;
+use function is_callable;
 use function is_int;
 use function is_string;
 use function method_exists;
@@ -42,10 +43,15 @@ class DbQueryInterceptor implements MethodInterceptor
             return $this->getPager($dbQuery->id, $values, $pager, $entity);
         }
 
-        $fetchStyle = $this->getFetchMode($entity);
-
         /** @var ReflectionNamedType|null $returnType */
         $returnType = $invocation->getMethod()->getReturnType();
+
+        $maybeFactory = [$dbQuery->factory, 'factory'];
+        if (is_callable($maybeFactory)) {
+            return $this->sqlQuery($returnType, $dbQuery, $values, PDO::FETCH_FUNC, $maybeFactory);
+        }
+
+        $fetchStyle = $this->getFetchMode($entity);
 
         return $this->sqlQuery($returnType, $dbQuery, $values, $fetchStyle, (string) $entity);
     }

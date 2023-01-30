@@ -15,6 +15,7 @@ use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+use Ray\MediaQuery\Fake\Queries\TodoFactoryInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidType;
@@ -56,6 +57,7 @@ class DbQueryModuleTest extends TestCase
             DynamicPerPageInvalidInterface::class,
             DynamicPerPageInvalidType::class,
             PagerEntityInterface::class,
+            TodoFactoryInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
@@ -218,5 +220,16 @@ class DbQueryModuleTest extends TestCase
         $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query: todo_list', $log);
+    }
+
+    public function testFactory(): void
+    {
+        /** @var TodoEntityInterface $todoList */
+        $todoList = $this->injector->getInstance(TodoFactoryInterface::class);
+        $list = $todoList->getList();
+        $this->assertInstanceOf(TodoConstruct::class, $list[0]);
+        $this->assertSame('run', $list[0]->title);
+        $item = $todoList->getItem('1');
+        $this->assertInstanceOf(TodoConstruct::class, $item);
     }
 }
