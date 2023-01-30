@@ -12,9 +12,9 @@ use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
 use ReflectionNamedType;
+use ReflectionUnionType;
 
 use function assert;
-use function class_exists;
 use function is_callable;
 use function is_int;
 use function is_string;
@@ -76,9 +76,9 @@ class DbQueryInterceptor implements MethodInterceptor
      *
      * @return array<mixed>|object|null
      */
-    private function sqlQuery(ReflectionNamedType|null $returnType, DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
+    private function sqlQuery(ReflectionNamedType|ReflectionUnionType|null $returnType, DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
     {
-        if ($dbQuery->type === 'row' || ($returnType && class_exists($returnType->getName()))) {
+        if ($dbQuery->type === 'row' || $returnType instanceof ReflectionUnionType || ($returnType instanceof ReflectionNamedType && $returnType->getName() !== 'array')) {
             return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchStyle, $fetchArg);
         }
 
