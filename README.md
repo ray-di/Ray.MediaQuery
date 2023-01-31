@@ -175,6 +175,34 @@ final class Todo
 }
 ```
 
+#### Entity factory
+
+To create an entity with a factory class, specify the factory class in the `factory` attribute.
+
+```php
+interface TodoItemInterface
+{
+    #[DbQuery('todo_item', factory: TodoEntityFactory::class)]
+    public function item(string $id): Todo;
+
+    #[DbQuery('todo_list', factory: TodoEntityFactory::class)]
+    /** @return array<Todo> */
+    public function list(string $id): array;
+}
+```
+
+The `factory` method of the factory class is called with the fetched data. You can also change the entity depending on the data.
+
+```php
+final class TodoEntityFactory
+{
+    public static function factory(string $id, string $name): Todo
+    {
+        return new Todo($id, $name);
+    }
+}
+```
+
 #### Web API
 
 * Customization such as header for authentication is done by binding Guzzle's `ClinetInterface`.

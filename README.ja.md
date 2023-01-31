@@ -163,6 +163,33 @@ final class Todo
 }
 ```
 
+#### Entity factory
+
+ファクトリークラスでエンティティを生成するには`factory`属性ででファクトリークラスを指定します。
+
+```php
+interface TodoItemInterface
+{
+    #[DbQuery('todo_item', factory: TodoEntityFactory::class)]
+    public function item(string $id): Todo;
+
+    #[DbQuery('todo_list', factory: TodoEntityFactory::class)]
+    /** @return array<Todo> */
+    public function list(string $id): array;
+}
+```
+
+ファクトリークラスの`factory`メソッドがフェッチしたデータでコールされます。データに応じてエンティティを変えることもできます。
+
+```php
+final class TodoEntityFactory
+{
+    public static function factory(string $id, string $name): Todo
+    {
+        return new Todo($id, $name);
+    }
+}
+```
 ### Web API
 
 * メソッドの引数が `uri`で指定されたURI templateにバインドされ、Web APIリクエストオブジェクトが生成されます。
