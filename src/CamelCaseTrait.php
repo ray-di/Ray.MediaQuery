@@ -12,7 +12,7 @@ trait CamelCaseTrait
 {
     public function __set(string $name, mixed $value): void
     {
-        $propName =  lcfirst(str_replace('_', '', ucwords($name, '_')));
+        $propName = lcfirst(str_replace('_', '', ucwords($name, '_')));
         $this->{$propName} = $value;
     }
 }

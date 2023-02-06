@@ -9,9 +9,12 @@ use Ray\MediaQuery\Entity\TodoConstruct;
 
 interface TodoConstcuctEntityInterface
 {
-    #[DbQuery('todo_item', entity: TodoConstruct::class, type: "row")]
+    #[DbQuery('todo_item')]
     public function getItem(string $id): TodoConstruct;
 
-    #[DbQuery('todo_list', entity: TodoConstruct::class)]
+    #[DbQuery('todo_list')]
+    /**
+     * @return array<TodoConstruct>
+     */
     public function getList(): array;
 }

@@ -26,5 +26,6 @@ class MediaQueryDbModule extends AbstractModule
             [DbQueryInterceptor::class],
         );
         $this->bind()->annotatedWith(SqlDir::class)->toInstance($this->configs->sqlDir);
+        $this->bind(ReturnEntityInterface::class)->to(ReturnEntity::class);
     }
 }

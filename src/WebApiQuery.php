@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\TransferException;
 use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
 use Ray\MediaQuery\Exception\WebApiRequestException;
 
@@ -39,7 +39,7 @@ final class WebApiQuery implements WebApiQueryInterface
             $this->logger->log($boundUri, $query);
 
             return $body;
-        } catch (GuzzleException $e) {
+        } catch (TransferException $e) {
             throw new WebApiRequestException($e->getMessage(), (int) $e->getCode(), $e);
         }
     }

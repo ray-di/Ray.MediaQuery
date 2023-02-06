@@ -15,6 +15,8 @@ use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+use Ray\MediaQuery\Fake\Queries\TodoFactoryInterface;
+use Ray\MediaQuery\Fake\Queries\TodoFactoryUnionInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidType;
@@ -33,6 +35,7 @@ use function assert;
 use function dirname;
 use function file_get_contents;
 use function is_array;
+use function is_callable;
 
 class DbQueryModuleTest extends TestCase
 {
@@ -55,11 +58,12 @@ class DbQueryModuleTest extends TestCase
             DynamicPerPageInvalidInterface::class,
             DynamicPerPageInvalidType::class,
             PagerEntityInterface::class,
+            TodoFactoryInterface::class,
+            TodoFactoryUnionInterface::class,
         ]);
         $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
-        /** @phpstan-ignore-next-line  */
-        $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true]));
+        $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true])); /* @phpstan-ignore-line */
         $this->injector = new Injector($module, __DIR__ . '/tmp');
         $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
@@ -203,6 +207,7 @@ class DbQueryModuleTest extends TestCase
     {
         $this->expectException(PerPageNotIntTypeException::class);
         $todoList = $this->injector->getInstance(DynamicPerPageInvalidType::class);
+        assert(is_callable($todoList));
         $todoList('1');
     }
 
@@ -217,5 +222,30 @@ class DbQueryModuleTest extends TestCase
         $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query: todo_list', $log);
+    }
+
+    /** @return array<array<class-string>> */
+    public function queryInterfaceProvider(): array
+    {
+        return [
+            [TodoFactoryInterface::class],
+            [TodoFactoryUnionInterface::class],
+        ];
+    }
+
+    /**
+     * @param class-string $queryInterface
+     *
+     * @dataProvider queryInterfaceProvider
+     */
+    public function testFactory(string $queryInterface): void
+    {
+        /** @var TodoFactoryInterface|TodoFactoryUnionInterface $todoList */
+        $todoList = $this->injector->getInstance($queryInterface);
+        $list = $todoList->getList();
+        $this->assertInstanceOf(TodoConstruct::class, $list[0]);
+        $this->assertSame('run', $list[0]->title);
+        $item = $todoList->getItem('1');
+        $this->assertInstanceOf(TodoConstruct::class, $item);
     }
 }

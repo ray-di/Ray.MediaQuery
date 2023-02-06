@@ -36,7 +36,7 @@ interface TodoAddInterface
 interface PostItemInterface
 {
     #[WebQuery('user_item')]
-    public function get(string $id): array;
+    public function item(string $id): Post;
 }
 ```
 
@@ -75,11 +75,11 @@ protected function configure(): void
 }
 ```
 
-MediaQueryModuleはAuraSqlModuleのインストールが必要です。
+注) MediaQueryModuleはAuraSqlModuleのインストールが必要です。
 
 ### 注入
 
-インtーフェイスからオブジェクトが直接生成され、インジェクトされます。実装クラスのコーディングが不要です。
+実装クラスをコーディングすることなく、インターフェイスからクエリー実行オブジェクトが生成されインジェクトされます。
 
 ```php
 class Todo
@@ -97,29 +97,44 @@ class Todo
 
 ### DbQuery
 
-SQL実行がメソッドにマップされ、IDで指定されたSQLをメソッドの引数でバインドして実行します。
-例えばIDが`todo_item`の指定では`todo_item.sql`SQL文に`['id => $id]`をバインドして実行します。
-
-* `$sqlDir`ディレクトリにSQLファイルを用意します。
-* SQL実行の戻り値が単一行なら`item`、複数行なら`list`のpostfixを付けます。
-* SQLファイルには複数のSQL文が記述できます。最後の行のSELECTが返り値になります。
-
-#### Entity
-
-* SQL実行結果を用意したエンティティクラスを`entity`で指定して変換 (hydrate)することができます。
+メソッドをコールするとIDで指定されたSQLをメソッドの引数でバインドして実行します。
+例えばIDが`todo_item`の指定では`todo_item.sql`SQL文を`['id => $id]`でバインドして実行します。
 
 ```php
 interface TodoItemInterface
 {
-    #[DbQuery('todo_item', entity: Todo::class)]
-    public function getItem(string $id): Todo;
+    #[DbQuery('todo_item', type: 'row')]
+    public function item(string $id): array;
+
+    #[DbQuery('todo_list')]
+    /** @return array<Todo> */
+    public function list(string $id): array;
+}
+```
+
+* 結果がrow`(`array<string, scalar>>`)の場合は`type:'row'`を指定します。`row_list`(`array<int, array<string, scalar>>>`)にはtype指定は不要です。
+* SQLファイルには複数のSQL文が記述できます。その場合には最後の行のSELECTが戻り値になります。
+
+#### Entity
+
+メソッドの戻り値をエンティティクラスにするとSQL実行結果がハイドレートされます。
+
+```php
+interface TodoItemInterface
+{
+    #[DbQuery('todo_item')]
+    public function item(string $id): Todo;
+
+    #[DbQuery('todo_list')]
+    /** @return array<Todo> */
+    public function list(string $id): array;
 }
 ```
 ```php
 final class Todo
 {
-    public string $id;
-    public string $title;
+    public readonly string $id;
+    public readonly string $title;
 }
 ```
 
@@ -136,18 +151,45 @@ class Invoice
 }
 ```
 
-コンストラクタがあると、フェッチしたデータでコールされます。
+エンティティにコンストラクタがあると、フェッチしたデータでコールされます。
 
 ```php
 final class Todo
 {
     public function __construct(
-        public string $id,
-        public string $title
+        public readonly string $id,
+        public readonly string $title
     ) {}
 }
 ```
 
+#### Entity factory
+
+ファクトリークラスでエンティティを生成するには`factory`属性ででファクトリークラスを指定します。
+
+```php
+interface TodoItemInterface
+{
+    #[DbQuery('todo_item', factory: TodoEntityFactory::class)]
+    public function item(string $id): Todo;
+
+    #[DbQuery('todo_list', factory: TodoEntityFactory::class)]
+    /** @return array<Todo> */
+    public function list(string $id): array;
+}
+```
+
+ファクトリークラスの`factory`メソッドがフェッチしたデータでコールされます。データに応じてエンティティを変えることもできます。
+
+```php
+final class TodoEntityFactory
+{
+    public static function factory(string $id, string $name): Todo
+    {
+        return new Todo($id, $name);
+    }
+}
+```
 ### Web API
 
 * メソッドの引数が `uri`で指定されたURI templateにバインドされ、Web APIリクエストオブジェクトが生成されます。
@@ -235,14 +277,14 @@ use Ray\MediaQuery\PagesInterface;
 interface TodoList
 {
     #[DbQuery, Pager(perPage: 10, template: '/{?page}')]
-    public function __invoke(): PagesInterface;
+    public function __invoke(): Pages;
 }
 ```
 
 ページ毎のアイテム数をperPageで指定しますが、動的な値の場合は以下のようにページ数を表す引数の名前を文字列を指定します。
 ```php
     #[DbQuery, Pager(perPage: 'pageNum', template: '/{?page}')]
-    public function __invoke($pageNum): PagesInterface;
+    public function __invoke($pageNum): Pages;
 ```
 
 `count()`で件数が取得でき、ページ番号で配列アクセスをするとページオブジェクトが取得できます。
@@ -262,6 +304,13 @@ $page = $pages[2]; // 配列アクセスをした時にそのページのDBク�
 // (string) $page // pager html
 ```
 
+エンティティクラスにハイドレーションを行うときは`@return`で指定します。
+
+```php
+    #[DbQuery, Pager(perPage: 'pageNum', template: '/{?page}')]
+    /** @return array<Todo> */
+    public function __invoke($pageNum): Pages;
+```
 ## SqlQuery
 
 `SqlQuery`はSQLファイルのIDを指定してSQLを実行します。

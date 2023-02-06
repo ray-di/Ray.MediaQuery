@@ -11,9 +11,12 @@ use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+use ReflectionNamedType;
+use ReflectionType;
+use ReflectionUnionType;
 
 use function assert;
-use function class_exists;
+use function is_callable;
 use function is_int;
 use function is_string;
 use function method_exists;
@@ -24,6 +27,7 @@ class DbQueryInterceptor implements MethodInterceptor
         private SqlQueryInterface $sqlQuery,
         private MediaQueryLoggerInterface $logger,
         private ParamInjectorInterface $paramInjector,
+        private ReturnEntityInterface $returnEntity,
     ) {
     }
 
@@ -35,27 +39,36 @@ class DbQueryInterceptor implements MethodInterceptor
         $dbQuery = $method->getAnnotation(DbQuery::class);
         $pager = $method->getAnnotation(Pager::class);
         $values = $this->paramInjector->getArgumentes($invocation);
+        $entity = ($this->returnEntity)($method);
         if ($pager instanceof Pager) {
-            return $this->getPager($dbQuery->id, $values, $pager, $dbQuery->entity);
+            return $this->getPager($dbQuery->id, $values, $pager, $entity);
         }
 
-        $fetchStyle = $this->getFetchMode($dbQuery);
+        /** @var ReflectionNamedType|null $returnType */
+        $returnType = $invocation->getMethod()->getReturnType();
 
-        return $this->sqlQuery($dbQuery, $values, $fetchStyle, (string) $dbQuery->entity);
+        $maybeFactory = [$dbQuery->factory, 'factory'];
+        if (is_callable($maybeFactory)) {
+            return $this->sqlQuery($returnType, $dbQuery, $values, PDO::FETCH_FUNC, $maybeFactory);
+        }
+
+        $fetchStyle = $this->getFetchMode($entity);
+
+        return $this->sqlQuery($returnType, $dbQuery, $values, $fetchStyle, (string) $entity);
     }
 
-    /** @return  PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle */
-    private function getFetchMode(DbQuery $dbQuery): int
+    /**
+     * @param ?class-string $entity
+     *
+     * @return PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
+     */
+    private function getFetchMode(string|null $entity): int
     {
-        if (! class_exists((string) $dbQuery->entity)) {
+        if ($entity === null) {
             return PDO::FETCH_ASSOC;
         }
 
-        if (is_string($dbQuery->entity) && method_exists($dbQuery->entity, '__construct')) {
-            return PDO::FETCH_FUNC;
-        }
-
-        return PDO::FETCH_CLASS;
+        return method_exists($entity, '__construct') ? PDO::FETCH_FUNC : PDO::FETCH_CLASS;
     }
 
     /**
@@ -64,9 +77,9 @@ class DbQueryInterceptor implements MethodInterceptor
      *
      * @return array<mixed>|object|null
      */
-    private function sqlQuery(DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
+    private function sqlQuery(ReflectionType|null $returnType, DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
     {
-        if ($dbQuery->type === 'row') {
+        if ($dbQuery->type === 'row' || $returnType instanceof ReflectionUnionType || ($returnType instanceof ReflectionNamedType && $returnType->getName() !== 'array')) {
             return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchStyle, $fetchArg);
         }
 

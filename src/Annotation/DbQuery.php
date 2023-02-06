@@ -19,8 +19,7 @@ final class DbQuery
     public function __construct(
         public string $id,
         public string $type = 'row_list',
-        /** @var ?class-string */
-        public string|null $entity = null,
+        public string $factory = '',
     ) {
     }
 }
