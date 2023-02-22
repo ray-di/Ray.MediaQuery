@@ -13,7 +13,6 @@ use phpDocumentor\Reflection\Types\Object_;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionType;
-use ReflectionUnionType;
 
 use function assert;
 use function class_exists;
@@ -43,8 +42,6 @@ final class ReturnEntity implements ReturnEntityInterface
         if ($reflectionType instanceof ReflectionNamedType) {
             return $reflectionType->getName();
         }
-
-        assert($reflectionType instanceof ReflectionUnionType);
 
         return (string) $reflectionType;
     }
