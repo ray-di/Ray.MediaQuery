@@ -15,6 +15,7 @@ use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+use Ray\MediaQuery\Fake\Queries\TodoEntityNullableInterface;
 use Ray\MediaQuery\Fake\Queries\TodoFactoryInterface;
 use Ray\MediaQuery\Fake\Queries\TodoFactoryUnionInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInterface;
@@ -53,6 +54,7 @@ class DbQueryModuleTest extends TestCase
             PromiseItemInterface::class,
             PromiseListInterface::class,
             TodoEntityInterface::class,
+            TodoEntityNullableInterface::class,
             TodoConstcuctEntityInterface::class,
             DynamicPerPageInterface::class,
             DynamicPerPageInvalidInterface::class,
@@ -138,6 +140,17 @@ class DbQueryModuleTest extends TestCase
     {
         /** @var TodoEntityInterface $todoList */
         $todoList = $this->injector->getInstance(TodoEntityInterface::class);
+        $list = $todoList->getList();
+        $this->assertInstanceOf(Todo::class, $list[0]);
+        $this->assertSame('run', $list[0]->title);
+        $item = $todoList->getItem('1');
+        $this->assertInstanceOf(Todo::class, $item);
+    }
+
+    public function testEntityNullable(): void
+    {
+        /** @var TodoEntityInterface $todoList */
+        $todoList = $this->injector->getInstance(TodoEntityNullableInterface::class);
         $list = $todoList->getList();
         $this->assertInstanceOf(Todo::class, $list[0]);
         $this->assertSame('run', $list[0]->title);

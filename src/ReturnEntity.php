@@ -11,6 +11,8 @@ use phpDocumentor\Reflection\Types\Collection;
 use phpDocumentor\Reflection\Types\ContextFactory;
 use phpDocumentor\Reflection\Types\Object_;
 use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionType;
 
 use function assert;
 use function class_exists;
@@ -26,12 +28,22 @@ final class ReturnEntity implements ReturnEntityInterface
             return null;
         }
 
-        $returnTypeClass = (string) $returnType;
+        $returnTypeClass = $this->getReturnTypeName($returnType);
+
         if (class_exists($returnTypeClass) && $returnTypeClass !== Pages::class) {
             return $returnTypeClass;
         }
 
         return $this->docblock($method);
+    }
+
+    private function getReturnTypeName(ReflectionType $reflectionType): string
+    {
+        if ($reflectionType instanceof ReflectionNamedType) {
+            return $reflectionType->getName();
+        }
+
+        return (string) $reflectionType;
     }
 
     /** @return ?class-string  */
