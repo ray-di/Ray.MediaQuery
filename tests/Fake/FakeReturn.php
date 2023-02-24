@@ -35,10 +35,19 @@ final class FakeReturn
     {
     }
 
+    public function noPhpDocFakePages(): FakePages
+    {
+    }
+
     /**
      * @todo Add return type!
      */
     public function noReturnDoc(): Pages
+    {
+    }
+
+    /** @todo Add return type! */
+    public function noReturnDocFakePages(): FakePages
     {
     }
 

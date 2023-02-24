@@ -42,9 +42,25 @@ class ReturnTypeTest extends TestCase
         $this->assertSame(null, $entity);
     }
 
+    public function testNoPhpDocFakePages(): void
+    {
+        $method = new ReflectionMethod(new FakeReturn(), 'noPhpDocFakePages');
+        $entity = (new ReturnEntity())($method);
+
+        $this->assertSame(null, $entity);
+    }
+
     public function testNoReturnDoc(): void
     {
         $method = new ReflectionMethod(new FakeReturn(), 'noReturnDoc');
+        $entity = (new ReturnEntity())($method);
+
+        $this->assertSame(null, $entity);
+    }
+
+    public function testNoReturnDocFakePages(): void
+    {
+        $method = new ReflectionMethod(new FakeReturn(), 'noReturnDocFakePages');
         $entity = (new ReturnEntity())($method);
 
         $this->assertSame(null, $entity);
