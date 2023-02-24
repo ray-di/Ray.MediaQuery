@@ -16,6 +16,7 @@ use ReflectionType;
 
 use function assert;
 use function class_exists;
+use function is_a;
 use function substr;
 
 final class ReturnEntity implements ReturnEntityInterface
@@ -30,7 +31,7 @@ final class ReturnEntity implements ReturnEntityInterface
 
         $returnTypeClass = $this->getReturnTypeName($returnType);
 
-        if (class_exists($returnTypeClass) && $returnTypeClass !== Pages::class) {
+        if (class_exists($returnTypeClass) && ! is_a($returnTypeClass, PagesInterface::class, true)) {
             return $returnTypeClass;
         }
 
