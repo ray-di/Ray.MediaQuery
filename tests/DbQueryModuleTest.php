@@ -71,8 +71,10 @@ class DbQueryModuleTest extends TestCase
         assert($pdo instanceof ExtendedPdoInterface);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
+        $pdo->query((string) file_get_contents($sqlDir . '/create_memo.sql'));
         $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), ['id' => '1', 'title' => 'run']);
         $pdo->perform((string) file_get_contents($sqlDir . '/promise_add.sql'), ['id' => '1', 'title' => 'run', 'time' => UnixEpocTime::TEXT]);
+        $pdo->perform((string) file_get_contents($sqlDir . '/memo_add.sql'), ['id' => '1', 'body' => 'run', 'todoId' => '1']);
         /** @var MediaQueryLoggerInterface $logger */
         $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
         $this->logger = $logger;
