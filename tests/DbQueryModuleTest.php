@@ -11,6 +11,7 @@ use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
+use Ray\MediaQuery\Entity\Memo;
 use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
@@ -262,5 +263,21 @@ class DbQueryModuleTest extends TestCase
         $this->assertSame('run', $list[0]->title);
         $item = $todoList->getItem('1');
         $this->assertInstanceOf(TodoConstruct::class, $item);
+    }
+
+    /**
+     * 1 対 多 のリレーション検証をします。
+     * Todo -< Memo のリレーションがあります。
+     */
+    public function testOneToMany(): void
+    {
+        $query = $this->injector->getInstance(TodoEntityInterface::class);
+        assert($query instanceof TodoEntityInterface);
+        $todo = $query->getItem('1');
+        $this->assertNotEmpty($todo->memos);
+        $this->assertContainsOnlyInstancesOf(
+            className: Memo::class, 
+            haystack: $todo->memos
+        );
     }
 }
