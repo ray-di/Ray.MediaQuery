@@ -75,7 +75,8 @@ class DbQueryModuleTest extends TestCase
         $pdo->query((string) file_get_contents($sqlDir . '/create_memo.sql'));
         $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), ['id' => '1', 'title' => 'run']);
         $pdo->perform((string) file_get_contents($sqlDir . '/promise_add.sql'), ['id' => '1', 'title' => 'run', 'time' => UnixEpocTime::TEXT]);
-        $pdo->perform((string) file_get_contents($sqlDir . '/memo_add.sql'), ['id' => '1', 'body' => 'run', 'todoId' => '1']);
+        $pdo->perform((string) file_get_contents($sqlDir . '/memo_add.sql'), ['id' => '1', 'body' => 'memo1', 'todoId' => '1']);
+        $pdo->perform((string) file_get_contents($sqlDir . '/memo_add.sql'), ['id' => '2', 'body' => 'memo2', 'todoId' => '1']);
         /** @var MediaQueryLoggerInterface $logger */
         $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
         $this->logger = $logger;
@@ -273,11 +274,12 @@ class DbQueryModuleTest extends TestCase
     {
         $query = $this->injector->getInstance(TodoEntityInterface::class);
         assert($query instanceof TodoEntityInterface);
-        $todo = $query->getItem('1');
+        $todo = $query->getListWithMemo('1');
         $this->assertNotEmpty($todo->memos);
         $this->assertContainsOnlyInstancesOf(
             className: Memo::class, 
             haystack: $todo->memos
         );
+        $this->assertCount(expectedCount: 2, haystack: $todo->memos);
     }
 }

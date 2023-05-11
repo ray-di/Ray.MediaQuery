@@ -17,4 +17,7 @@ interface TodoEntityInterface
      * @return array<Todo>
      */
     public function getList(): array;
+
+    #[DbQuery('todo_list_join')]
+    public function getListWithMemo(string $id): Todo;
 }
