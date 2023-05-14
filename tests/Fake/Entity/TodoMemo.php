@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery\Entity;
 
-use Ray\MediaQuery\CsvEnities;
+use Koriym\CsvEntities\CsvEntities;
 
 class TodoMemo
 {
@@ -17,6 +17,6 @@ class TodoMemo
         string|null $memoIds,
         string|null $memoBodies
     ){
-        $this->memos = (new CsvEnities())(Memo::class, $memoIds, $memoBodies);
+        $this->memos = (new CsvEntities())(Memo::class, $memoIds, $memoBodies);
     }
 }
