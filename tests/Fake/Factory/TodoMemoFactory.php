@@ -4,7 +4,7 @@ namespace Ray\MediaQuery\Factory;
 
 use Ray\MediaQuery\CsvEnities;
 use Ray\MediaQuery\Entity\Memo;
-use Ray\MediaQuery\Entity\Todo;
+use Ray\MediaQuery\Entity\TodoConstruct;
 
 final class TodoMemoFactory
 {
@@ -13,9 +13,9 @@ final class TodoMemoFactory
         string $title,
         string|null $memoIds,
         string|null $memoBodies
-    ): Todo
+    ): TodoConstruct
     {
-        return new Todo(
+        return new TodoConstruct(
             $id,
             $title,
             (new CsvEnities)(Memo::class, $memoIds, $memoBodies)

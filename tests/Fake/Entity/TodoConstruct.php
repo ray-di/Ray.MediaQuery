@@ -7,7 +7,10 @@ namespace Ray\MediaQuery\Entity;
 class TodoConstruct
 {
     public function __construct(
-        public string $id, public string $title
+        public string $id,
+        public string $title,
+        /** @var array<Memo> */
+        public array $memos = [],
     ){
     }
 }
