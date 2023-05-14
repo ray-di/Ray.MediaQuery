@@ -44,6 +44,8 @@ class DbQueryModuleTest extends TestCase
     protected AbstractModule $module;
     private MediaQueryLoggerInterface $logger;
     private Injector $injector;
+    private string $sqlDir;
+    private ExtendedPdoInterface $pdo;
 
     protected function setUp(): void
     {
@@ -64,17 +66,16 @@ class DbQueryModuleTest extends TestCase
             TodoFactoryInterface::class,
             TodoFactoryUnionInterface::class,
         ]);
-        $sqlDir = dirname(__DIR__) . '/tests/sql';
+        $this->sqlDir = $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
         $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true])); /* @phpstan-ignore-line */
         $this->injector = new Injector($module, __DIR__ . '/tmp');
-        $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
+        $this->pdo = $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_memo.sql'));
         $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), ['id' => '1', 'title' => 'run']);
-        $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), ['id' => '2', 'title' => 'walk']);
         $pdo->perform((string) file_get_contents($sqlDir . '/promise_add.sql'), ['id' => '1', 'title' => 'run', 'time' => UnixEpocTime::TEXT]);
         $pdo->perform((string) file_get_contents($sqlDir . '/memo_add.sql'), ['id' => '1', 'body' => 'memo1', 'todoId' => '1']);
         $pdo->perform((string) file_get_contents($sqlDir . '/memo_add.sql'), ['id' => '2', 'body' => 'memo2', 'todoId' => '1']);
@@ -273,6 +274,7 @@ class DbQueryModuleTest extends TestCase
      */
     public function testOneToMany(): void
     {
+        $this->pdo->perform((string) file_get_contents($this->sqlDir . '/todo_add.sql'), ['id' => '2', 'title' => 'walk']);
         $query = $this->injector->getInstance(TodoEntityInterface::class);
         assert($query instanceof TodoEntityInterface);
         $todos = $query->getListWithMemo('1');
