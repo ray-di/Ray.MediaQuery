@@ -1,9 +1,9 @@
 SELECT
   todo.id AS id, 
-  todo.title AS title, 
-  memo.id AS memo_id, 
-  memo.body AS memo_body
+  todo.title AS title,
+  GROUP_CONCAT(memo.id),
+  GROUP_CONCAT(memo.body)
 FROM todo
-LEFT OUTER JOIN memo 
+LEFT OUTER JOIN memo
     ON memo.todo_id = todo.id
-WHERE todo.id = :id;
+GROUP BY todo.id;

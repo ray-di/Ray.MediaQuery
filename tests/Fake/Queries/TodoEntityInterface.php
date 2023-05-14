@@ -6,6 +6,7 @@ namespace Ray\MediaQuery\Queries;
 
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Entity\Todo;
+use Ray\MediaQuery\Factory\TodoMemoFactory;
 
 interface TodoEntityInterface
 {
@@ -18,6 +19,6 @@ interface TodoEntityInterface
      */
     public function getList(): array;
 
-    #[DbQuery('todo_list_join')]
-    public function getListWithMemo(string $id): Todo;
+    #[DbQuery('todo_list_join', factory: TodoMemoFactory::class)]
+    public function getListWithMemo(string $id);
 }
