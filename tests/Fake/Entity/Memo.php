@@ -5,9 +5,9 @@ namespace Ray\MediaQuery\Entity;
 
 class Memo
 {
-    /** @var string */
-    public $id;
-
-    /** @var string */
-    public $body;
+    public function __construct(
+        public string $id,
+        public string $body
+    ) {
+    }
 }

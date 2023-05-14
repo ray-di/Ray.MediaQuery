@@ -6,12 +6,12 @@ namespace Ray\MediaQuery\Entity;
 
 class Todo
 {
-    /** @var string */
-    public $id;
+    public function __construct(
+        public string $id,
+        public string $title,
 
-    /** @var string */
-    public $title;
-
-    /** @var Memo[] */
-    public $memos = [];
+        /** @var Memo[] */
+        public array $memos = []
+    ) {
+    }
 }
