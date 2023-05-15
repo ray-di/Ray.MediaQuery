@@ -14,7 +14,6 @@
         "aura/sql": "^4.0 || ^5.0",
         "doctrine/annotations": "^1.12",
         "guzzlehttp/guzzle": "^6.3 || ^7.2",
-        "koriym/csv-entities": "^1.0",
         "koriym/null-object": "^1.0.1",
         "nikic/php-parser": "^4.15",
         "pagerfanta/pagerfanta": "^3.5",
@@ -28,6 +27,7 @@
     },
     "require-dev": {
         "doctrine/coding-standard": "^10.0",
+        "koriym/csv-entities": "^1.0",
         "phpmd/phpmd": "^2.9",
         "phpmetrics/phpmetrics": "^2.7",
         "phpstan/phpstan": "^1.7",
