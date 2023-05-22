@@ -19,7 +19,7 @@ final class WebQueryInterceptor implements MethodInterceptor
     ) {
     }
 
-    /** @return Pages<array<mixed>>|array<mixed> */
+    /** @return Pages<mixed>|array<string, mixed> */
     public function invoke(MethodInvocation $invocation): Pages|array
     {
         $method = $invocation->getMethod();

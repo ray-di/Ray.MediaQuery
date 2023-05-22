@@ -16,6 +16,7 @@ use ReflectionType;
 use ReflectionUnionType;
 
 use function assert;
+use function class_exists;
 use function is_callable;
 use function is_int;
 use function is_string;
@@ -48,19 +49,20 @@ class DbQueryInterceptor implements MethodInterceptor
         $returnType = $invocation->getMethod()->getReturnType();
 
         $maybeFactory = [$dbQuery->factory, 'factory'];
-        if (is_callable($maybeFactory)) {
-            return $this->sqlQuery($returnType, $dbQuery, $values, PDO::FETCH_FUNC, $maybeFactory);
+        $isFactoryCall = is_callable($maybeFactory) || (class_exists($dbQuery->factory) && method_exists($dbQuery->factory, 'factory'));
+        if ($isFactoryCall) {
+            return $this->sqlQuery($returnType, $dbQuery, $values, new FetchMode(PDO::FETCH_FUNC, $maybeFactory));
         }
 
-        $fetchStyle = $this->getFetchMode($entity);
+        $fetchMode = $this->getFetchMode($entity);
 
-        return $this->sqlQuery($returnType, $dbQuery, $values, $fetchStyle, (string) $entity);
+        return $this->sqlQuery($returnType, $dbQuery, $values, new FetchMode($fetchMode, (string) $entity));
     }
 
     /**
      * @param ?class-string $entity
      *
-     * @return PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
+     * @return PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchMode
      */
     private function getFetchMode(string|null $entity): int
     {
@@ -72,18 +74,17 @@ class DbQueryInterceptor implements MethodInterceptor
     }
 
     /**
-     * @param array<string, mixed>                              $values
-     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchStyle
+     * @param array<string, mixed> $values
      *
      * @return array<mixed>|object|null
      */
-    private function sqlQuery(ReflectionType|null $returnType, DbQuery $dbQuery, array $values, int $fetchStyle, int|string|callable $fetchArg): array|object|null
+    private function sqlQuery(ReflectionType|null $returnType, DbQuery $dbQuery, array $values, FetchMode $fetchMode): array|object|null
     {
         if ($dbQuery->type === 'row' || $returnType instanceof ReflectionUnionType || ($returnType instanceof ReflectionNamedType && $returnType->getName() !== 'array')) {
-            return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchStyle, $fetchArg);
+            return $this->sqlQuery->getRow($dbQuery->id, $values, $fetchMode);
         }
 
-        return $this->sqlQuery->getRowList($dbQuery->id, $values, $fetchStyle, $fetchArg);
+        return $this->sqlQuery->getRowList($dbQuery->id, $values, $fetchMode);
     }
 
     /** @param array<string, mixed> $values */

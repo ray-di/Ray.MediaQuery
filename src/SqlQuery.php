@@ -10,6 +10,7 @@ use PDOException;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
+use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
@@ -26,6 +27,7 @@ use function is_callable;
 use function is_object;
 use function is_string;
 use function json_encode;
+use function method_exists;
 use function preg_replace;
 use function sprintf;
 use function stripos;
@@ -47,23 +49,24 @@ final class SqlQuery implements SqlQueryInterface
         private MediaQueryLoggerInterface $logger,
         private AuraSqlPagerFactoryInterface $pagerFactory,
         private ParamConverterInterface $paramConverter,
+        private InjectorInterface $injector,
     ) {
     }
 
     /**
      * {@inheritDoc}
      */
-    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): void
+    public function exec(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): void
     {
-        $this->perform($sqlId, $values, $fetchMode, $fetchArg);
+        $this->perform($sqlId, $values, $fetchMode);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, int|string|callable $fetchArg = ''): array|object|null
+    public function getRow(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): array|object|null
     {
-        $rowList = $this->perform($sqlId, $values, $fetchMode, $fetchArg);
+        $rowList = $this->perform($sqlId, $values, $fetchMode);
         if (! count($rowList)) {
             return null;
         }
@@ -77,10 +80,10 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): array
+    public function getRowList(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): array
     {
         /** @var array<array<mixed>> $list */
-        $list =  $this->perform($sqlId, $values, $fetchMode, $fetchArg);
+        $list =  $this->perform($sqlId, $values, $fetchMode);
 
         return $list;
     }
@@ -94,12 +97,11 @@ final class SqlQuery implements SqlQueryInterface
     }
 
     /**
-     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchModode
-     * @param array<string, mixed>                              $values
+     * @param array<string, mixed> $values
      *
      * @return array<mixed>
      */
-    private function perform(string $sqlId, array $values, int $fetchModode, callable|int|string $fetchArg = ''): array
+    private function perform(string $sqlId, array $values, FetchMode|null $fetchMode = null): array
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
@@ -120,43 +122,95 @@ final class SqlQuery implements SqlQueryInterface
         $lastQuery = (string) $this->pdoStatement->queryString;
         $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
         $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
-        $result = $isSelect ? $this->fetchAll($fetchModode, $fetchArg) : [];
+        $result = $isSelect ? $this->fetchAll($fetchMode) : [];
         $this->logger->log($sqlId, $values);
 
         return $result;
     }
 
-    /**
-     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchModode
-     *
-     * @return array<mixed>
-     */
-    private function fetchAll(int $fetchModode, callable|int|string $fetchArg): array
+    /** @return array<mixed> */
+    private function fetchAll(FetchMode|null $fetchMode): array
     {
         assert($this->pdoStatement instanceof PDOStatement);
-        if ($fetchModode === PDO::FETCH_ASSOC) {
-            return $this->pdoStatement->fetchAll($fetchModode);
+        if ($fetchMode === null || $fetchMode->mode === PDO::FETCH_ASSOC) {
+            return $this->pdoStatement->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        if ($fetchModode === PDO::FETCH_CLASS) {
-            return $this->pdoStatement->fetchAll($fetchModode, $fetchArg);
+        if ($fetchMode->mode === PDO::FETCH_CLASS) {
+            assert(is_string($fetchMode->args));
+
+            return $this->pdoStatement->fetchAll(PDO::FETCH_CLASS, $fetchMode->args);
         }
 
+        $fetchArg = $fetchMode->args;
         // 'factory' attribute
         if (is_callable($fetchArg)) {
             return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, $fetchArg);
         }
 
-        // constuructor call
-        return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, /** @param list<mixed> $args */static function (...$args) use ($fetchArg) {
-            assert(is_string($fetchArg) && class_exists($fetchArg));
+        if (is_array($fetchArg)) {
+            assert(class_exists($fetchArg[0]));
+            assert(method_exists($fetchArg[0], $fetchArg[1]));
+            [$maybeClass] = $fetchArg;
+            $maybeClassString = $maybeClass;
 
+            return $this->fetchFactory(
+                $this->injector->getInstance($maybeClassString),
+            );
+        }
+
+        assert(is_string($fetchArg));
+        assert(class_exists($fetchArg));
+
+        return $this->fetchNewInstance($fetchArg);
+    }
+
+    /**
+     * @param class-string<T> $entity
+     *
+     * @return array<T>
+     *
+     * @template T
+     * @psalm-suppress MixedReturnTypeCoercion
+     */
+    private function fetchNewInstance(string $entity): array
+    {
+        // constructor call
+        assert($this->pdoStatement instanceof PDOStatement);
+
+        /** @psalm-suppress MixedReturnTypeCoercion */
+        return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, /** @param list<mixed> $args */static function (...$args) use ($entity) {
             /** @psalm-suppress MixedMethodCall */
-            return new $fetchArg(...$args);
+            return new $entity(...$args);
         });
     }
 
-    /** @return array<string> */
+    /** @return array<mixed> */
+    private function fetchFactory(object $factory): array
+    {
+        // constructor call
+        assert($this->pdoStatement instanceof PDOStatement);
+
+        return $this->pdoStatement->fetchAll(
+            PDO::FETCH_FUNC,
+            /**
+             * @param list<mixed> $args
+             *
+             * @retrun mixed
+             */
+            static function (...$args) use ($factory): mixed {
+                assert(method_exists($factory, 'factory'));
+
+                /** @psalm-suppress MixedAssignment */
+                return $factory->factory(...$args);
+            },
+        );
+    }
+
+    /**
+     * @return string[]
+     * @psalm-return array{0: string}
+     */
     private function getSqls(string $sqlFile): array
     {
         if (! file_exists($sqlFile)) {

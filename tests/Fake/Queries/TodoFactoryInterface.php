@@ -8,6 +8,7 @@ use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Factory\TodoEntityFactory;
+use Ray\MediaQuery\Factory\TodoInjectionFactory;
 
 interface TodoFactoryInterface
 {
@@ -19,4 +20,10 @@ interface TodoFactoryInterface
      * @return array<TodoConstruct>
      */
     public function getList(): array;
+
+    /**
+     * @return array<TodoConstruct>
+     */
+    #[DbQuery('todo_list', factory: TodoInjectionFactory::class)]
+    public function getListInjection(): array;
 }

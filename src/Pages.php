@@ -35,6 +35,8 @@ class Pages implements PagesInterface
     /**
      * @param int $offset
      *
+     * @return never
+     *
      * @codeCoverageIgnore
      */
     public function offsetSet(mixed $offset, mixed $value): void
@@ -44,7 +46,11 @@ class Pages implements PagesInterface
         throw new LogicException('Read only');
     }
 
-    /** @codeCoverageIgnore */
+    /**
+     * @return never
+     *
+     * @codeCoverageIgnore
+     */
     public function offsetUnset(mixed $offset): void
     {
         unset($offset);
