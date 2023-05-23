@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use PDO;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\DbQuery;
@@ -16,11 +15,8 @@ use ReflectionType;
 use ReflectionUnionType;
 
 use function assert;
-use function class_exists;
-use function is_callable;
 use function is_int;
 use function is_string;
-use function method_exists;
 
 class DbQueryInterceptor implements MethodInterceptor
 {

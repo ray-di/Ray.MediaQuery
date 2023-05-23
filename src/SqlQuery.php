@@ -17,17 +17,13 @@ use Ray\MediaQuery\Exception\PdoPerformException;
 
 use function array_pop;
 use function assert;
-use function class_exists;
 use function count;
 use function explode;
 use function file_exists;
 use function file_get_contents;
 use function is_array;
-use function is_callable;
 use function is_object;
-use function is_string;
 use function json_encode;
-use function method_exists;
 use function preg_replace;
 use function sprintf;
 use function stripos;
@@ -40,7 +36,6 @@ final class SqlQuery implements SqlQueryInterface
 {
     private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
 
-    /** @psalm-readonly */
     private PDOStatement|null $pdoStatement = null;
 
     public function __construct(
@@ -107,10 +102,11 @@ final class SqlQuery implements SqlQueryInterface
         $sqls = $this->getSqls($sqlFile);
         $this->logger->start();
         ($this->paramConverter)($values);
+        $pdoStatement = null;
         foreach ($sqls as $sql) {
             /** @psalm-suppress InaccessibleProperty */
             try {
-                $this->pdoStatement = $this->pdo->perform($sql, $values);
+                $pdoStatement = $this->pdo->perform($sql, $values);
             } catch (PDOException $e) {
                 $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
 
@@ -118,93 +114,26 @@ final class SqlQuery implements SqlQueryInterface
             }
         }
 
-        assert($this->pdoStatement instanceof PDOStatement);
-        $lastQuery = (string) $this->pdoStatement->queryString;
+        assert($pdoStatement instanceof PDOStatement);
+        $this->pdoStatement = $pdoStatement;
+        $lastQuery = (string) $pdoStatement->queryString;
         $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
         $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
-        $result = $isSelect ? $this->fetchAll($fetchMode) : [];
+        $result = $isSelect ? $this->fetchAll($pdoStatement, $fetchMode) : [];
         $this->logger->log($sqlId, $values);
 
         return $result;
     }
 
     /** @return array<mixed> */
-    private function fetchAll(FetchMode|null $fetchMode): array
+    private function fetchAll(PDOStatement $pdoStatement, FetchMode|null $fetchMode): array
     {
-        assert($this->pdoStatement instanceof PDOStatement);
-        if ($fetchMode === null || $fetchMode->mode === PDO::FETCH_ASSOC) {
-            return $this->pdoStatement->fetchAll(PDO::FETCH_ASSOC);
+        if ($fetchMode === null) {
+            return $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        if ($fetchMode->mode === PDO::FETCH_CLASS) {
-            assert(is_string($fetchMode->args));
-
-            return $this->pdoStatement->fetchAll(PDO::FETCH_CLASS, $fetchMode->args);
-        }
-
-        $fetchArg = $fetchMode->args;
-        // 'factory' attribute
-        if (is_callable($fetchArg)) {
-            return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, $fetchArg);
-        }
-
-        if (is_array($fetchArg)) {
-            assert(class_exists($fetchArg[0]));
-            assert(method_exists($fetchArg[0], $fetchArg[1]));
-            [$maybeClass] = $fetchArg;
-            $maybeClassString = $maybeClass;
-
-            return $this->fetchFactory(
-                $this->injector->getInstance($maybeClassString),
-            );
-        }
-
-        assert(is_string($fetchArg));
-        assert(class_exists($fetchArg));
-
-        return $this->fetchNewInstance($fetchArg);
-    }
-
-    /**
-     * @param class-string<T> $entity
-     *
-     * @return array<T>
-     *
-     * @template T
-     * @psalm-suppress MixedReturnTypeCoercion
-     */
-    private function fetchNewInstance(string $entity): array
-    {
-        // constructor call
-        assert($this->pdoStatement instanceof PDOStatement);
-
-        /** @psalm-suppress MixedReturnTypeCoercion */
-        return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, /** @param list<mixed> $args */static function (...$args) use ($entity) {
-            /** @psalm-suppress MixedMethodCall */
-            return new $entity(...$args);
-        });
-    }
-
-    /** @return array<mixed> */
-    private function fetchFactory(object $factory): array
-    {
-        // constructor call
-        assert($this->pdoStatement instanceof PDOStatement);
-
-        return $this->pdoStatement->fetchAll(
-            PDO::FETCH_FUNC,
-            /**
-             * @param list<mixed> $args
-             *
-             * @retrun mixed
-             */
-            static function (...$args) use ($factory): mixed {
-                assert(method_exists($factory, 'factory'));
-
-                /** @psalm-suppress MixedAssignment */
-                return $factory->factory(...$args);
-            },
-        );
+        /** @psalm-suppress PossiblyNullArgument */
+        return $fetchMode->fetchAll($fetchMode, $pdoStatement, $this->injector);
     }
 
     /**
