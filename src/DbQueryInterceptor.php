@@ -47,30 +47,9 @@ class DbQueryInterceptor implements MethodInterceptor
 
         /** @var ReflectionNamedType|null $returnType */
         $returnType = $invocation->getMethod()->getReturnType();
+        $fetchMode = FetchMode::factory($dbQuery, $entity, $returnType);
 
-        $maybeFactory = [$dbQuery->factory, 'factory'];
-        $isFactoryCall = is_callable($maybeFactory) || (class_exists($dbQuery->factory) && method_exists($dbQuery->factory, 'factory'));
-        if ($isFactoryCall) {
-            return $this->sqlQuery($returnType, $dbQuery, $values, new FetchMode(PDO::FETCH_FUNC, $maybeFactory));
-        }
-
-        $fetchMode = $this->getFetchMode($entity);
-
-        return $this->sqlQuery($returnType, $dbQuery, $values, new FetchMode($fetchMode, (string) $entity));
-    }
-
-    /**
-     * @param ?class-string $entity
-     *
-     * @return PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchMode
-     */
-    private function getFetchMode(string|null $entity): int
-    {
-        if ($entity === null) {
-            return PDO::FETCH_ASSOC;
-        }
-
-        return method_exists($entity, '__construct') ? PDO::FETCH_FUNC : PDO::FETCH_CLASS;
+        return $this->sqlQuery($returnType, $dbQuery, $values, $fetchMode);
     }
 
     /**
