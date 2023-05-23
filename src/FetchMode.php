@@ -24,4 +24,20 @@ final class FetchMode
         public array|string|null $args,
     ) {
     }
+
+    public static function factory(DbQuery $dbQuery, string|null $entity, ReflectionNamedType|ReflectionUnionType|null $returnType): FetchMode
+    {
+        $maybeFactory = [$dbQuery->factory, 'factory'];
+        $isFactoryCall = is_callable($maybeFactory) || (class_exists($dbQuery->factory) && method_exists($dbQuery->factory, 'factory'));
+        if ($isFactoryCall) {
+            return new FetchMode(PDO::FETCH_FUNC, $maybeFactory);
+        }
+
+        $mode = match($entity) {
+            null => PDO::FETCH_ASSOC,
+            default => class_exists($entity) && method_exists($entity, '__construct') ? PDO::FETCH_FUNC : PDO::FETCH_CLASS
+        };
+
+        return new FetchMode($mode, (string) $entity);
+    }
 }
