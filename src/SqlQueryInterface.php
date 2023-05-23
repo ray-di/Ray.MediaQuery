@@ -11,17 +11,17 @@ interface SqlQueryInterface
      *
      * @return array<mixed>|object|null
      */
-    public function getRow(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): array|object|null;
+    public function getRow(string $sqlId, array $values = [], Fetch|null $fetch = null): array|object|null;
 
     /**
      * @param array<string, mixed> $values
      *
      * @return array<array<mixed>>
      */
-    public function getRowList(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): array;
+    public function getRowList(string $sqlId, array $values = [], Fetch|null $fetch = null): array;
 
     /** @param array<string, mixed> $values */
-    public function exec(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): void;
+    public function exec(string $sqlId, array $values = [], Fetch|null $fetch = null): void;
 
     /** @param array<string, mixed> $values */
     public function getCount(string $sqlId, array $values): int;

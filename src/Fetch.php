@@ -18,20 +18,20 @@ use function is_callable;
 use function is_string;
 use function method_exists;
 
-final class FetchMode
+final class Fetch
 {
     /**
      * @param int                                   $mode
      * @param array{0:string, 1:string}|string|null $args
      */
     public function __construct(
-        public int $mode,
-        public array|string|null $args,
+        private int $mode,
+        private array|string|null $args,
     ) {
     }
 
     /** @return array<mixed> */
-    public function fetchAll(FetchMode $fetchMode, PDOStatement $pdoStatement, InjectorInterface $injector): array
+    public function fetchAll(PDOStatement $pdoStatement, InjectorInterface $injector): array
     {
         if ($this->mode === PDO::FETCH_ASSOC) {
             return $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
@@ -102,12 +102,12 @@ final class FetchMode
         );
     }
 
-    public static function factory(DbQuery $dbQuery, string|null $entity, ReflectionNamedType|ReflectionUnionType|null $returnType): FetchMode
+    public static function factory(DbQuery $dbQuery, string|null $entity, ReflectionNamedType|ReflectionUnionType|null $returnType): Fetch
     {
         $maybeFactory = [$dbQuery->factory, 'factory'];
         $isFactoryCall = is_callable($maybeFactory) || (class_exists($dbQuery->factory) && method_exists($dbQuery->factory, 'factory'));
         if ($isFactoryCall) {
-            return new FetchMode(PDO::FETCH_FUNC, $maybeFactory);
+            return new Fetch(PDO::FETCH_FUNC, $maybeFactory);
         }
 
         $mode = match ($entity) {
@@ -115,6 +115,6 @@ final class FetchMode
             default => class_exists($entity) && method_exists($entity, '__construct') ? PDO::FETCH_FUNC : PDO::FETCH_CLASS
         };
 
-        return new FetchMode($mode, (string) $entity);
+        return new self($mode, (string) $entity);
     }
 }

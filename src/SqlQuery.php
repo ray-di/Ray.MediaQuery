@@ -51,17 +51,17 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function exec(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): void
+    public function exec(string $sqlId, array $values = [], Fetch|null $fetch = null): void
     {
-        $this->perform($sqlId, $values, $fetchMode);
+        $this->perform($sqlId, $values, $fetch);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRow(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): array|object|null
+    public function getRow(string $sqlId, array $values = [], Fetch|null $fetch = null): array|object|null
     {
-        $rowList = $this->perform($sqlId, $values, $fetchMode);
+        $rowList = $this->perform($sqlId, $values, $fetch);
         if (! count($rowList)) {
             return null;
         }
@@ -75,10 +75,10 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getRowList(string $sqlId, array $values = [], FetchMode|null $fetchMode = null): array
+    public function getRowList(string $sqlId, array $values = [], Fetch|null $fetch = null): array
     {
         /** @var array<array<mixed>> $list */
-        $list =  $this->perform($sqlId, $values, $fetchMode);
+        $list =  $this->perform($sqlId, $values, $fetch);
 
         return $list;
     }
@@ -96,7 +96,7 @@ final class SqlQuery implements SqlQueryInterface
      *
      * @return array<mixed>
      */
-    private function perform(string $sqlId, array $values, FetchMode|null $fetchMode = null): array
+    private function perform(string $sqlId, array $values, Fetch|null $fetch = null): array
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
@@ -119,21 +119,21 @@ final class SqlQuery implements SqlQueryInterface
         $lastQuery = (string) $pdoStatement->queryString;
         $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
         $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
-        $result = $isSelect ? $this->fetchAll($pdoStatement, $fetchMode) : [];
+        $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
         $this->logger->log($sqlId, $values);
 
         return $result;
     }
 
     /** @return array<mixed> */
-    private function fetchAll(PDOStatement $pdoStatement, FetchMode|null $fetchMode): array
+    private function fetchAll(PDOStatement $pdoStatement, Fetch|null $fetch): array
     {
-        if ($fetchMode === null) {
+        if ($fetch === null) {
             return $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
         }
 
         /** @psalm-suppress PossiblyNullArgument */
-        return $fetchMode->fetchAll($fetchMode, $pdoStatement, $this->injector);
+        return $fetch->fetchAll($pdoStatement, $this->injector);
     }
 
     /**
