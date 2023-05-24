@@ -6,26 +6,21 @@ namespace Ray\MediaQuery;
 
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
+use Ray\Di\Di\Set;
+use Ray\Di\ProviderInterface;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
-use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
-use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
 use ReflectionNamedType;
-use ReflectionType;
 use ReflectionUnionType;
-
-use function assert;
-use function is_int;
-use function is_string;
 
 class DbQueryInterceptor implements MethodInterceptor
 {
     public function __construct(
-        private SqlQueryInterface         $sqlQuery,
-        private ParamInjectorInterface    $paramInjector,
-        private ReturnEntityInterface     $returnEntity,
-        private FetchFactoryInterface     $factory,
-        private DbPager                   $pager,
+        private SqlQueryInterface $sqlQuery,
+        private ParamInjectorInterface $paramInjector,
+        private ReturnEntityInterface $returnEntity,
+        private FetchFactoryInterface $factory,
+        #[Set(DbPager::class)] private ProviderInterface $dbPagerProvider,
     ) {
     }
 
@@ -39,7 +34,9 @@ class DbQueryInterceptor implements MethodInterceptor
         $values = $this->paramInjector->getArgumentes($invocation);
         $entity = ($this->returnEntity)($method);
         if ($pager instanceof Pager) {
-            return ($this->pager)($dbQuery->id, $values, $pager, $entity);
+            $dbPager = $this->dbPagerProvider->get();
+
+            return ($dbPager)($dbQuery->id, $values, $pager, $entity);
         }
 
         /** @var ReflectionNamedType|ReflectionUnionType|null $returnType */

@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ray\MediaQuery;
 
 use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+
 use function assert;
 use function is_int;
 use function is_string;
@@ -14,7 +17,7 @@ final class DbPager
     public function __construct(
         private MediaQueryLoggerInterface $logger,
         private SqlQueryInterface $sqlQuery,
-    ){
+    ) {
     }
 
     /** @param array<string, mixed> $values */
@@ -41,12 +44,12 @@ final class DbPager
     private function dynamicPager(Pager $pager, array $values): array
     {
         $perPage = $pager->perPage;
-        if (!isset($values[$perPage])) {
-            throw new InvalidPerPageVarNameException((string)$perPage);
+        if (! isset($values[$perPage])) {
+            throw new InvalidPerPageVarNameException((string) $perPage);
         }
 
-        if (!is_int($values[$perPage])) {
-            throw new PerPageNotIntTypeException((string)$perPage);
+        if (! is_int($values[$perPage])) {
+            throw new PerPageNotIntTypeException((string) $perPage);
         }
 
         $perPageInValues = $values[$perPage];
