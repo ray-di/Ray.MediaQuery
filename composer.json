@@ -97,5 +97,8 @@
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "bamarni/composer-bin-plugin": true
         }
+    },
+    "suggest": {
+        "koriym/csv-entities": "Provides one-to-many entity relation"
     }
 }
