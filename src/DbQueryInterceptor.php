@@ -25,6 +25,7 @@ class DbQueryInterceptor implements MethodInterceptor
         private MediaQueryLoggerInterface $logger,
         private ParamInjectorInterface $paramInjector,
         private ReturnEntityInterface $returnEntity,
+        private FetchFactoryInterface $factory,
     ) {
     }
 
@@ -43,7 +44,7 @@ class DbQueryInterceptor implements MethodInterceptor
 
         /** @var ReflectionNamedType|null $returnType */
         $returnType = $invocation->getMethod()->getReturnType();
-        $fetch = FetchFactory::factory($dbQuery, $entity, $returnType);
+        $fetch = $this->factory->factory($dbQuery, $entity, $returnType);
 
         return $this->sqlQuery($returnType, $dbQuery, $values, $fetch);
     }

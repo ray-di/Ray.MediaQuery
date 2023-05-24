@@ -6,6 +6,7 @@ namespace Ray\MediaQuery;
 
 use Ray\Di\AbstractModule;
 use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\Annotation\Qualifier\FactoryMethod;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 
 class MediaQueryDbModule extends AbstractModule
@@ -27,5 +28,7 @@ class MediaQueryDbModule extends AbstractModule
         );
         $this->bind()->annotatedWith(SqlDir::class)->toInstance($this->configs->sqlDir);
         $this->bind(ReturnEntityInterface::class)->to(ReturnEntity::class);
+        $this->bind(FetchFactoryInterface::class)->to(FetchFactory::class);
+        $this->bind()->annotatedWith(FactoryMethod::class)->toInstance('factory');
     }
 }

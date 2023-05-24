@@ -17,6 +17,7 @@ class FetchInjectionFactory implements FetchInterface
     /** @param array{0:string, 1:string} $factory */
     public function __construct(
         private array $factory,
+        private string $factoryMethod,
     ) {
     }
 
@@ -37,6 +38,8 @@ class FetchInjectionFactory implements FetchInterface
     {
         // constructor call
 
+        $method = $this->factoryMethod;
+
         return $pdoStatement->fetchAll(
             PDO::FETCH_FUNC,
             /**
@@ -44,11 +47,11 @@ class FetchInjectionFactory implements FetchInterface
              *
              * @retrun mixed
              */
-            static function (...$args) use ($factory): mixed {
-                assert(method_exists($factory, 'factory'));
+            static function (...$args) use ($factory, $method): mixed {
+                assert(method_exists($factory, $method));
 
                 /** @psalm-suppress MixedAssignment */
-                return $factory->factory(...$args);
+                return $factory->$method(...$args);
             },
         );
     }
