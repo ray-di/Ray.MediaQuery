@@ -13,8 +13,11 @@ use Ray\MediaQuery\Annotation\Pager;
 use ReflectionNamedType;
 use ReflectionUnionType;
 
+use function assert;
+
 class DbQueryInterceptor implements MethodInterceptor
 {
+    /** @param ProviderInterface<DbPager> $dbPagerProvider */
     public function __construct(
         private SqlQueryInterface $sqlQuery,
         private ParamInjectorInterface $paramInjector,
@@ -28,8 +31,8 @@ class DbQueryInterceptor implements MethodInterceptor
     public function invoke(MethodInvocation $invocation): array|object|null
     {
         $method = $invocation->getMethod();
-        /** @var DbQuery $dbQuery */
         $dbQuery = $method->getAnnotation(DbQuery::class);
+        assert($dbQuery instanceof DbQuery);
         $pager = $method->getAnnotation(Pager::class);
         $values = $this->paramInjector->getArgumentes($invocation);
         $entity = ($this->returnEntity)($method);
@@ -39,8 +42,8 @@ class DbQueryInterceptor implements MethodInterceptor
             return ($dbPager)($dbQuery->id, $values, $pager, $entity);
         }
 
-        /** @var ReflectionNamedType|ReflectionUnionType|null $returnType */
         $returnType = $invocation->getMethod()->getReturnType();
+        assert($returnType === null || $returnType instanceof ReflectionNamedType || $returnType instanceof ReflectionUnionType);
         $fetch = $this->factory->factory($dbQuery, $entity, $returnType);
         $isRow = $dbQuery->type === 'row' || $returnType instanceof ReflectionUnionType || ($returnType instanceof ReflectionNamedType && $returnType->getName() !== 'array');
 
