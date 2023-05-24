@@ -43,7 +43,7 @@ class DbQueryInterceptor implements MethodInterceptor
 
         /** @var ReflectionNamedType|null $returnType */
         $returnType = $invocation->getMethod()->getReturnType();
-        $fetch = Fetch::factory($dbQuery, $entity, $returnType);
+        $fetch = FetchFactory::factory($dbQuery, $entity, $returnType);
 
         return $this->sqlQuery($returnType, $dbQuery, $values, $fetch);
     }
@@ -53,7 +53,7 @@ class DbQueryInterceptor implements MethodInterceptor
      *
      * @return array<mixed>|object|null
      */
-    private function sqlQuery(ReflectionType|null $returnType, DbQuery $dbQuery, array $values, Fetch $fetch): array|object|null
+    private function sqlQuery(ReflectionType|null $returnType, DbQuery $dbQuery, array $values, FetchInterface $fetch): array|object|null
     {
         if ($dbQuery->type === 'row' || $returnType instanceof ReflectionUnionType || ($returnType instanceof ReflectionNamedType && $returnType->getName() !== 'array')) {
             return $this->sqlQuery->getRow($dbQuery->id, $values, $fetch);

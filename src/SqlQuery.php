@@ -51,7 +51,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function exec(string $sqlId, array $values = [], Fetch|null $fetch = null): void
+    public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void
     {
         $this->perform($sqlId, $values, $fetch);
     }
@@ -59,7 +59,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getRow(string $sqlId, array $values = [], Fetch|null $fetch = null): array|object|null
+    public function getRow(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array|object|null
     {
         $rowList = $this->perform($sqlId, $values, $fetch);
         if (! count($rowList)) {
@@ -75,7 +75,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getRowList(string $sqlId, array $values = [], Fetch|null $fetch = null): array
+    public function getRowList(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array
     {
         /** @var array<array<mixed>> $list */
         $list =  $this->perform($sqlId, $values, $fetch);
@@ -96,7 +96,7 @@ final class SqlQuery implements SqlQueryInterface
      *
      * @return array<mixed>
      */
-    private function perform(string $sqlId, array $values, Fetch|null $fetch = null): array
+    private function perform(string $sqlId, array $values, FetchInterface|null $fetch = null): array
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
@@ -126,7 +126,7 @@ final class SqlQuery implements SqlQueryInterface
     }
 
     /** @return array<mixed> */
-    private function fetchAll(PDOStatement $pdoStatement, Fetch|null $fetch): array
+    private function fetchAll(PDOStatement $pdoStatement, FetchInterface|null $fetch): array
     {
         if ($fetch === null) {
             return $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
