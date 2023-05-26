@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use PHPUnit\Framework\TestCase;
+use Ray\Di\Injector;
 
 class SqlQueryFactoryTest extends TestCase
 {
@@ -14,6 +15,7 @@ class SqlQueryFactoryTest extends TestCase
         $sqlQuery = SqlQueryFactory::getInstance(
             $sqlDir,
             'sqlite::memory:',
+            new Injector(),
         );
         $this->assertInstanceOf(SqlQueryInterface::class, $sqlQuery);
     }

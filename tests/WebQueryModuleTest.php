@@ -22,7 +22,7 @@ class WebQueryModuleTest extends TestCase
     {
         $mediaQueries = Queries::fromClasses([FooItemInterface::class]);
         $mediaQueryJson = __DIR__ . '/Fake/web_query.json';
-        $module = new MediaQueryModule($mediaQueries, [new WebQueryConfig($mediaQueryJson, ['domain' => 'httpbin.org'])]);
+        $module = new MediaQueryModule($mediaQueries, [new WebQueryConfig($mediaQueryJson, ['domain' => 'ray-di.github.io'])]);
         $this->injector = new Injector($module);
         $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
         assert($logger instanceof MediaQueryLoggerInterface);
@@ -33,8 +33,8 @@ class WebQueryModuleTest extends TestCase
     {
         $fooItem = $this->injector->getInstance(FooItemInterface::class);
         assert(is_callable($fooItem));
-        $response = ($fooItem)('hello');
-        $this->assertSame('https://httpbin.org/anything/hello', $response['url']);
-        $this->assertSame('query: https://httpbin.org/anything/hello({"id":"hello"})', (string) $this->logger);
+        $response = ($fooItem)('web_query');
+        $this->assertSame('Web query schema', $response['title']);
+        $this->assertSame('query: https://ray-di.github.io/Ray.MediaQuery/schema/web_query.json({"id":"web_query"})', (string) $this->logger);
     }
 }

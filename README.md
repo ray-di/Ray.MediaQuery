@@ -203,6 +203,22 @@ final class TodoEntityFactory
 }
 ```
 
+If the factory method is not static, the factory class dependency resolution is performed.
+
+```php
+final class TodoEntityFactory
+{
+    public function __construct(
+        private HelperInterface $helper
+    ){}
+    
+    public function factory(string $id, string $name): Todo
+    {
+        return new Todo($id, $this->helper($name));
+    }
+}
+```
+
 #### Web API
 
 * Customization such as header for authentication is done by binding Guzzle's `ClinetInterface`.

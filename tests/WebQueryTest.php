@@ -12,9 +12,9 @@ class WebQueryTest extends TestCase
 {
     public function testRequest(): void
     {
-        $webQuery = new WebApiQuery(new Client(), new MediaQueryLogger(), ['domain1' => 'httpbin.org']);
-        $response = $webQuery->request('GET', 'https://{domain1}/anything/foo', ['id' => '1']);
-        $this->assertSame('GET', $response['method']);
+        $webQuery = new WebApiQuery(new Client(), new MediaQueryLogger(), ['domain1' => 'ray-di.github.io']);
+        $response = $webQuery->request('GET', 'https://{domain1}/Ray.MediaQuery/schema/{id}.json', ['id' => 'web_query']);
+        $this->assertSame('Web query schema', $response['title']);
     }
 
     public function testInvalidRequest(): void

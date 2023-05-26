@@ -10,21 +10,19 @@ use PDOException;
 use PDOStatement;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
+use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
 
 use function array_pop;
 use function assert;
-use function class_exists;
 use function count;
 use function explode;
 use function file_exists;
 use function file_get_contents;
 use function is_array;
-use function is_callable;
 use function is_object;
-use function is_string;
 use function json_encode;
 use function preg_replace;
 use function sprintf;
@@ -38,7 +36,6 @@ final class SqlQuery implements SqlQueryInterface
 {
     private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
 
-    /** @psalm-readonly */
     private PDOStatement|null $pdoStatement = null;
 
     public function __construct(
@@ -47,23 +44,24 @@ final class SqlQuery implements SqlQueryInterface
         private MediaQueryLoggerInterface $logger,
         private AuraSqlPagerFactoryInterface $pagerFactory,
         private ParamConverterInterface $paramConverter,
+        private InjectorInterface $injector,
     ) {
     }
 
     /**
      * {@inheritDoc}
      */
-    public function exec(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): void
+    public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void
     {
-        $this->perform($sqlId, $values, $fetchMode, $fetchArg);
+        $this->perform($sqlId, $values, $fetch);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRow(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, int|string|callable $fetchArg = ''): array|object|null
+    public function getRow(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array|object|null
     {
-        $rowList = $this->perform($sqlId, $values, $fetchMode, $fetchArg);
+        $rowList = $this->perform($sqlId, $values, $fetch);
         if (! count($rowList)) {
             return null;
         }
@@ -77,10 +75,10 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function getRowList(string $sqlId, array $values = [], int $fetchMode = PDO::FETCH_ASSOC, $fetchArg = ''): array
+    public function getRowList(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array
     {
         /** @var array<array<mixed>> $list */
-        $list =  $this->perform($sqlId, $values, $fetchMode, $fetchArg);
+        $list =  $this->perform($sqlId, $values, $fetch);
 
         return $list;
     }
@@ -94,21 +92,21 @@ final class SqlQuery implements SqlQueryInterface
     }
 
     /**
-     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchModode
-     * @param array<string, mixed>                              $values
+     * @param array<string, mixed> $values
      *
      * @return array<mixed>
      */
-    private function perform(string $sqlId, array $values, int $fetchModode, callable|int|string $fetchArg = ''): array
+    private function perform(string $sqlId, array $values, FetchInterface|null $fetch = null): array
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
         $this->logger->start();
         ($this->paramConverter)($values);
+        $pdoStatement = null;
         foreach ($sqls as $sql) {
             /** @psalm-suppress InaccessibleProperty */
             try {
-                $this->pdoStatement = $this->pdo->perform($sql, $values);
+                $pdoStatement = $this->pdo->perform($sql, $values);
             } catch (PDOException $e) {
                 $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
 
@@ -116,47 +114,32 @@ final class SqlQuery implements SqlQueryInterface
             }
         }
 
-        assert($this->pdoStatement instanceof PDOStatement);
-        $lastQuery = (string) $this->pdoStatement->queryString;
+        assert($pdoStatement instanceof PDOStatement);
+        $this->pdoStatement = $pdoStatement;
+        $lastQuery = (string) $pdoStatement->queryString;
         $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
         $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
-        $result = $isSelect ? $this->fetchAll($fetchModode, $fetchArg) : [];
+        $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
         $this->logger->log($sqlId, $values);
 
         return $result;
     }
 
-    /**
-     * @param PDO::FETCH_ASSOC|PDO::FETCH_CLASS|PDO::FETCH_FUNC $fetchModode
-     *
-     * @return array<mixed>
-     */
-    private function fetchAll(int $fetchModode, callable|int|string $fetchArg): array
+    /** @return array<mixed> */
+    private function fetchAll(PDOStatement $pdoStatement, FetchInterface|null $fetch): array
     {
-        assert($this->pdoStatement instanceof PDOStatement);
-        if ($fetchModode === PDO::FETCH_ASSOC) {
-            return $this->pdoStatement->fetchAll($fetchModode);
+        if ($fetch === null) {
+            return $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        if ($fetchModode === PDO::FETCH_CLASS) {
-            return $this->pdoStatement->fetchAll($fetchModode, $fetchArg);
-        }
-
-        // 'factory' attribute
-        if (is_callable($fetchArg)) {
-            return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, $fetchArg);
-        }
-
-        // constuructor call
-        return $this->pdoStatement->fetchAll(PDO::FETCH_FUNC, /** @param list<mixed> $args */static function (...$args) use ($fetchArg) {
-            assert(is_string($fetchArg) && class_exists($fetchArg));
-
-            /** @psalm-suppress MixedMethodCall */
-            return new $fetchArg(...$args);
-        });
+        /** @psalm-suppress PossiblyNullArgument */
+        return $fetch->fetchAll($pdoStatement, $this->injector);
     }
 
-    /** @return array<string> */
+    /**
+     * @return string[]
+     * @psalm-return array{0: string}
+     */
     private function getSqls(string $sqlFile): array
     {
         if (! file_exists($sqlFile)) {

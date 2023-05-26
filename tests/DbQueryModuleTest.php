@@ -11,10 +11,13 @@ use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
+use Ray\MediaQuery\Entity\Memo;
 use Ray\MediaQuery\Entity\Todo;
 use Ray\MediaQuery\Entity\TodoConstruct;
 use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
+use Ray\MediaQuery\Factory\FakeFactoryHelper;
+use Ray\MediaQuery\Factory\FakeFactoryHelperInterface;
 use Ray\MediaQuery\Fake\Queries\TodoEntityNullableInterface;
 use Ray\MediaQuery\Fake\Queries\TodoFactoryInterface;
 use Ray\MediaQuery\Fake\Queries\TodoFactoryUnionInterface;
@@ -43,6 +46,8 @@ class DbQueryModuleTest extends TestCase
     protected AbstractModule $module;
     private MediaQueryLoggerInterface $logger;
     private Injector $injector;
+    private string $sqlDir;
+    private ExtendedPdoInterface $pdo;
 
     protected function setUp(): void
     {
@@ -63,16 +68,25 @@ class DbQueryModuleTest extends TestCase
             TodoFactoryInterface::class,
             TodoFactoryUnionInterface::class,
         ]);
-        $sqlDir = dirname(__DIR__) . '/tests/sql';
+        $this->sqlDir = $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
         $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true])); /* @phpstan-ignore-line */
+        $module->install(new class extends AbstractModule{
+            protected function configure(): void
+            {
+                $this->bind(FakeFactoryHelperInterface::class)->to(FakeFactoryHelper::class);
+            }
+        });
         $this->injector = new Injector($module, __DIR__ . '/tmp');
-        $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
+        $this->pdo = $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
+        $pdo->query((string) file_get_contents($sqlDir . '/create_memo.sql'));
         $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), ['id' => '1', 'title' => 'run']);
         $pdo->perform((string) file_get_contents($sqlDir . '/promise_add.sql'), ['id' => '1', 'title' => 'run', 'time' => UnixEpocTime::TEXT]);
+        $pdo->perform((string) file_get_contents($sqlDir . '/memo_add.sql'), ['id' => '1', 'body' => 'memo1', 'todoId' => '1']);
+        $pdo->perform((string) file_get_contents($sqlDir . '/memo_add.sql'), ['id' => '2', 'body' => 'memo2', 'todoId' => '1']);
         /** @var MediaQueryLoggerInterface $logger */
         $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
         $this->logger = $logger;
@@ -251,7 +265,7 @@ class DbQueryModuleTest extends TestCase
      *
      * @dataProvider queryInterfaceProvider
      */
-    public function testFactory(string $queryInterface): void
+    public function testStaticFactory(string $queryInterface): void
     {
         /** @var TodoFactoryInterface|TodoFactoryUnionInterface $todoList */
         $todoList = $this->injector->getInstance($queryInterface);
@@ -260,5 +274,31 @@ class DbQueryModuleTest extends TestCase
         $this->assertSame('run', $list[0]->title);
         $item = $todoList->getItem('1');
         $this->assertInstanceOf(TodoConstruct::class, $item);
+    }
+
+    public function testFactoryInjection(): void
+    {
+        $todoQuery = $this->injector->getInstance(TodoFactoryInterface::class);
+        $todoList = $todoQuery->getListInjection();
+        $this->assertSame('RUN', $todoList[0]->title);
+    }
+
+    /**
+     * 1 対 多 のリレーション検証をします。
+     * Todo -< Memo のリレーションがあります。
+     */
+    public function testOneToMany(): void
+    {
+        $this->pdo->perform((string) file_get_contents($this->sqlDir . '/todo_add.sql'), ['id' => '2', 'title' => 'walk']);
+        $query = $this->injector->getInstance(TodoEntityInterface::class);
+        assert($query instanceof TodoEntityInterface);
+        $todos = $query->getListWithMemo('1');
+        $this->assertNotEmpty($todos[0]->memos);
+        $this->assertEmpty($todos[1]->memos);
+        $this->assertContainsOnlyInstancesOf(
+            className: Memo::class,
+            haystack: $todos[0]->memos,
+        );
+        $this->assertCount(expectedCount: 2, haystack: $todos[0]->memos);
     }
 }

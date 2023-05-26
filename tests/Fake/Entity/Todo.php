@@ -11,4 +11,7 @@ class Todo
 
     /** @var string */
     public $title;
+
+    /** @var Memo[] */
+    public $memos = [];
 }

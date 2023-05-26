@@ -190,6 +190,22 @@ final class TodoEntityFactory
     }
 }
 ```
+
+ファクトリーメソッドがstaticでない場合はfactoryクラスの依存解決が行われます。
+
+```php
+final class TodoEntityFactory
+{
+    public function __construct(
+        private HelperInterface $helper
+    ){}
+    
+    public function factory(string $id, string $name): Todo
+    {
+        return new Todo($id, $this->helper($name));
+    }
+}
+
 ### Web API
 
 * メソッドの引数が `uri`で指定されたURI templateにバインドされ、Web APIリクエストオブジェクトが生成されます。
