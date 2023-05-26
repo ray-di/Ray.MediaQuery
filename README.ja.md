@@ -67,7 +67,7 @@ protected function configure(): void
         new MediaQueryModule(
             Queries::fromDir('/path/to/queryInterface'),[
                 new DbQueryConfig('/path/to/sql'),
-                new WebQueryConfig('/path/to/web_query.json', ['domain' => 'api.exmaple.com'])
+                new WebQueryConfig('/path/to/web_query.json', ['domain' => 'api.example.com'])
             ],
         ),
     );
@@ -112,7 +112,7 @@ interface TodoItemInterface
 }
 ```
 
-* 結果がrow`(`array<string, scalar>>`)の場合は`type:'row'`を指定します。`row_list`(`array<int, array<string, scalar>>>`)にはtype指定は不要です。
+* 結果が `row`(`array<string, scalar>`)の場合は`type:'row'`を指定します。`row_list`(`array<int, array<string, scalar>>`)にはtype指定は不要です。
 * SQLファイルには複数のSQL文が記述できます。その場合には最後の行のSELECTが戻り値になります。
 
 #### Entity
@@ -205,6 +205,7 @@ final class TodoEntityFactory
         return new Todo($id, $this->helper($name));
     }
 }
+```
 
 ### Web API
 
