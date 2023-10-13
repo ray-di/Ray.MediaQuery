@@ -46,6 +46,12 @@ final class ParamConverter implements ParamConverterInterface
             }
 
             if (function_exists('enum_exists') && enum_exists($value::class)) {
+                if (method_exists($value, 'from') && method_exists($value, 'tryFrom')) {
+                    assert(property_exists($value, 'value'));
+                    $value = $value->value;
+                    continue;
+                }
+
                 assert(property_exists($value, 'name'));
                 $value = $value->name;
                 continue;
