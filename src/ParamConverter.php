@@ -45,19 +45,19 @@ final class ParamConverter implements ParamConverterInterface
                 continue;
             }
 
-            if (function_exists('enum_exists') && enum_exists($value::class)) {
-                if (method_exists($value, 'from') && method_exists($value, 'tryFrom')) {
-                    assert(property_exists($value, 'value'));
-                    $value = $value->value;
-                    continue;
-                }
+            $isEnumUnavailable = ! function_exists('enum_exists') || ! enum_exists($value::class);
+            if ($isEnumUnavailable) {
+                throw new CouldNotBeConvertedException(print_r($value, true));
+            }
 
-                assert(property_exists($value, 'name'));
-                $value = $value->name;
+            if (method_exists($value, 'from') && method_exists($value, 'tryFrom')) {
+                assert(property_exists($value, 'value'));
+                $value = $value->value;
                 continue;
             }
 
-            throw new CouldNotBeConvertedException(print_r($value, true));
+            assert(property_exists($value, 'name'));
+            $value = $value->name;
         }
     }
 }
