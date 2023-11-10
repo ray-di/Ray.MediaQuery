@@ -6,5 +6,6 @@ namespace Ray\MediaQuery;
 
 interface ToScalarInterface
 {
-    public function toScalar(): bool|string|int|float;
+    /** @return scalar|array<scalar> */
+    public function toScalar(): bool|string|int|float|array;
 }
