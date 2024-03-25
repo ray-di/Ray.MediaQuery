@@ -40,7 +40,8 @@ final class SqlQuery implements SqlQueryInterface
 
     public function __construct(
         private ExtendedPdoInterface $pdo,
-        #[SqlDir] private string $sqlDir,
+        #[SqlDir]
+        private string $sqlDir,
         private MediaQueryLoggerInterface $logger,
         private AuraSqlPagerFactoryInterface $pagerFactory,
         private ParamConverterInterface $paramConverter,

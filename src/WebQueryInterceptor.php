@@ -15,7 +15,8 @@ final class WebQueryInterceptor implements MethodInterceptor
     public function __construct(
         private WebApiQueryInterface $webApiQuery,
         private ParamInjectorInterface $paramInjector,
-        #[WebApiList] private array $webApiList,
+        #[WebApiList]
+        private array $webApiList,
     ) {
     }
 

@@ -20,7 +20,8 @@ final class WebApiQuery implements WebApiQueryInterface
     public function __construct(
         private ClientInterface $client,
         private MediaQueryLoggerInterface $logger,
-        #[UriTemplateBindings] private array $uriTemplateBindings,
+        #[UriTemplateBindings]
+        private array $uriTemplateBindings,
     ) {
     }
 

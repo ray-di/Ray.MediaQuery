@@ -16,7 +16,8 @@ use function method_exists;
 final class FetchFactory implements FetchFactoryInterface
 {
     public function __construct(
-        #[FactoryMethod] private string $factoryMehtod,
+        #[FactoryMethod]
+        private string $factoryMehtod,
     ) {
     }
 
