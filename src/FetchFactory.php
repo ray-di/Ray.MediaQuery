@@ -9,6 +9,7 @@ use Ray\MediaQuery\Annotation\Qualifier\FactoryMethod;
 use ReflectionNamedType;
 use ReflectionUnionType;
 
+use function assert;
 use function class_exists;
 use function is_callable;
 use function method_exists;
@@ -46,6 +47,8 @@ final class FetchFactory implements FetchFactoryInterface
         }
 
         // PDO::FETCH_FUNC with entity having constructor
+        assert(class_exists($entity));
+
         return new FetchNewInstance($entity);
     }
 }

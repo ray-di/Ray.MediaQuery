@@ -41,7 +41,7 @@ final class WebApiQuery implements WebApiQueryInterface
 
             return $body;
         } catch (TransferException $e) {
-            throw new WebApiRequestException($e->getMessage(), (int) $e->getCode(), $e);
+            throw new WebApiRequestException($e->getMessage(), $e->getCode(), $e);
         }
     }
 }

@@ -103,7 +103,6 @@ final class SqlQuery implements SqlQueryInterface
         $sqls = $this->getSqls($sqlFile);
         $this->logger->start();
         ($this->paramConverter)($values);
-        $pdoStatement = null;
         foreach ($sqls as $sql) {
             /** @psalm-suppress InaccessibleProperty */
             try {
@@ -115,9 +114,8 @@ final class SqlQuery implements SqlQueryInterface
             }
         }
 
-        assert($pdoStatement instanceof PDOStatement);
         $this->pdoStatement = $pdoStatement;
-        $lastQuery = (string) $pdoStatement->queryString;
+        $lastQuery = $pdoStatement->queryString;
         $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
         $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
         $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
@@ -137,10 +135,7 @@ final class SqlQuery implements SqlQueryInterface
         return $fetch->fetchAll($pdoStatement, $this->injector);
     }
 
-    /**
-     * @return string[]
-     * @psalm-return array{0: string}
-     */
+    /** @return non-empty-array<string> */
     private function getSqls(string $sqlFile): array
     {
         if (! file_exists($sqlFile)) {
@@ -148,7 +143,7 @@ final class SqlQuery implements SqlQueryInterface
         }
 
         $sqls = (string) file_get_contents($sqlFile);
-        if (! strpos($sqls, ';')) {
+        if (strpos($sqls, ';') === false) {
             $sqls .= ';';
         }
 
@@ -157,6 +152,8 @@ final class SqlQuery implements SqlQueryInterface
         if ($sqls[0] === '') {
             throw new InvalidSqlException($sqlFile);
         }
+
+        /** @psalm-var non-empty-array<int, string> $sqls*/
 
         return $sqls;
     }
