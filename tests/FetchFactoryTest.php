@@ -7,6 +7,8 @@ namespace Ray\MediaQuery;
 use PHPUnit\Framework\TestCase;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Entity\Todo;
+use Ray\MediaQuery\Entity\TodoConstruct;
+use Ray\MediaQuery\Exception\InvalidEntityException;
 use Ray\MediaQuery\Factory\TodoEntityFactory;
 use Ray\MediaQuery\Factory\TodoInjectionFactory;
 
@@ -49,8 +51,15 @@ class FetchFactoryTest extends TestCase
 
     public function testIllegalEntity(): void
     {
+        $this->expectException(InvalidEntityException::class);
         $dbQuery = new DbQuery('todo_list', 'row_list');
-        $factory = $this->factory->factory($dbQuery, '__NOT_EXISTS__', null);
-        $this->assertInstanceOf(FetchInjectionFactory::class, $factory);
+        $this->factory->factory($dbQuery, '__NOT_EXISTS__', null);
+    }
+
+    public function testFetchNewInstance(): void
+    {
+        $dbQuery = new DbQuery('todo_list', 'row_list');
+        $factory = $this->factory->factory($dbQuery, TodoConstruct::class, null);
+        $this->assertInstanceOf(FetchNewInstance::class, $factory);
     }
 }
