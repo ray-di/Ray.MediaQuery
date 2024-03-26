@@ -46,4 +46,11 @@ class FetchFactoryTest extends TestCase
         $factory = $this->factory->factory($dbQuery, null, null);
         $this->assertInstanceOf(FetchInjectionFactory::class, $factory);
     }
+
+    public function testIllegalEntity(): void
+    {
+        $dbQuery = new DbQuery('todo_list', 'row_list');
+        $factory = $this->factory->factory($dbQuery, '__NOT_EXISTS__', null);
+        $this->assertInstanceOf(FetchInjectionFactory::class, $factory);
+    }
 }
