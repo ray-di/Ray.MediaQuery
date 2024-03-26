@@ -24,12 +24,15 @@ class FetchInjectionFactory implements FetchInterface
     /** @return array<mixed> */
     public function fetchAll(PDOStatement $pdoStatement, InjectorInterface $injector): array
     {
-        assert(class_exists($this->factory[0]));
-        assert(method_exists($this->factory[0], $this->factory[1]));
+        $factoryClass = $this->factory[0];
+        assert(class_exists($factoryClass));
+        assert(method_exists($factoryClass, $this->factory[1]));
+
+        $factory = $injector->getInstance($factoryClass);
 
         return $this->fetchFactory(
             $pdoStatement,
-            $injector->getInstance($this->factory[0]),
+            $factory, // @phpstan-ignore-line
         );
     }
 

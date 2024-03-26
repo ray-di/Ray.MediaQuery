@@ -70,7 +70,7 @@ class DbQueryModuleTest extends TestCase
         ]);
         $this->sqlDir = $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
-        $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true])); /* @phpstan-ignore-line */
+        $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true]));
         $module->install(new class extends AbstractModule{
             protected function configure(): void
             {
@@ -78,7 +78,7 @@ class DbQueryModuleTest extends TestCase
             }
         });
         $this->injector = new Injector($module, __DIR__ . '/tmp');
-        $this->pdo = $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
+        $this->pdo = $pdo = $this->injector->getInstance(ExtendedPdoInterface::class); // @phpstan-ignore-line
         assert($pdo instanceof ExtendedPdoInterface);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
@@ -279,6 +279,7 @@ class DbQueryModuleTest extends TestCase
     public function testFactoryInjection(): void
     {
         $todoQuery = $this->injector->getInstance(TodoFactoryInterface::class);
+        assert($todoQuery instanceof TodoFactoryInterface);
         $todoList = $todoQuery->getListInjection();
         $this->assertSame('RUN', $todoList[0]->title);
     }

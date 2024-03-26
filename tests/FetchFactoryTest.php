@@ -53,7 +53,7 @@ class FetchFactoryTest extends TestCase
     {
         $this->expectException(InvalidEntityException::class);
         $dbQuery = new DbQuery('todo_list', 'row_list');
-        $this->factory->factory($dbQuery, '__NOT_EXISTS__', null);
+        $this->factory->factory($dbQuery, '__NOT_EXISTS__', null); // @phpstan-ignore-line
     }
 
     public function testFetchNewInstance(): void
