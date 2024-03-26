@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
-        bootstrap="vendor/autoload.php">
-  <coverage processUncoveredFiles="true">
-    <include>
-      <directory suffix=".php">src</directory>
-    </include>
-  </coverage>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd" bootstrap="vendor/autoload.php" cacheDirectory=".phpunit.cache">
+  <coverage/>
   <testsuites>
-    <testsuite name="Ray.MediaQuery test suite" >
+    <testsuite name="Ray.MediaQuery test suite">
       <directory>tests</directory>
-      <directory phpVersion="8.1.0" phpVersionOperator=">=">tests-php81</directory>
+      <directory phpVersion="8.1.0" phpVersionOperator="&gt;=">tests-php81</directory>
     </testsuite>
   </testsuites>
   <php>
     <ini name="error_reporting" value="-1"/>
   </php>
+  <source>
+    <include>
+      <directory suffix=".php">src</directory>
+    </include>
+  </source>
 </phpunit>
