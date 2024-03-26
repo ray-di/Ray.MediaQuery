@@ -70,7 +70,17 @@ class DbQueryModuleTest extends TestCase
         ]);
         $this->sqlDir = $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
-        $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true]));
+        $module = new MediaQueryModule(
+            $mediaQueries,
+            [$dbQueryConfig],
+            new AuraSqlModule(
+                'sqlite::memory:',
+                '',
+                '',
+                '',
+                [PDO::ATTR_STRINGIFY_FETCHES => true], // @phpstan-ignore-line The constructor of AuraSqlModule has wrong type.
+            ),
+        );
         $module->install(new class extends AbstractModule{
             protected function configure(): void
             {
@@ -78,7 +88,7 @@ class DbQueryModuleTest extends TestCase
             }
         });
         $this->injector = new Injector($module, __DIR__ . '/tmp');
-        $this->pdo = $pdo = $this->injector->getInstance(ExtendedPdoInterface::class); // @phpstan-ignore-line
+        $this->pdo = $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
         assert($pdo instanceof ExtendedPdoInterface);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));

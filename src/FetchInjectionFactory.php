@@ -32,7 +32,7 @@ class FetchInjectionFactory implements FetchInterface
 
         return $this->fetchFactory(
             $pdoStatement,
-            $factory, // @phpstan-ignore-line
+            $factory,
         );
     }
 
