@@ -20,7 +20,8 @@ final class WebApiQuery implements WebApiQueryInterface
     public function __construct(
         private ClientInterface $client,
         private MediaQueryLoggerInterface $logger,
-        #[UriTemplateBindings] private array $uriTemplateBindings,
+        #[UriTemplateBindings]
+        private array $uriTemplateBindings,
     ) {
     }
 
@@ -40,7 +41,7 @@ final class WebApiQuery implements WebApiQueryInterface
 
             return $body;
         } catch (TransferException $e) {
-            throw new WebApiRequestException($e->getMessage(), (int) $e->getCode(), $e);
+            throw new WebApiRequestException($e->getMessage(), $e->getCode(), $e);
         }
     }
 }

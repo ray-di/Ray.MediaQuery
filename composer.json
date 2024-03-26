@@ -9,33 +9,26 @@
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": "^8.1",
         "ext-pdo": "*",
         "aura/sql": "^4.0 || ^5.0",
-        "doctrine/annotations": "^1.12",
+        "doctrine/annotations": "^1.12 || ^2.0",
         "guzzlehttp/guzzle": "^6.3 || ^7.2",
+        "koriym/csv-entities": "^1.0",
         "koriym/null-object": "^1.0.1",
-        "nikic/php-parser": "^4.15",
+        "nikic/php-parser": "^4.15 || ^5.0",
         "pagerfanta/pagerfanta": "^3.5",
         "phpdocumentor/reflection-docblock": "^5.3",
         "phpdocumentor/type-resolver": "^1.6.1",
         "ray/aop": "^2.10.4",
         "ray/aura-sql-module": "^1.12.0",
-        "ray/di": "^2.12",
-        "roave/better-reflection": "^4.12 || ^5.6",
+        "ray/di": "^2.14",
+        "roave/better-reflection": "^4.12 || ^5.6 || ^6.25",
         "symfony/polyfill-php81": "^1.24"
     },
     "require-dev": {
-        "doctrine/coding-standard": "^10.0",
-        "koriym/csv-entities": "^1.0",
-        "phpmd/phpmd": "^2.9",
-        "phpmetrics/phpmetrics": "^2.7",
-        "phpstan/phpstan": "^1.7",
-        "phpunit/phpunit": "^9.5.5",
-        "ray/rector-ray": "^1.0",
-        "rector/rector": "^0.14.8",
-        "squizlabs/php_codesniffer": "^3.7",
-        "vimeo/psalm": "^4.24"
+        "bamarni/composer-bin-plugin": "^1.8",
+        "phpunit/phpunit": "^10.5"
     },
     "autoload": {
         "psr-4": {
@@ -100,5 +93,12 @@
     },
     "suggest": {
         "koriym/csv-entities": "Provides one-to-many entity relation"
+    },
+    "extra": {
+        "bamarni-bin": {
+            "bin-links": true,
+            "target-directory": "vendor-bin",
+            "forward-command": true
+        }
     }
 }

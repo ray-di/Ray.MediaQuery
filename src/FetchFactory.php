@@ -6,6 +6,7 @@ namespace Ray\MediaQuery;
 
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Qualifier\FactoryMethod;
+use Ray\MediaQuery\Exception\InvalidEntityException;
 use ReflectionNamedType;
 use ReflectionUnionType;
 
@@ -16,13 +17,16 @@ use function method_exists;
 final class FetchFactory implements FetchFactoryInterface
 {
     public function __construct(
-        #[FactoryMethod] private string $factoryMehtod,
+        #[FactoryMethod]
+        private string $factoryMehtod,
     ) {
     }
 
     /** {@inheritDoc} */
     public function factory(DbQuery $dbQuery, string|null $entity, ReflectionNamedType|ReflectionUnionType|null $returnType): FetchInterface
     {
+        unset($returnType);
+
         $maybeFactory = [$dbQuery->factory, $this->factoryMehtod];
         if (is_callable($maybeFactory)) {
             // PDO::FETCH_FUNC with static factory method
@@ -44,7 +48,10 @@ final class FetchFactory implements FetchFactoryInterface
             return new FetchClass($entity);
         }
 
-        // PDO::FETCH_FUNC with entity having constructor
+        if (! class_exists($entity)) {
+            throw new InvalidEntityException($entity);
+        }
+
         return new FetchNewInstance($entity);
     }
 }

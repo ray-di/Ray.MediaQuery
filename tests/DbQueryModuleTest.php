@@ -70,7 +70,17 @@ class DbQueryModuleTest extends TestCase
         ]);
         $this->sqlDir = $sqlDir = dirname(__DIR__) . '/tests/sql';
         $dbQueryConfig = new DbQueryConfig($sqlDir);
-        $module = new MediaQueryModule($mediaQueries, [$dbQueryConfig], new AuraSqlModule('sqlite::memory:', '', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true])); /* @phpstan-ignore-line */
+        $module = new MediaQueryModule(
+            $mediaQueries,
+            [$dbQueryConfig],
+            new AuraSqlModule(
+                'sqlite::memory:',
+                '',
+                '',
+                '',
+                [PDO::ATTR_STRINGIFY_FETCHES => true], // @phpstan-ignore-line The constructor of AuraSqlModule has wrong type.
+            ),
+        );
         $module->install(new class extends AbstractModule{
             protected function configure(): void
             {
@@ -279,6 +289,7 @@ class DbQueryModuleTest extends TestCase
     public function testFactoryInjection(): void
     {
         $todoQuery = $this->injector->getInstance(TodoFactoryInterface::class);
+        assert($todoQuery instanceof TodoFactoryInterface);
         $todoList = $todoQuery->getListInjection();
         $this->assertSame('RUN', $todoList[0]->title);
     }

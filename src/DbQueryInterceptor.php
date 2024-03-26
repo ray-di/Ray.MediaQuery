@@ -23,7 +23,8 @@ class DbQueryInterceptor implements MethodInterceptor
         private ParamInjectorInterface $paramInjector,
         private ReturnEntityInterface $returnEntity,
         private FetchFactoryInterface $factory,
-        #[Set(DbPager::class)] private ProviderInterface $dbPagerProvider,
+        #[Set(DbPager::class)]
+        private ProviderInterface $dbPagerProvider,
     ) {
     }
 
