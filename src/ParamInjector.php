@@ -37,7 +37,8 @@ final class ParamInjector implements ParamInjectorInterface
         foreach ($parameters as $parameter) {
             $pos = $parameter->getPosition();
             /** @psalm-suppress MixedAssignment */
-            $namedArgs[$parameter->getName()] = $args[$pos] ?? $this->getInjectedParam($parameter);
+            $namedArgs[$parameter->getName()] = array_key_exists($pos, $args)
+                ? $args[$pos] : $this->getInjectedParam($parameter);
         }
 
         return $namedArgs;

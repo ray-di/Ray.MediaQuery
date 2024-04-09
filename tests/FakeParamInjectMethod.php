@@ -12,7 +12,7 @@ class FakeParamInjectMethod
     {
     }
 
-    public function paramInject(DateTimeInterface|null $dateTime = null): void
+    public function paramInject(string|null $nullableString, DateTimeInterface|null $dateTime = null): void
     {
     }
 
