@@ -36,7 +36,7 @@ final class MediaQueryLogger implements MediaQueryLoggerInterface, Stringable
                 continue;
             }
 
-            $value = base64_encode($value); // or '(binary) ' . base64_encode($value); // or '(binary) ' .
+            $value = base64_encode($value); // Encode non-UTF-8 strings in base64 to handle binary data.
         }
 
         $this->logs[] = sprintf('query: %s(%s)', $queryId, json_encode($values, JSON_THROW_ON_ERROR));
