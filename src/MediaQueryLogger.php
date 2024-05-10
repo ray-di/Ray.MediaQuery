@@ -6,8 +6,10 @@ namespace Ray\MediaQuery;
 
 use Stringable;
 
+use function base64_encode;
 use function implode;
 use function json_encode;
+use function mb_check_encoding;
 use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
@@ -27,6 +29,14 @@ final class MediaQueryLogger implements MediaQueryLoggerInterface, Stringable
      */
     public function log(string $queryId, array $values): void
     {
+        foreach ($values as &$value) {
+            if (mb_check_encoding($value, 'UTF-8')) {
+                continue;
+            }
+
+            $value = base64_encode($value); // or '(binary) ' . base64_encode($value); // or '(binary) ' .
+        }
+
         $this->logs[] = sprintf('query: %s(%s)', $queryId, json_encode($values, JSON_THROW_ON_ERROR));
     }
 
