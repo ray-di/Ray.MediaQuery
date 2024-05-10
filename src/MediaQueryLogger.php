@@ -8,6 +8,7 @@ use Stringable;
 
 use function base64_encode;
 use function implode;
+use function is_string;
 use function json_encode;
 use function mb_check_encoding;
 use function sprintf;
@@ -29,8 +30,9 @@ final class MediaQueryLogger implements MediaQueryLoggerInterface, Stringable
      */
     public function log(string $queryId, array $values): void
     {
+        /** @psalm-suppress MixedAssignment */
         foreach ($values as &$value) {
-            if (mb_check_encoding($value, 'UTF-8')) {
+            if (! is_string($value) || mb_check_encoding($value, 'UTF-8')) {
                 continue;
             }
 
