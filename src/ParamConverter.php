@@ -35,13 +35,13 @@ final class ParamConverter implements ParamConverterInterface
                 continue;
             }
 
-            if (method_exists($value, '__toString')) {
-                $value = (string) $value;
+            if ($value instanceof ToScalarInterface) {
+                $value = $value->toScalar();
                 continue;
             }
 
-            if ($value instanceof ToScalarInterface) {
-                $value = $value->toScalar();
+            if (method_exists($value, '__toString')) {
+                $value = (string) $value;
                 continue;
             }
 
