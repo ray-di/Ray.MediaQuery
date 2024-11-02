@@ -9,17 +9,30 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
+use function class_exists;
+use function count;
+use function file_get_contents;
+use function interface_exists;
+use function token_get_all;
+
+use const T_CLASS;
+use const T_INTERFACE;
+use const T_NAME_QUALIFIED;
+use const T_NAMESPACE;
+use const T_STRING;
+
 final class ClassesInDirectories
 {
     /**
      * @param list<string> $directories
+     *
      * @return Generator<int, class-string>
      */
     public static function list(string ...$directories): Generator
     {
         foreach ($directories as $directory) {
             $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($directory)
+                new RecursiveDirectoryIterator($directory),
             );
 
             foreach ($iterator as $file) {
@@ -36,14 +49,16 @@ final class ClassesInDirectories
                     continue;
                 }
 
-                if (class_exists($className) || interface_exists($className)) {
-                    yield $className;
+                if (! class_exists($className) && ! interface_exists($className)) {
+                    continue;
                 }
+
+                yield $className;
             }
         }
     }
 
-    private static function getClassFromFile(string $filePath): ?string
+    private static function getClassFromFile(string $filePath): string|null
     {
         $content = file_get_contents($filePath);
         if ($content === false) {
@@ -56,7 +71,7 @@ final class ClassesInDirectories
         $count = count($tokens);
 
         for ($i = 0; $i < $count; $i++) {
-            if (!isset($tokens[$i][0])) {
+            if (! isset($tokens[$i][0])) {
                 continue;
             }
 
@@ -69,12 +84,14 @@ final class ClassesInDirectories
                 }
             }
 
-            if ($tokens[$i][0] === T_CLASS || $tokens[$i][0] === T_INTERFACE) {
-                for ($j = $i + 1; $j < $count; $j++) {
-                    if ($tokens[$j][0] === T_STRING) {
-                        $class = $tokens[$j][1];
-                        break 2;
-                    }
+            if ($tokens[$i][0] !== T_CLASS && $tokens[$i][0] !== T_INTERFACE) {
+                continue;
+            }
+
+            for ($j = $i + 1; $j < $count; $j++) {
+                if ($tokens[$j][0] === T_STRING) {
+                    $class = $tokens[$j][1];
+                    break 2;
                 }
             }
         }
