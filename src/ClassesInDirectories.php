@@ -9,6 +9,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
+use function assert;
 use function class_exists;
 use function count;
 use function file_get_contents;
@@ -53,7 +54,9 @@ final class ClassesInDirectories
                 if (! class_exists($className) && ! interface_exists($className)) {
                     continue;
                 }
+
                 assert(class_exists($className) || interface_exists($className));
+
                 yield $className;
             }
         }
