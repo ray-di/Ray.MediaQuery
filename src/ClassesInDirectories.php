@@ -28,13 +28,14 @@ final class ClassesInDirectories
      *
      * @return Generator<int, class-string>
      */
-    public static function list(string ...$directories): Generator
+    public static function list(string ...$directories): Generator // @phpstan-ignore-line
     {
         foreach ($directories as $directory) {
             $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($directory),
             );
 
+            /** @psalm-suppress MixedAssignment */
             foreach ($iterator as $file) {
                 if (! $file instanceof SplFileInfo) {
                     continue;
@@ -52,7 +53,7 @@ final class ClassesInDirectories
                 if (! class_exists($className) && ! interface_exists($className)) {
                     continue;
                 }
-
+                assert(class_exists($className) || interface_exists($className));
                 yield $className;
             }
         }
