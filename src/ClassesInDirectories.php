@@ -98,7 +98,6 @@ final class ClassesInDirectories
             }
 
             for ($j = $index + 1, $count = count($tokens); $j < $count; $j++) {
-                assert(is_array($tokens[$j]) && isset($tokens[$j][0]));
                 if ($tokens[$j][0] === T_NAME_QUALIFIED) {
                     $string = $tokens[$j][1];
                     assert(is_string($string));
@@ -115,7 +114,6 @@ final class ClassesInDirectories
     private static function extractClassName(array $tokens): string|null
     {
         foreach ($tokens as $index => $token) {
-            assert(is_array($token));
             if ($token[0] !== T_CLASS && $token[0] !== T_INTERFACE) {
                 continue;
             }
