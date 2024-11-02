@@ -5,51 +5,84 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Generator;
-use Roave\BetterReflection\BetterReflection;
-use Roave\BetterReflection\Reflector\DefaultReflector;
-use Roave\BetterReflection\SourceLocator\Type\AggregateSourceLocator;
-use Roave\BetterReflection\SourceLocator\Type\AutoloadSourceLocator;
-use Roave\BetterReflection\SourceLocator\Type\DirectoriesSourceLocator;
-
-use function assert;
-use function class_exists;
-use function interface_exists;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 
 final class ClassesInDirectories
 {
     /**
-     * get a list of all classes in the given directories.
-     *
-     * Based on: https://github.com/Roave/BetterReflection/blob/396a07c9d276cb9ffba581b24b2dadbb542d542e/demo/parsing-whole-directory/example2.php.
-     *
      * @param list<string> $directories
-     *
      * @return Generator<int, class-string>
-     *
-     * This function code is taken from https://github.com/WyriHaximus/php-list-classes-in-directory/blob/master/src/functions.php
-     * and modified for roave/better-reflection 5.x
-     *
-     * @see https://github.com/WyriHaximus/php-list-classes-in-directory
-     * @psalm-suppress MixedReturnTypeCoercion
-     * @phpstan-ignore-next-line/
      */
-    public static function list(string ...$directories): iterable
+    public static function list(string ...$directories): Generator
     {
-        /** @var list<string> $directories */
-        $sourceLocator = new AggregateSourceLocator([
-            new DirectoriesSourceLocator(
-                $directories,
-                (new BetterReflection())->astLocator(),
-            ),
-            // ↓ required to autoload parent classes/interface from another directory than /src (e.g. /vendor)
-            new AutoloadSourceLocator((new BetterReflection())->astLocator()),
-        ]);
+        foreach ($directories as $directory) {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($directory)
+            );
 
-        foreach ((new DefaultReflector($sourceLocator))->reflectAllClasses() as $class) {
-            $className = $class->getName();
-            assert(class_exists($className) || interface_exists($className));
+            foreach ($iterator as $file) {
+                if (! $file instanceof SplFileInfo) {
+                    continue;
+                }
 
-            yield $className;
+                if ($file->getExtension() !== 'php') {
+                    continue;
+                }
+
+                $className = self::getClassFromFile($file->getRealPath());
+                if ($className === null) {
+                    continue;
+                }
+
+                if (class_exists($className) || interface_exists($className)) {
+                    yield $className;
+                }
+            }
         }
+    }
+
+    private static function getClassFromFile(string $filePath): ?string
+    {
+        $content = file_get_contents($filePath);
+        if ($content === false) {
+            return null;
+        }
+
+        $namespace = '';
+        $class = '';
+        $tokens = token_get_all($content);
+        $count = count($tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (!isset($tokens[$i][0])) {
+                continue;
+            }
+
+            if ($tokens[$i][0] === T_NAMESPACE) {
+                for ($j = $i + 1; $j < $count; $j++) {
+                    if ($tokens[$j][0] === T_NAME_QUALIFIED) {
+                        $namespace = $tokens[$j][1];
+                        break;
+                    }
+                }
+            }
+
+            if ($tokens[$i][0] === T_CLASS || $tokens[$i][0] === T_INTERFACE) {
+                for ($j = $i + 1; $j < $count; $j++) {
+                    if ($tokens[$j][0] === T_STRING) {
+                        $class = $tokens[$j][1];
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        if ($class === '') {
+            return null;
+        }
+
+        return $namespace ? $namespace . '\\' . $class : $class;
     }
 }
