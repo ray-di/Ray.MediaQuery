@@ -40,20 +40,13 @@ final class ClassesInDirectories
 
             /** @psalm-suppress MixedAssignment */
             foreach ($iterator as $file) {
-                if (! $file instanceof SplFileInfo) {
-                    continue;
-                }
-
-                if ($file->getExtension() !== 'php') {
+                if (! $file instanceof SplFileInfo || $file->getExtension() !== 'php') {
                     continue;
                 }
 
                 $className = self::getClassFromFile($file->getRealPath());
-                if ($className === null) {
-                    continue;
-                }
 
-                if (! class_exists($className) && ! interface_exists($className)) {
+                if ($className === null || ! class_exists($className) && ! interface_exists($className)) {
                     continue;
                 }
 
