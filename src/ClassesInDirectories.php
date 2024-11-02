@@ -27,11 +27,11 @@ use const T_STRING;
 final class ClassesInDirectories
 {
     /**
-     * @param list<string> $directories
+    +     * @param string ...$directories
      *
      * @return Generator<int, class-string>
      */
-    public static function list(string ...$directories): Generator // @phpstan-ignore-line
+    public static function list(string ...$directories): Generator
     {
         foreach ($directories as $directory) {
             $iterator = new RecursiveIteratorIterator(
@@ -56,8 +56,6 @@ final class ClassesInDirectories
                 if (! class_exists($className) && ! interface_exists($className)) {
                     continue;
                 }
-
-                assert(class_exists($className) || interface_exists($className));
 
                 yield $className;
             }
