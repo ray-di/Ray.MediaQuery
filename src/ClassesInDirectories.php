@@ -98,7 +98,8 @@ final class ClassesInDirectories
             }
 
             for ($j = $index + 1, $count = count($tokens); $j < $count; $j++) {
-                if ($tokens[$j][0] === T_NAME_QUALIFIED) {
+                if (isset($tokens[$j][0]) && $tokens[$j][0] === T_NAME_QUALIFIED) { // @phpstan-ignore-line
+                    assert(isset($tokens[$j][1])); // @phpstan-ignore-line
                     $string = $tokens[$j][1];
                     assert(is_string($string));
 
@@ -113,8 +114,9 @@ final class ClassesInDirectories
     /** @param array<int, mixed> $tokens */
     private static function extractClassName(array $tokens): string|null
     {
+        /** @psalm-suppress MixedAssignment */
         foreach ($tokens as $index => $token) {
-            if ($token[0] !== T_CLASS && $token[0] !== T_INTERFACE) {
+            if (isset($token[0]) && $token[0] !== T_CLASS && $token[0] !== T_INTERFACE) { // @phpstan-ignore-line
                 continue;
             }
 
