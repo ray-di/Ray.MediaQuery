@@ -37,7 +37,7 @@ final class WebApiQuery implements WebApiQueryInterface
             $boundUri = uri_template($uri, $this->uriTemplateBindings + $query);
             $response = $this->client->request($method, $boundUri, $query);
 
-            if (str_contains($response->getHeader(ResponseHeader::CONTENT_TYPE)[0], 'json') === false) {
+            if (str_contains($response->getHeaderLine(ResponseHeader::CONTENT_TYPE), 'json') === false) {
                 return $response->getBody()->getContents();
             }
 
