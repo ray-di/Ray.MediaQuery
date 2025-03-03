@@ -27,7 +27,7 @@ final class WebQueryInterceptor implements MethodInterceptor
         /** @var WebQuery $webQuery */
         $webQuery = $method->getAnnotation(WebQuery::class);
         /** @var array<string, string> $values */
-        $values = $this->paramInjector->getArgumentes($invocation);
+        $values = $this->paramInjector->getArguments($invocation);
         $request = $this->webApiList[$webQuery->id];
 
         return $this->webApiQuery->request($request['method'], $request['path'], $values);

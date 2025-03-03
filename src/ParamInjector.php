@@ -21,7 +21,7 @@ final class ParamInjector implements ParamInjectorInterface
     /**
      * {@inheritDoc}
      */
-    public function getArgumentes(MethodInvocation $invocation): array
+    public function getArguments(MethodInvocation $invocation): array
     {
         $args = (array) $invocation->getArguments();
         $method = $invocation->getMethod();
