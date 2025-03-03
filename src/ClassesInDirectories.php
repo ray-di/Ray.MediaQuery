@@ -46,7 +46,7 @@ final class ClassesInDirectories
 
                 $className = self::getClassFromFile($file->getRealPath());
 
-                if ($className === null || ! class_exists($className) && ! interface_exists($className)) {
+                if ($className === null || (! class_exists($className) && ! interface_exists($className))) {
                     continue;
                 }
 
@@ -59,7 +59,7 @@ final class ClassesInDirectories
     {
         $content = file_get_contents($filePath);
         if ($content === false) {
-            return null;
+            return null; // @codeCoverageIgnore
         }
 
         $tokens = token_get_all($content);

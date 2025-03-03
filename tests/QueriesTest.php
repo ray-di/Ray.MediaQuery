@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Ray\MediaQuery\FromDir\TodoAddInterface;
 use Ray\MediaQuery\FromDir\TodoItemInterface;
 
+use function chmod;
 use function sort;
 
 class QueriesTest extends TestCase
@@ -37,5 +38,12 @@ class QueriesTest extends TestCase
             TodoAddInterface::class,
             TodoItemInterface::class,
         ], $mediaQueries->classes);
+    }
+
+    public function testFromDirInvalidClass(): void
+    {
+        $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDirInvalidCase');
+        $this->assertEmpty($mediaQueries->classes);
+        chmod(__DIR__ . '/Fake/FromDirInvalidCase/InvalidFIleModeInterface.php', 0644);
     }
 }
