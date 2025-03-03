@@ -9,7 +9,7 @@ interface WebApiQueryInterface
     /**
      * @param array<string, string> $query
      *
-     * @return array<string, mixed>
+     * @return array<string, mixed>|string
      */
-    public function request(string $method, string $uri, array $query): array;
+    public function request(string $method, string $uri, array $query): array|string;
 }

@@ -14,7 +14,15 @@ class WebQueryTest extends TestCase
     {
         $webQuery = new WebApiQuery(new Client(), new MediaQueryLogger(), ['domain1' => 'ray-di.github.io']);
         $response = $webQuery->request('GET', 'https://{domain1}/Ray.MediaQuery/schema/{id}.json', ['id' => 'web_query']);
+        $this->assertIsArray($response);
         $this->assertSame('Web query schema', $response['title']);
+    }
+
+    public function testRequestNonJsonResponse(): void
+    {
+        $webQuery = new WebApiQuery(new Client(), new MediaQueryLogger(), ['domain1' => 'ray-di.github.io']);
+        $response = $webQuery->request('GET', 'https://{domain1}/', []);
+        $this->assertIsString($response);
     }
 
     public function testInvalidRequest(): void

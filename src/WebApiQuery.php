@@ -6,10 +6,12 @@ namespace Ray\MediaQuery;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\TransferException;
+use Koriym\HttpConstants\ResponseHeader;
 use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
 use Ray\MediaQuery\Exception\WebApiRequestException;
 
 use function json_decode;
+use function str_contains;
 use function uri_template;
 
 use const JSON_THROW_ON_ERROR;
@@ -28,12 +30,17 @@ final class WebApiQuery implements WebApiQueryInterface
     /**
      * {@inheritDoc}
      */
-    public function request(string $method, string $uri, array $query): array
+    public function request(string $method, string $uri, array $query): array|string
     {
         try {
             $this->logger->start();
             $boundUri = uri_template($uri, $this->uriTemplateBindings + $query);
             $response = $this->client->request($method, $boundUri, $query);
+
+            if (str_contains($response->getHeader(ResponseHeader::CONTENT_TYPE)[0], 'json') === false) {
+                return $response->getBody()->getContents();
+            }
+
             $json = $response->getBody()->getContents();
             /** @var array<string, mixed> $body */
             $body = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
