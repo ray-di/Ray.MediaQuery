@@ -219,7 +219,7 @@ final class TodoEntityFactory
 }
 ```
 
-#### Web API
+### Web API
 
 * Customization such as header for authentication is done by binding Guzzle's `ClinetInterface`.
 
