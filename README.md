@@ -221,7 +221,7 @@ final class TodoEntityFactory
 
 ### Web API
 
-* Customization such as header for authentication is done by binding Guzzle's `ClinetInterface`.
+* Customization such as header for authentication is done by binding Guzzle's `ClientInterface`.
 
 ```php
 $this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);

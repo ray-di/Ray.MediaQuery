@@ -212,7 +212,7 @@ final class TodoEntityFactory
 ### Web API
 
 * メソッドの引数が `uri`で指定されたURI templateにバインドされ、Web APIリクエストオブジェクトが生成されます。
-* 認証のためのヘッダーなどのカスタムはGuzzleの`ClinetInterface`をバインドして行います。
+* 認証のためのヘッダーなどのカスタムはGuzzleの`ClientInterface`をバインドして行います。
 
 ```php
 $this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
