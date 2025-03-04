@@ -227,6 +227,41 @@ final class TodoEntityFactory
 $this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
 ```
 
+#### Array return type
+
+When the return type of the method is an array, the JSON in the HTTP response body will be automatically decoded and returned as an array.
+
+```php
+interface PostItemInterface
+{
+    #[WebQuery('user_item')]
+    public function item(string $id): array;
+}
+```
+
+#### String return type
+
+When the return type of the method is a string, the raw response body will be returned without any modifications.
+
+```php
+interface PostItemInterface
+{
+    #[WebQuery('user_item')]
+    public function item(string $id): string;
+}
+```
+
+#### HttpMessageInterface return type
+
+When the return type of the method is a MessageInterface, the entire response will be returned as an object compatible with the PSR-7 HTTP Message Interface.
+```php
+interface PostItemInterface
+{
+    #[WebQuery('user_item')]
+    public function item(string $id): Psr\Http\Message\MessageInterface;
+}
+```
+
 ## Parameters
 
 ### DateTime
