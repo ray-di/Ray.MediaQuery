@@ -9,6 +9,7 @@ use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
 use Ray\MediaQuery\Annotation\WebQuery;
+use Ray\MediaQuery\Exception\NotSupportedReturnTypeException;
 use ReflectionNamedType;
 
 use function is_a;
@@ -46,6 +47,10 @@ final class WebQueryInterceptor implements MethodInterceptor
             return $this->webApiQuery->getStringBody($request['method'], $request['path'], $values);
         }
 
-        return $this->webApiQuery->request($request['method'], $request['path'], $values);
+        if ($returnType instanceof ReflectionNamedType && $returnType->getName() === 'array') {
+            return $this->webApiQuery->request($request['method'], $request['path'], $values);
+        }
+
+        throw new NotSupportedReturnTypeException();
     }
 }

@@ -17,4 +17,7 @@ interface FooItemInterface
 
     #[WebQuery('foo_item')]
     public function message(string $id): MessageInterface;
+
+    #[WebQuery('foo_item')]
+    public function boolean(string $id): bool;
 }

@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\MessageInterface;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
+use Ray\MediaQuery\Exception\NotSupportedReturnTypeException;
 use Ray\MediaQuery\WebApi\FooItemInterface;
 
 use function assert;
@@ -49,5 +50,11 @@ class WebQueryModuleTest extends TestCase
         $response = $this->fooItem->message('web_query');
         $this->assertInstanceOf(MessageInterface::class, $response);
         $this->assertStringContainsString('"title": "Web query schema"', $response->getBody()->getContents());
+    }
+
+    public function testGetRequestNotSupportedReturnType(): void
+    {
+        $this->expectException(NotSupportedReturnTypeException::class);
+        $this->fooItem->boolean('web_query');
     }
 }
