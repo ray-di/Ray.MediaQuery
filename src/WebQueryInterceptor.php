@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Psr\Http\Message\MessageInterface;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
 use Ray\MediaQuery\Annotation\WebQuery;
+use Ray\MediaQuery\Exception\NotSupportedReturnTypeException;
+use ReflectionNamedType;
+
+use function is_a;
 
 final class WebQueryInterceptor implements MethodInterceptor
 {
@@ -20,16 +25,32 @@ final class WebQueryInterceptor implements MethodInterceptor
     ) {
     }
 
-    /** @return Pages<mixed>|array<string, mixed> */
-    public function invoke(MethodInvocation $invocation): Pages|array
+    /** @return array<string, mixed>|string|MessageInterface */
+    public function invoke(MethodInvocation $invocation): array|string|MessageInterface
     {
         $method = $invocation->getMethod();
         /** @var WebQuery $webQuery */
         $webQuery = $method->getAnnotation(WebQuery::class);
         /** @var array<string, string> $values */
-        $values = $this->paramInjector->getArgumentes($invocation);
+        $values = $this->paramInjector->getArguments($invocation);
         $request = $this->webApiList[$webQuery->id];
 
-        return $this->webApiQuery->request($request['method'], $request['path'], $values);
+        $returnType = $method->getReturnType();
+        if (
+            $returnType instanceof ReflectionNamedType &&
+            is_a($returnType->getName(), MessageInterface::class, true)
+        ) {
+            return $this->webApiQuery->getHttpMessage($request['method'], $request['path'], $values);
+        }
+
+        if ($returnType instanceof ReflectionNamedType && $returnType->getName() === 'string') {
+            return $this->webApiQuery->getStringBody($request['method'], $request['path'], $values);
+        }
+
+        if ($returnType instanceof ReflectionNamedType && $returnType->getName() === 'array') {
+            return $this->webApiQuery->request($request['method'], $request['path'], $values);
+        }
+
+        throw new NotSupportedReturnTypeException();
     }
 }

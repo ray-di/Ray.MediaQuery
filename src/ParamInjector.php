@@ -21,12 +21,12 @@ final class ParamInjector implements ParamInjectorInterface
     /**
      * {@inheritDoc}
      */
-    public function getArgumentes(MethodInvocation $invocation): array
+    public function getArguments(MethodInvocation $invocation): array
     {
         $args = (array) $invocation->getArguments();
         $method = $invocation->getMethod();
-        $counntArgs = count($args);
-        $noInjection = $counntArgs === $method->getNumberOfParameters();
+        $countArgs = count($args);
+        $noInjection = $countArgs === $method->getNumberOfParameters();
         if ($noInjection) {
             /** @var array<string, mixed> */ // phpcs:ignoreFile
             return (array) $invocation->getNamedArguments();

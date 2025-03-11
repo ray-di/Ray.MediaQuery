@@ -38,4 +38,10 @@ class QueriesTest extends TestCase
             TodoItemInterface::class,
         ], $mediaQueries->classes);
     }
+
+    public function testFromDirInvalidClass(): void
+    {
+        $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDirInvalidCase');
+        $this->assertEmpty($mediaQueries->classes);
+    }
 }

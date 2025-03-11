@@ -38,7 +38,7 @@ interface TodoAddInterface
 interface PostItemInterface
 {
     #[WebQuery('user_item')]
-    public function item(string $id): Post;
+    public function item(string $id): array;
 }
 ```
 
@@ -212,10 +212,46 @@ final class TodoEntityFactory
 ### Web API
 
 * メソッドの引数が `uri`で指定されたURI templateにバインドされ、Web APIリクエストオブジェクトが生成されます。
-* 認証のためのヘッダーなどのカスタムはGuzzleの`ClinetInterface`をバインドして行います。
+* 認証のためのヘッダーなどのカスタムはGuzzleの`ClientInterface`をバインドして行います。
 
 ```php
 $this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvicer::class);
+```
+
+#### 戻り値の型がarrayの場合
+
+メソッドの戻り値を `array` にするとHTTPレスポンスボディのJSONは自動で配列にデコードされて返却されます。
+
+```php
+interface PostItemInterface
+{
+    #[WebQuery('user_item')]
+    public function item(string $id): array;
+}
+```
+
+#### 戻り値の型がstringの場合
+
+メソッドの戻り値を `string` にすると無加工のレスポンスボディを返します。
+
+```php
+interface PostItemInterface
+{
+    #[WebQuery('user_item')]
+    public function item(string $id): string;
+}
+```
+
+#### 戻り値の型がHttpMessageInterfaceの場合
+
+メソッドの戻り値を `MessageInterface` にするとレスポンス全体をPSR-7 HTTP Message Interfaceに対応したオブジェクトで返します。
+
+```php
+interface PostItemInterface
+{
+    #[WebQuery('user_item')]
+    public function item(string $id): Psr\Http\Message\MessageInterface;
+}
 ```
 
 ## パラメーター

@@ -35,7 +35,7 @@ class DbQueryInterceptor implements MethodInterceptor
         $dbQuery = $method->getAnnotation(DbQuery::class);
         assert($dbQuery instanceof DbQuery);
         $pager = $method->getAnnotation(Pager::class);
-        $values = $this->paramInjector->getArgumentes($invocation);
+        $values = $this->paramInjector->getArguments($invocation);
         $entity = ($this->returnEntity)($method);
         if ($pager instanceof Pager) {
             $dbPager = $this->dbPagerProvider->get();
