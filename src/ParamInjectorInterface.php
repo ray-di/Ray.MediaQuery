@@ -15,5 +15,5 @@ interface ParamInjectorInterface
      *
      * @template T of object
      */
-    public function getArgumentes(MethodInvocation $invocation): array;
+    public function getArguments(MethodInvocation $invocation): array;
 }
