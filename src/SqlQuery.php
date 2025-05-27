@@ -111,6 +111,7 @@ final class SqlQuery implements SqlQueryInterface
         foreach ($sqls as $sql) {
             /** @psalm-suppress InaccessibleProperty */
             try {
+                /** @var array<string, mixed> $values */
                 $pdoStatement = $this->pdo->perform($sql, $values);
             } catch (PDOException $e) {
                 $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
@@ -124,6 +125,7 @@ final class SqlQuery implements SqlQueryInterface
         $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
         $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
         $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
+        /** @var array<string, mixed> $values */
         $this->logger->log($sqlId, $values);
 
         return $result;

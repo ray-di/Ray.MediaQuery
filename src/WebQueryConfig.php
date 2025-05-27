@@ -25,8 +25,10 @@ final class WebQueryConfig
         /** @var object $json */
         $json = json_decode((string) file_get_contents($mediaQueryJson), null, 512, JSON_THROW_ON_ERROR);
         assert(property_exists($json, 'webQuery'));
+        /** @var iterable<object> $webQuery */
+        $webQuery = $json->webQuery;
         /** @var object $item */
-        foreach ($json->webQuery as $item) {
+        foreach ($webQuery as $item) {
             assert(property_exists($item, 'id'));
             assert(property_exists($item, 'method'));
             assert(property_exists($item, 'path'));

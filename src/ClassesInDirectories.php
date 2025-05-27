@@ -63,7 +63,7 @@ final class ClassesInDirectories
         }
 
         $tokens = token_get_all($content);
-        /** @var array<int, mixed> $tokens */
+        /** @var list<array{int, string, int}|string> $tokens */
 
         $namespace = self::extractNamespace($tokens);
         $class = self::extractClassName($tokens);
@@ -79,7 +79,7 @@ final class ClassesInDirectories
         return $namespace . '\\' . $class;
     }
 
-    /** @param array<int, mixed> $tokens*/
+    /** @param list<array{int, string, int}|string> $tokens*/
     private static function extractNamespace(array $tokens): string|null
     {
         /** @psalm-suppress MixedAssignment */
@@ -89,12 +89,10 @@ final class ClassesInDirectories
             }
 
             for ($j = $index + 1, $count = count($tokens); $j < $count; $j++) {
-                if (isset($tokens[$j][0]) && $tokens[$j][0] === T_NAME_QUALIFIED) { // @phpstan-ignore-line
-                    assert(isset($tokens[$j][1])); // @phpstan-ignore-line
-                    $string = $tokens[$j][1];
-                    assert(is_string($string));
+                if (isset($tokens[$j][0]) && $tokens[$j][0] === T_NAME_QUALIFIED) {
+                    assert(isset($tokens[$j][1]));
 
-                    return $string;
+                    return $tokens[$j][1];
                 }
             }
         }
@@ -102,19 +100,18 @@ final class ClassesInDirectories
         return null;
     }
 
-    /** @param array<int, mixed> $tokens */
+    /** @param list<array{int, string, int}|string> $tokens */
     private static function extractClassName(array $tokens): string|null
     {
         /** @psalm-suppress MixedAssignment */
         foreach ($tokens as $index => $token) {
-            if (isset($token[0]) && $token[0] !== T_CLASS && $token[0] !== T_INTERFACE) { // @phpstan-ignore-line
+            if (isset($token[0]) && $token[0] !== T_CLASS && $token[0] !== T_INTERFACE) {
                 continue;
             }
 
             for ($j = $index + 1, $count = count($tokens); $j < $count; $j++) {
                 if (is_array($tokens[$j]) && $tokens[$j][0] === T_STRING) {
                     $string = $tokens[$j][1];
-                    assert(is_string($string));
 
                     return $string;
                 }

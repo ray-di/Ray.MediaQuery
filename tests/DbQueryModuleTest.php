@@ -307,9 +307,9 @@ class DbQueryModuleTest extends TestCase
         $this->assertNotEmpty($todos[0]->memos);
         $this->assertEmpty($todos[1]->memos);
         $this->assertContainsOnlyInstancesOf(
-            className: Memo::class,
-            haystack: $todos[0]->memos,
+            Memo::class,
+            $todos[0]->memos,
         );
-        $this->assertCount(expectedCount: 2, haystack: $todos[0]->memos);
+        $this->assertCount(2, $todos[0]->memos);
     }
 }
