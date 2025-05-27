@@ -108,7 +108,7 @@ jobs:
         id: prepare_php84_lowest_aura_sql
         # This step runs only for PHP 8.4 with lowest dependencies.
         # Assumes inputs.current_stable will be '8.4' when testing PHP 8.4
-        if: matrix.php-version == inputs.current_stable && inputs.current_stable == '8.4' && matrix.dependencies == 'lowest'
+        if: ${{ matrix['php-version'] == inputs.current_stable && inputs.current_stable == '8.4' && matrix.dependencies == 'lowest' }}
         shell: bash
         run: |
           echo "PHP version is ${{ matrix.php-version }} and dependencies are 'lowest'. Modifying composer.json for aura/sql ^6.0."
