@@ -7,6 +7,7 @@ namespace Ray\MediaQuery;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\TransferException;
+use Override;
 use Psr\Http\Message\MessageInterface;
 use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
 use Ray\MediaQuery\Exception\WebApiRequestException;
@@ -30,6 +31,7 @@ final class WebApiQuery implements WebApiQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function request(string $method, string $uri, array $query): array
     {
         try {
@@ -47,6 +49,7 @@ final class WebApiQuery implements WebApiQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getStringBody(string $method, string $uri, array $query): string
     {
         try {
@@ -61,6 +64,7 @@ final class WebApiQuery implements WebApiQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getHttpMessage(string $method, string $uri, array $query): MessageInterface
     {
         try {

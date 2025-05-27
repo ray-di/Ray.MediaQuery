@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use Ray\Di\AbstractModule;
 
-class MediaQueryModule extends AbstractModule
+final class MediaQueryModule extends AbstractModule
 {
     /** @param list<DbQueryConfig|WebQueryConfig> $configs */
     public function __construct(
@@ -17,6 +18,7 @@ class MediaQueryModule extends AbstractModule
         parent::__construct($module);
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->install(new MediaQueryBaseModule($this->queries));

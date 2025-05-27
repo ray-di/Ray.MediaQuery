@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
+use Override;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -52,6 +53,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void
     {
         $this->perform($sqlId, $values, $fetch);
@@ -60,6 +62,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getRow(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array|object|null
     {
         $rowList = $this->perform($sqlId, $values, $fetch);
@@ -76,6 +79,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getRowList(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array
     {
         /** @var array<array<mixed>> $list */
@@ -87,6 +91,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getCount(string $sqlId, array $values): int
     {
         return (new ExtendedPdoAdapter($this->pdo, $this->getSql($sqlId), $values))->getNbResults();
@@ -168,6 +173,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', string|null $entity = null): PagesInterface
     {
         ($this->paramConverter)($values);

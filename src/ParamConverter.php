@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use DateTimeInterface;
+use Override;
 use Ray\MediaQuery\Exception\CouldNotBeConvertedException;
 
 use function assert;
@@ -22,6 +23,7 @@ final class ParamConverter implements ParamConverterInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function __invoke(array &$values): void
     {
         /** @psalm-suppress MixedAssignment $value */

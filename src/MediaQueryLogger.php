@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use Stringable;
 
 use function base64_encode;
@@ -21,6 +22,7 @@ final class MediaQueryLogger implements MediaQueryLoggerInterface, Stringable
     /** @var list<string> */
     public $logs = [];
 
+    #[Override]
     public function start(): void
     {
     }
@@ -28,6 +30,7 @@ final class MediaQueryLogger implements MediaQueryLoggerInterface, Stringable
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function log(string $queryId, array $values): void
     {
         /** @psalm-suppress MixedAssignment */
@@ -42,6 +45,7 @@ final class MediaQueryLogger implements MediaQueryLoggerInterface, Stringable
         $this->logs[] = sprintf('query: %s(%s)', $queryId, json_encode($values, JSON_THROW_ON_ERROR));
     }
 
+    #[Override]
     public function __toString(): string
     {
         return implode(PHP_EOL, $this->logs);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ray\Di\Di\Set;
@@ -15,7 +16,7 @@ use ReflectionUnionType;
 
 use function assert;
 
-class DbQueryInterceptor implements MethodInterceptor
+final class DbQueryInterceptor implements MethodInterceptor
 {
     /** @param ProviderInterface<DbPager> $dbPagerProvider */
     public function __construct(
@@ -29,6 +30,7 @@ class DbQueryInterceptor implements MethodInterceptor
     }
 
     /** @return array<mixed>|object|null */
+    #[Override]
     public function invoke(MethodInvocation $invocation): array|object|null
     {
         $method = $invocation->getMethod();

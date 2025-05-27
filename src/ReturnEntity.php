@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use phpDocumentor\Reflection\DocBlock\Tags\Return_;
 use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\Types\Array_;
@@ -22,6 +23,7 @@ use function substr;
 final class ReturnEntity implements ReturnEntityInterface
 {
     /** @inheritDoc  */
+    #[Override]
     public function __invoke(ReflectionMethod $method): string|null
     {
         $returnType = $method->getReturnType();

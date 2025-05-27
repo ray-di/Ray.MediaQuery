@@ -6,12 +6,13 @@ namespace Ray\MediaQuery;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use Override;
 use Ray\Di\AbstractModule;
 use Ray\MediaQuery\Annotation\Qualifier\UriTemplateBindings;
 use Ray\MediaQuery\Annotation\Qualifier\WebApiList;
 use Ray\MediaQuery\Annotation\WebQuery;
 
-class MediaQueryWebModule extends AbstractModule
+final class MediaQueryWebModule extends AbstractModule
 {
     public function __construct(
         private WebQueryConfig $config,
@@ -20,6 +21,7 @@ class MediaQueryWebModule extends AbstractModule
         parent::__construct($module);
     }
 
+    #[Override]
     public function configure(): void
     {
         $this->bindInterceptor(

@@ -6,6 +6,6 @@ namespace Ray\MediaQuery\Exception;
 
 use PDOException;
 
-class PdoPerformException extends PDOException
+final class PdoPerformException extends PDOException
 {
 }

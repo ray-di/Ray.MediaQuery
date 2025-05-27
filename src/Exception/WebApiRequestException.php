@@ -6,6 +6,6 @@ namespace Ray\MediaQuery\Exception;
 
 use RuntimeException;
 
-class WebApiRequestException extends RuntimeException
+final class WebApiRequestException extends RuntimeException
 {
 }

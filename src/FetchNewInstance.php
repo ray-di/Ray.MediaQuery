@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use PDO;
 use PDOStatement;
 use Ray\Di\InjectorInterface;
 
-class FetchNewInstance implements FetchInterface
+final class FetchNewInstance implements FetchInterface
 {
     /** @param class-string $entity */
     public function __construct(
@@ -17,6 +18,7 @@ class FetchNewInstance implements FetchInterface
     }
 
     /** @return array<mixed> */
+    #[Override]
     public function fetchAll(PDOStatement $pdoStatement, InjectorInterface $injector): array
     {
         $entity = $this->entity;

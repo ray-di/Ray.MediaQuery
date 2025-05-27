@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use PDO;
 use PDOStatement;
 use Ray\Di\InjectorInterface;
@@ -12,7 +13,7 @@ use function assert;
 use function class_exists;
 use function method_exists;
 
-class FetchInjectionFactory implements FetchInterface
+final class FetchInjectionFactory implements FetchInterface
 {
     /** @param array{0:string, 1:string} $factory */
     public function __construct(
@@ -22,6 +23,7 @@ class FetchInjectionFactory implements FetchInterface
     }
 
     /** @return array<mixed> */
+    #[Override]
     public function fetchAll(PDOStatement $pdoStatement, InjectorInterface $injector): array
     {
         $factoryClass = $this->factory[0];
