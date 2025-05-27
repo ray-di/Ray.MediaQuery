@@ -171,6 +171,6 @@ jobs:
           fail_ci_if_error: false
 
       - name: Run additional script
-        if: inputs.script != ''
+        if: ${{ inputs.script != '' }}
         shell: bash
         run: php ${{ inputs.script }}
