@@ -132,7 +132,7 @@ jobs:
       # --- End of aura/sql specific modification ---
 
       - name: Remove platform config for dependency resolution
-        if: matrix.dependencies == 'highest'
+        if: ${{ matrix.dependencies == 'highest' }}
         shell: bash
         run: composer config platform --unset
 
