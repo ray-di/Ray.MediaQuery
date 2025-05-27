@@ -9,9 +9,11 @@ use Ray\Aop\MethodInvocation;
 interface ParamInjectorInterface
 {
     /**
-     * @template T of object
      * @param MethodInvocation<T> $invocation
+     *
      * @return array<string, mixed>
+     *
+     * @template T of object
      */
     public function getArgumentes(MethodInvocation $invocation): array;
 }
