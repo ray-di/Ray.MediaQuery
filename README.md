@@ -452,3 +452,21 @@ $ cd Ray.MediaQuery
 $ composer tests
 $ php demo/run.php
 ```
+
+## PHP 8.4 Support and Aura.Sql
+
+This library supports PHP 8.1 to 8.4.
+Aura.Sql has different major versions for different PHP versions:
+- Aura.Sql v5.x: Recommended for PHP 8.1 - 8.3.
+- Aura.Sql v6.x: Recommended for PHP 8.4 and newer.
+
+Our `composer.json` specifies `aura/sql: "^5 || ^6"` to allow flexibility.
+
+**Important for PHP 8.4 users:**
+
+If you are using PHP 8.4, it is highly recommended to ensure Aura.Sql v6.x is installed.
+Due to how Composer resolves dependencies with `--prefer-lowest`, Aura.Sql v5.x (specifically older patch versions like 5.0.0 whose `composer.json` might not have an upper PHP bound like `<8.4`) might be installed on PHP 8.4 if you explicitly use `--prefer-lowest` or if other constraints lead to it. While our CI tests for PHP 8.4 with `lowest` dependencies are configured to force Aura.Sql v6, your local environment or specific project setup might differ.
+
+To ensure Aura.Sql v6 is used on PHP 8.4, you can:
+1.  Run `composer require aura/sql:"^6.0"` in your project.
+2.  If `aura/sql` is already in your `composer.json`, ensure its constraint points to `^6.0` or a similar range that selects v6.
