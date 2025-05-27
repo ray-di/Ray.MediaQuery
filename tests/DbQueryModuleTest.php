@@ -39,7 +39,6 @@ use function assert;
 use function dirname;
 use function file_get_contents;
 use function is_array;
-use function is_callable;
 
 class DbQueryModuleTest extends TestCase
 {
@@ -89,7 +88,6 @@ class DbQueryModuleTest extends TestCase
         });
         $this->injector = new Injector($module, __DIR__ . '/tmp');
         $this->pdo = $pdo = $this->injector->getInstance(ExtendedPdoInterface::class);
-        assert($pdo instanceof ExtendedPdoInterface);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_memo.sql'));
@@ -105,13 +103,10 @@ class DbQueryModuleTest extends TestCase
     public function testInsertItem(): void
     {
         $todoAdd = $this->injector->getInstance(TodoAddInterface::class);
-        assert($todoAdd instanceof TodoAddInterface);
         $todoAdd('1', 'run');
         $log = (string) $this->logger;
         $this->assertStringContainsString('query: todo_add', $log);
         $todoItem = $this->injector->getInstance(TodoItemInterface::class);
-
-        assert($todoItem instanceof TodoItemInterface);
         $item = $todoItem('1');
         $this->assertSame(['id' => '1', 'title' => 'run'], $item);
         $log = (string) $this->logger;
@@ -121,7 +116,6 @@ class DbQueryModuleTest extends TestCase
     public function testSelectItem(): void
     {
         $todoItem = $this->injector->getInstance(TodoItemInterface::class);
-        assert($todoItem instanceof TodoItemInterface);
         $item = $todoItem('1');
         $this->assertSame(['id' => '1', 'title' => 'run'], $item);
         $log = (string) $this->logger;
@@ -131,7 +125,6 @@ class DbQueryModuleTest extends TestCase
     public function testSelectList(): void
     {
         $promiselist = $this->injector->getInstance(PromiseListInterface::class);
-        assert($promiselist instanceof PromiseListInterface);
         $list = $promiselist->get();
         $row = ['id' => '1', 'title' => 'run', 'time' => '1970-01-01 00:00:00'];
         $this->assertSame([$row], $list);
@@ -142,7 +135,6 @@ class DbQueryModuleTest extends TestCase
     public function testSelectPager(): void
     {
         $todoList = $this->injector->getInstance(TodoListInterface::class);
-        assert($todoList instanceof TodoListInterface);
         $list = ($todoList)();
         /** @var Page $page */
         $page = $list[1];
@@ -196,7 +188,6 @@ class DbQueryModuleTest extends TestCase
     public function testDynamicPerPage(): void
     {
         $todoList = $this->injector->getInstance(DynamicPerPageInterface::class);
-        assert($todoList instanceof DynamicPerPageInterface);
         $list = $todoList->get(2);
         /** @var Page $page */
         $page = $list[1];
@@ -209,7 +200,6 @@ class DbQueryModuleTest extends TestCase
     public function testDynamicPerPageWithParameterInjection(): void
     {
         $todoList = $this->injector->getInstance(DynamicPerPageInterface::class);
-        assert($todoList instanceof DynamicPerPageInterface);
 
         $list = $todoList->getWithScalarParam(2);
         /** @var Page $page */
@@ -236,7 +226,6 @@ class DbQueryModuleTest extends TestCase
     {
         $this->expectException(InvalidPerPageVarNameException::class);
         $todoList = $this->injector->getInstance(DynamicPerPageInvalidInterface::class);
-        assert($todoList instanceof DynamicPerPageInvalidInterface);
         ($todoList)(1);
     }
 
@@ -244,14 +233,12 @@ class DbQueryModuleTest extends TestCase
     {
         $this->expectException(PerPageNotIntTypeException::class);
         $todoList = $this->injector->getInstance(DynamicPerPageInvalidType::class);
-        assert(is_callable($todoList));
         $todoList('1');
     }
 
     public function testSelectPagerEntity(): void
     {
         $todoList = $this->injector->getInstance(PagerEntityInterface::class);
-        assert($todoList instanceof PagerEntityInterface);
         $list = ($todoList)();
         $page = $list[1];
         assert($page instanceof Page);
@@ -289,7 +276,6 @@ class DbQueryModuleTest extends TestCase
     public function testFactoryInjection(): void
     {
         $todoQuery = $this->injector->getInstance(TodoFactoryInterface::class);
-        assert($todoQuery instanceof TodoFactoryInterface);
         $todoList = $todoQuery->getListInjection();
         $this->assertSame('RUN', $todoList[0]->title);
     }
@@ -302,7 +288,6 @@ class DbQueryModuleTest extends TestCase
     {
         $this->pdo->perform((string) file_get_contents($this->sqlDir . '/todo_add.sql'), ['id' => '2', 'title' => 'walk']);
         $query = $this->injector->getInstance(TodoEntityInterface::class);
-        assert($query instanceof TodoEntityInterface);
         $todos = $query->getListWithMemo('1');
         $this->assertNotEmpty($todos[0]->memos);
         $this->assertEmpty($todos[1]->memos);

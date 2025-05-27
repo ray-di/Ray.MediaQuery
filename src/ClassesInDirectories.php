@@ -9,13 +9,11 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
-use function assert;
 use function class_exists;
 use function count;
 use function file_get_contents;
 use function interface_exists;
 use function is_array;
-use function is_string;
 use function token_get_all;
 
 use const T_CLASS;
@@ -90,8 +88,6 @@ final class ClassesInDirectories
 
             for ($j = $index + 1, $count = count($tokens); $j < $count; $j++) {
                 if (isset($tokens[$j][0]) && $tokens[$j][0] === T_NAME_QUALIFIED) {
-                    assert(isset($tokens[$j][1]));
-
                     return $tokens[$j][1];
                 }
             }
@@ -111,9 +107,7 @@ final class ClassesInDirectories
 
             for ($j = $index + 1, $count = count($tokens); $j < $count; $j++) {
                 if (is_array($tokens[$j]) && $tokens[$j][0] === T_STRING) {
-                    $string = $tokens[$j][1];
-
-                    return $string;
+                    return $tokens[$j][1];
                 }
             }
         }
