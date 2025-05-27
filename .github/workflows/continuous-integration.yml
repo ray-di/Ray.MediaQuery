@@ -150,7 +150,7 @@ jobs:
       - name: Revert composer.json modification
         # This step always runs to ensure composer.json is restored if it was modified.
         # It checks if the modification step was successful and if it actually set the 'modified' output to true.
-        if: always() && steps.prepare_php84_lowest_aura_sql.outcome == 'success' && steps.prepare_php84_lowest_aura_sql.outputs.modified == 'true'
+        if: ${{ always() && steps.prepare_php84_lowest_aura_sql.outcome == 'success' && steps.prepare_php84_lowest_aura_sql.outputs.modified == 'true' }}
         shell: bash
         run: |
           echo "Attempting to revert composer.json modification."
