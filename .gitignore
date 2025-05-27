@@ -7,3 +7,4 @@
 /.phpcs-cache
 /coverage.xml
 /tests/tmp/*
+/.phpunit.cache/test-results
