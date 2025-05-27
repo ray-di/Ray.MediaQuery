@@ -19,7 +19,9 @@ final class ParamInjector implements ParamInjectorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @template T of object
+     * @param MethodInvocation<T> $invocation
+     * @return array<string, mixed>
      */
     public function getArgumentes(MethodInvocation $invocation): array
     {
