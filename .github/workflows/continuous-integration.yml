@@ -98,10 +98,9 @@ jobs:
           composer config platform.php ${{ matrix.php-version }}
 
       - name: Handle lowest dependencies update
-        if: matrix.dependencies == 'lowest'
+        if: ${{ matrix.dependencies == 'lowest' }}
         shell: bash
         run: echo COMPOSER_UPDATE_FLAGS="$COMPOSER_UPDATE_FLAGS --prefer-lowest" >> $GITHUB_ENV
-
       # --- Start of aura/sql specific modification ---
       - name: Temporarily modify composer.json for PHP 8.4 lowest dependencies
         id: prepare_php84_lowest_aura_sql
