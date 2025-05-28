@@ -22,21 +22,23 @@ class QueriesTest extends TestCase
     public function testFromDir(): void
     {
         $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDir');
-        sort($mediaQueries->classes);
+        $classes = $mediaQueries->classes;
+        sort($classes);
         $this->assertSame([
             TodoAddInterface::class,
             TodoItemInterface::class,
-        ], $mediaQueries->classes);
+        ], $classes);
     }
 
     public function testFromDirCache(): void
     {
         $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDir');
-        sort($mediaQueries->classes);
+        $classes = $mediaQueries->classes;
+        sort($classes);
         $this->assertSame([
             TodoAddInterface::class,
             TodoItemInterface::class,
-        ], $mediaQueries->classes);
+        ], $classes);
     }
 
     public function testFromDirInvalidClass(): void

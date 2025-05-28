@@ -6,10 +6,11 @@ namespace Ray\MediaQuery;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use Override;
 use Ray\Di\AbstractModule;
 use Ray\Di\Scope;
 
-class MediaQueryBaseModule extends AbstractModule
+final class MediaQueryBaseModule extends AbstractModule
 {
     public function __construct(
         private Queries $queries,
@@ -18,6 +19,7 @@ class MediaQueryBaseModule extends AbstractModule
         parent::__construct($module);
     }
 
+    #[Override]
     protected function configure(): void
     {
         foreach ($this->queries->classes as $class) {

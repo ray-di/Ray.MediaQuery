@@ -11,8 +11,6 @@ use Ray\Di\Injector;
 use Ray\MediaQuery\Exception\NotSupportedReturnTypeException;
 use Ray\MediaQuery\WebApi\FooItemInterface;
 
-use function assert;
-
 class WebQueryModuleTest extends TestCase
 {
     protected AbstractModule $module;
@@ -27,7 +25,6 @@ class WebQueryModuleTest extends TestCase
         $module = new MediaQueryModule($mediaQueries, [new WebQueryConfig($mediaQueryJson, ['domain' => 'ray-di.github.io'])]);
         $this->injector = new Injector($module);
         $logger = $this->injector->getInstance(MediaQueryLoggerInterface::class);
-        assert($logger instanceof MediaQueryLoggerInterface);
         $this->logger = $logger;
         $this->fooItem = $this->injector->getInstance(FooItemInterface::class);
     }

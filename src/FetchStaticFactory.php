@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use PDO;
 use PDOStatement;
 use Ray\Di\InjectorInterface;
@@ -20,6 +21,7 @@ final class FetchStaticFactory implements FetchInterface
     }
 
     /** @return array<mixed> */
+    #[Override]
     public function fetchAll(PDOStatement $pdoStatement, InjectorInterface $injector): array
     {
         // 'factory' attribute

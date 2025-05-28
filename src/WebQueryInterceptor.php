@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use Psr\Http\Message\MessageInterface;
 use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
@@ -26,6 +27,7 @@ final class WebQueryInterceptor implements MethodInterceptor
     }
 
     /** @return array<string, mixed>|string|MessageInterface */
+    #[Override]
     public function invoke(MethodInvocation $invocation): array|string|MessageInterface
     {
         $method = $invocation->getMethod();

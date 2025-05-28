@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Qualifier\FactoryMethod;
 use Ray\MediaQuery\Exception\InvalidEntityException;
@@ -23,6 +24,7 @@ final class FetchFactory implements FetchFactoryInterface
     }
 
     /** {@inheritDoc} */
+    #[Override]
     public function factory(DbQuery $dbQuery, string|null $entity, ReflectionNamedType|ReflectionUnionType|null $returnType): FetchInterface
     {
         unset($returnType);

@@ -23,6 +23,7 @@ final class ParamInjector implements ParamInjectorInterface
      * @param MethodInvocation<T> $invocation
      * @return array<string, mixed>
      */
+    #[\Override]
     public function getArguments(MethodInvocation $invocation): array
     {
         $args = (array) $invocation->getArguments();

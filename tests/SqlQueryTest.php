@@ -18,7 +18,6 @@ use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\LogicException;
 use Ray\MediaQuery\Exception\PdoPerformException;
 
-use function assert;
 use function count;
 use function file_get_contents;
 
@@ -89,7 +88,6 @@ class SqlQueryTest extends TestCase
         $this->assertInstanceOf(Pages::class, $pages);
         $page = $pages[2];
         $this->assertInstanceOf(Page::class, $page);
-        assert($page instanceof Page);
         $this->assertSame(2, $page->current);
         $this->assertFalse($page->hasNext);
         $this->assertSame([$walkTodo], $page->data);

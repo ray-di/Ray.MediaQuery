@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
+use Override;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -52,6 +53,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void
     {
         $this->perform($sqlId, $values, $fetch);
@@ -60,6 +62,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getRow(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array|object|null
     {
         $rowList = $this->perform($sqlId, $values, $fetch);
@@ -76,6 +79,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getRowList(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array
     {
         /** @var array<array<mixed>> $list */
@@ -87,6 +91,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getCount(string $sqlId, array $values): int
     {
         return (new ExtendedPdoAdapter($this->pdo, $this->getSql($sqlId), $values))->getNbResults();
@@ -106,6 +111,7 @@ final class SqlQuery implements SqlQueryInterface
         foreach ($sqls as $sql) {
             /** @psalm-suppress InaccessibleProperty */
             try {
+                /** @var array<string, mixed> $values */
                 $pdoStatement = $this->pdo->perform($sql, $values);
             } catch (PDOException $e) {
                 $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
@@ -119,6 +125,7 @@ final class SqlQuery implements SqlQueryInterface
         $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
         $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
         $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
+        /** @var array<string, mixed> $values */
         $this->logger->log($sqlId, $values);
 
         return $result;
@@ -168,6 +175,7 @@ final class SqlQuery implements SqlQueryInterface
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', string|null $entity = null): PagesInterface
     {
         ($this->paramConverter)($values);

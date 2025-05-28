@@ -4,6 +4,6 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery\Exception;
 
-class NotSupportedReturnTypeException extends LogicException
+final class NotSupportedReturnTypeException extends LogicException
 {
 }

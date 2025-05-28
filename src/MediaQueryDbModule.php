@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Override;
 use Ray\Di\AbstractModule;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Qualifier\FactoryMethod;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 
-class MediaQueryDbModule extends AbstractModule
+final class MediaQueryDbModule extends AbstractModule
 {
     public function __construct(
         private DbQueryConfig $configs,
@@ -18,6 +19,7 @@ class MediaQueryDbModule extends AbstractModule
         parent::__construct($module);
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->bind(SqlQueryInterface::class)->to(SqlQuery::class);
