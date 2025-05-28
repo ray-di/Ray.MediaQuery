@@ -9,48 +9,67 @@ on:
     paths-ignore:
       - '**.md'  # Skip workflow on documentation changes only
   pull_request:
-  workflow_dispatch:  # Enable manual trigger
+  workflow_dispatch:  # Enable manual trigger (inputs can be provided manually here)
   workflow_call:      # Enable calling from other workflows
     inputs:
       old_stable:
         required: false
         type: string
-        default: "[]" # Example: '["8.1", "8.2", "8.3"]'
+        default: '[]' # Default for workflow_call if 'old_stable' input is not provided by the caller.
+        # Example, if caller wants specific old stables: '["8.0", "8.1"]'
+        # If caller wants NO old stables, they can pass '[]' or omit it to use this default.
       current_stable:
-        required: true
-        type: string  # Example: "8.4"
+        required: true # Required for workflow_call. Example from caller: "8.4" or "8.5"
+        type: string
       script:
         required: false
         type: string
 
-env:
+env: # This env block is for steps and job-level environment settings.
   COMPOSER_FLAGS: "--ansi --no-interaction --no-progress --prefer-dist --no-plugins"
   COMPOSER_UPDATE_FLAGS: ""
+  # Matrix defaults are defined in the jobs section due to GitHub Actions limitations
+  # DEFAULT_OLD_STABLE and DEFAULT_CURRENT_STABLE cannot be used in matrix context
 
 jobs:
   phpunit:
     name: PHPUnit
     runs-on: ${{ matrix.os }}
+    env:
+      # Define defaults here where they can be used in steps
+      DEFAULT_OLD_STABLE: '["8.1", "8.2", "8.3"]'
+      DEFAULT_CURRENT_STABLE: '8.4'
     strategy:
       fail-fast: false
       matrix:
-        php-version: ${{ fromJson(inputs.old_stable) }}
+        # For workflow_call:
+        #   - If inputs.old_stable is provided by the caller, that value is used.
+        #   - If inputs.old_stable is NOT provided by the caller, its `default: '[]'` in the `inputs` definition is used.
+        # For push/pull_request/workflow_dispatch (where inputs.old_stable is an empty string "" if not set via dispatch UI):
+        #   - The default is hardcoded here due to GitHub Actions matrix limitations with env variables
+        php-version: ${{ fromJson(inputs.old_stable || '["8.1", "8.2", "8.3"]') }}
         dependencies: [highest, lowest]
         os: [ubuntu-latest]
         experimental: [false]
         include:
-          - php-version: ${{ inputs.current_stable }} # Should be 8.4 for the special handling
+          # For workflow_call: inputs.current_stable is required and its value is used.
+          # For push/pull_request/workflow_dispatch (where inputs.current_stable is an empty string "" if not set via dispatch UI):
+          #   - The default is hardcoded here due to GitHub Actions matrix limitations with env variables
+          - php-version: ${{ inputs.current_stable || '8.4' }}
             os: windows-latest
             dependencies: highest
             experimental: false
-          - php-version: ${{ inputs.current_stable }} # Should be 8.4 for the special handling
+          - php-version: ${{ inputs.current_stable || '8.4' }}
             os: ubuntu-latest
             dependencies: highest
             experimental: false
-          - php-version: ${{ inputs.current_stable }} # Should be 8.4 for the special handling
-            os: ubuntu-latest
-            dependencies: lowest # This is the target for aura/sql modification
-            experimental: false
+          # Note: Current stable PHP version with lowest dependencies is intentionally excluded
+          # to avoid aura/sql v5 compatibility issues with the latest PHP version
+        exclude:
+          # Skip lowest dependencies test for current stable PHP version
+          # This prevents aura/sql ^5 from being installed on the latest PHP version where it may not be fully compatible
+          - php-version: ${{ inputs.current_stable || '8.4' }}
+            dependencies: lowest
 
     continue-on-error: ${{ matrix.experimental }}
 
@@ -58,10 +77,11 @@ jobs:
       - name: Disable autocrlf on Windows
         if: ${{ contains(matrix.os, 'windows') }}
         run: git config --global core.autocrlf false
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Not strictly necessary for this change but good practice
+          fetch-depth: 0
 
       - name: Setup PHP ${{ matrix.php-version }}
         uses: shivammathur/setup-php@v2
@@ -101,33 +121,6 @@ jobs:
         if: ${{ matrix.dependencies == 'lowest' }}
         shell: bash
         run: echo COMPOSER_UPDATE_FLAGS="$COMPOSER_UPDATE_FLAGS --prefer-lowest" >> $GITHUB_ENV
-      # --- Start of aura/sql specific modification ---
-      - name: Temporarily modify composer.json for PHP 8.4 lowest dependencies
-        id: prepare_php84_lowest_aura_sql
-        # This step runs only for PHP 8.4 with lowest dependencies.
-        # Assumes inputs.current_stable will be '8.4' when testing PHP 8.4
-        if: ${{ matrix['php-version'] == inputs.current_stable && inputs.current_stable == '8.4' && matrix.dependencies == 'lowest' }}
-        shell: bash
-        run: |
-          echo "PHP version is ${{ matrix.php-version }} and dependencies are 'lowest'. Modifying composer.json for aura/sql ^6.0."
-          if [ ! -f composer.json ]; then
-            echo "Error: composer.json not found!"
-            exit 1
-          fi
-          cp composer.json composer.json.bak-aura-sql-patch
-          # Use PHP to modify composer.json, ensuring JSON validity and handling potential errors.
-          php -r '$composerJsonPath = "composer.json"; $config = json_decode(file_get_contents($composerJsonPath), true); if (json_last_error() !== JSON_ERROR_NONE) { fwrite(STDERR, "Error decoding composer.json: " . json_last_error_msg() . "\n"); exit(1); } if (isset($config["require"]["aura/sql"])) { $config["require"]["aura/sql"] = "^6.0"; $jsonOutput = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES); if (json_last_error() !== JSON_ERROR_NONE) { fwrite(STDERR, "Error encoding composer.json: " . json_last_error_msg() . "\n"); exit(1); } file_put_contents($composerJsonPath, $jsonOutput); echo "composer.json modified: aura/sql constraint changed to ^6.0.\n"; echo "modified=true" >> $GITHUB_OUTPUT; } else { echo "Warning: aura/sql not found in require section of composer.json. No modification made.\n"; echo "modified=false" >> $GITHUB_OUTPUT; }'
-          # Check if PHP script itself failed (e.g., syntax error, or explicit exit(1))
-          if [ $? -ne 0 ]; then
-            echo "Error: PHP script to modify composer.json failed."
-            # Restore immediately if PHP script indicated failure, to ensure clean state for next steps or retry
-            if [ -f composer.json.bak-aura-sql-patch ]; then
-              mv composer.json.bak-aura-sql-patch composer.json
-              echo "Restored composer.json from backup due to script failure."
-            fi
-            exit 1 # Fail the step
-          fi
-      # --- End of aura/sql specific modification ---
 
       - name: Remove platform config for dependency resolution
         if: ${{ matrix.dependencies == 'highest' }}
@@ -146,22 +139,6 @@ jobs:
         env:
           XDEBUG_MODE: coverage # pcov uses XDEBUG_MODE=coverage for activation
 
-      # --- Start of composer.json reversion ---
-      - name: Revert composer.json modification
-        # This step always runs to ensure composer.json is restored if it was modified.
-        # It checks if the modification step was successful and if it actually set the 'modified' output to true.
-        if: ${{ always() && steps.prepare_php84_lowest_aura_sql.outcome == 'success' && steps.prepare_php84_lowest_aura_sql.outputs.modified == 'true' }}
-        shell: bash
-        run: |
-          echo "Attempting to revert composer.json modification."
-          if [ -f composer.json.bak-aura-sql-patch ]; then
-            mv composer.json.bak-aura-sql-patch composer.json
-            echo "composer.json has been successfully reverted."
-          else
-            echo "Warning: Backup file composer.json.bak-aura-sql-patch not found. No reversion performed or backup was not created."
-          fi
-      # --- End of composer.json reversion ---
-
       - name: Upload coverage report
         uses: codecov/codecov-action@v4
         with:
@@ -169,6 +146,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Run additional script
-        if: ${{ inputs.script != '' }}
+        # Run if inputs.script is not an empty string and also not null (which it can be if not provided in workflow_call)
+        if: ${{ inputs.script != '' && inputs.script != null }}
         shell: bash
         run: php ${{ inputs.script }}
