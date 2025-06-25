@@ -154,6 +154,8 @@ final class SqlQuery implements SqlQueryInterface
             $sqls .= ';';
         }
 
+        $sqls = preg_replace('/^\s*--.*$/m', '', $sqls);
+
         $sqls = explode(';', trim($sqls, "\\ \t\n\r\0\x0B"));
         array_pop($sqls);
         if ($sqls[0] === '') {
