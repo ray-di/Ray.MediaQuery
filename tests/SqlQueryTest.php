@@ -80,6 +80,13 @@ class SqlQueryTest extends TestCase
         $this->assertSame([0 => $this->insertData], $result);
     }
 
+    /** @depends testExec */
+    public function testHyphenComment(): void
+    {
+        $result = $this->sqlQuery->getRow('todo_item_hyphen_comment', ['id' => '1']);
+        $this->assertSame($this->insertData, $result);
+    }
+
     public function testPager(): PagesInterface
     {
         $walkTodo = ['id' => '2', 'title' => 'walk'];
