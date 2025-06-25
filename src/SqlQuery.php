@@ -25,9 +25,8 @@ use function file_get_contents;
 use function is_array;
 use function is_object;
 use function json_encode;
-use function preg_replace;
+use function preg_match;
 use function sprintf;
-use function stripos;
 use function strpos;
 use function trim;
 
@@ -35,7 +34,18 @@ use const JSON_THROW_ON_ERROR;
 
 final class SqlQuery implements SqlQueryInterface
 {
-    private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
+    // Pattern to detect SELECT queries by skipping comments and finding the first SQL keyword
+    // ^ : Start from beginning of string
+    // \s* : Skip leading whitespace
+    // (?:...)* : Non-capturing group repeated 0 or more times (comment blocks)
+    //   \/\*.*?\*\/ : C-style comment /* ... */
+    //   | : OR operator
+    //   --.*?[\r\n] : Hyphen comment -- to end of line
+    //   \s* : Skip whitespace after comments
+    // \s* : Skip final whitespace
+    // (SELECT|WITH) : Capture SELECT or WITH keywords (read-only queries)
+    // i : Case insensitive
+    private const SELECT_QUERY_PATTERN = '/^\s*(?:\/\*.*?\*\/\s*|--.*?[\r\n]\s*)*\s*(SELECT|WITH)/i';
 
     private PDOStatement|null $pdoStatement = null;
 
@@ -122,8 +132,7 @@ final class SqlQuery implements SqlQueryInterface
 
         $this->pdoStatement = $pdoStatement;
         $lastQuery = $pdoStatement->queryString;
-        $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
-        $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
+        $isSelect = (bool) preg_match(self::SELECT_QUERY_PATTERN, $lastQuery);
         $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
         /** @var array<string, mixed> $values */
         $this->logger->log($sqlId, $values);
@@ -153,8 +162,6 @@ final class SqlQuery implements SqlQueryInterface
         if (strpos($sqls, ';') === false) {
             $sqls .= ';';
         }
-
-        $sqls = (string) preg_replace('/^\s*--.*$/m', '', $sqls);
 
         $sqls = explode(';', trim($sqls, "\\ \t\n\r\0\x0B"));
         array_pop($sqls);
