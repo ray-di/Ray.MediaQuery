@@ -45,7 +45,7 @@ final class SqlQuery implements SqlQueryInterface
     // \s* : Skip final whitespace
     // (SELECT|WITH) : Capture SELECT or WITH keywords (read-only queries)
     // i : Case insensitive
-    private const SELECT_QUERY_PATTERN = '/^\s*(?:\/\*.*?\*\/\s*|--.*?[\r\n]\s*)*\s*(SELECT|WITH)/i';
+    private const SELECT_QUERY_PATTERN = '/^\s*(?:\/\*.*?\*\/\s*|--.*?(?:[\r\n]|$)\s*)*\s*(SELECT|WITH)/i';
 
     private PDOStatement|null $pdoStatement = null;
 
