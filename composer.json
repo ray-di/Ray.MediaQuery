@@ -26,6 +26,7 @@
         "ray/aop": "^2.10.4",
         "ray/aura-sql-module": "^1.12.0",
         "ray/di": "^2.14",
+        "ray/input-query": "1.x-dev",
         "symfony/polyfill-php81": "^1.24",
         "symfony/polyfill-php83": "^1.32"
     },
