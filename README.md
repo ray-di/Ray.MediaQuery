@@ -459,7 +459,7 @@ For advanced SQL execution control, you can inject the `PerformSqlInterface` whi
 
 Example)
  * Injecting the ID of a logged-in user and leaving it as a comment statement in SQL.
- * Leave bound values and execution times in comments and logs during development
+ * Leave bound values in comments or logs during development
 
 ## Annotations / Attributes
 
