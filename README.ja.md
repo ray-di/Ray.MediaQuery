@@ -457,6 +457,10 @@ SELECT id, name, email FROM users WHERE status = :status
 
 高度なSQL実行制御のために、`PerformSqlInterface`をインジェクトできます。SQL実行レイヤーへの直接アクセスを提供します。
 
+例）
+ * ログインユーザーのIDをインジェクトしてSQLにコメント文として残す
+ * 開発時に束縛した値や実行時間をコメントやログに残す
+
 ## アノテーション / アトリビュート
 
 属性を表すのに[doctrineアノテーション](https://github.com/doctrine/annotations/) 、[アトリビュート](https://www.php.net/manual/ja/language.attributes.overview.php) どちらも利用できます。 次の2つは同じものです。

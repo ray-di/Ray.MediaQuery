@@ -457,6 +457,10 @@ SELECT id, name, email FROM users WHERE status = :status
 
 For advanced SQL execution control, you can inject the `PerformSqlInterface` which provides direct access to the SQL execution layer.
 
+Example)
+ * Injecting the ID of a logged-in user and leaving it as a comment statement in SQL.
+ * Leave bound values and execution times in comments and logs during development
+
 ## Annotations / Attributes
 
 You can use either [doctrine annotations](https://github.com/doctrine/annotations/) or [PHP8 attributes](https://www.php.net/manual/en/language.attributes.overview.php) can both be used. 
