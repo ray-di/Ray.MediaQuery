@@ -40,9 +40,6 @@ final class MediaQuerySqlTemplateModuleTest extends TestCase
         $sqlTemplate = $injector->getInstance('', SqlTemplate::class);
 
         $this->assertSame($appTemplate, $sqlTemplate);
-        $this->assertStringContainsString('MyBlog:', $sqlTemplate);
-        $this->assertStringContainsString('{{ id }}', $sqlTemplate);
-        $this->assertStringContainsString('{{ sql }}', $sqlTemplate);
     }
 
     public function testMinimalSqlTemplate(): void
@@ -72,12 +69,11 @@ final class MediaQuerySqlTemplateModuleTest extends TestCase
         $complexTemplate = "/*\n" .
             " * Application: MyApp\n" .
             " * Query ID: {{ id }}\n" .
-            " * Generated at: %datetime%\n" .
             " */\n" .
             "{{ sql }}\n" .
             "/*\n" .
             " * End of query\n" .
-            ' */';
+            " */";
 
         $module = new MediaQuerySqlTemplateModule($complexTemplate);
         $injector = new Injector($module);
@@ -85,8 +81,5 @@ final class MediaQuerySqlTemplateModuleTest extends TestCase
         $sqlTemplate = $injector->getInstance('', SqlTemplate::class);
 
         $this->assertSame($complexTemplate, $sqlTemplate);
-        $this->assertStringContainsString('Application: MyApp', $sqlTemplate);
-        $this->assertStringContainsString('{{ id }}', $sqlTemplate);
-        $this->assertStringContainsString('{{ sql }}', $sqlTemplate);
     }
 }
