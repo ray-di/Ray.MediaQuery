@@ -427,10 +427,6 @@ public function testAdd(): void
 Implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) and run
 You can also implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) to benchmark each media query and log it with the injected PSR logger.
 
-### PerformSql Interface
-
-For advanced SQL execution control, you can inject the `PerformSqlInterface` which provides direct access to the SQL execution layer.
-
 ### SQL Template Configuration
 
 You can customize the SQL logging format using the `MediaQuerySqlTemplateModule`. This module allows you to define a template for how SQL queries are formatted in logs.
@@ -457,6 +453,9 @@ Example output with custom template:
 -- MyApp: user_list.sql
 SELECT id, name, email FROM users WHERE status = :status
 ```
+### PerformSql Interface
+
+For advanced SQL execution control, you can inject the `PerformSqlInterface` which provides direct access to the SQL execution layer.
 
 ## Annotations / Attributes
 

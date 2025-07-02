@@ -426,11 +426,6 @@ public function testAdd(): void
 独自の[MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php)を実装して、
 各メディアクエリーのベンチマークを行ったり、インジェクトしたPSRロガーでログをする事もできます。
 
-### PerformSql インターフェイス
-
-高度なSQL実行制御のために、`PerformSqlInterface`をインジェクトできます。このインターフェイスはビルトインログサポート付きでSQL実行レイヤーへの直接アクセスを提供します。
-
-
 ### SQLテンプレート設定
 
 `MediaQuerySqlTemplateModule`を使用して、SQLログのフォーマットをカスタマイズできます。このモジュールにより、SQLクエリをログでどのようにフォーマットするかのテンプレートを定義できます。
@@ -457,6 +452,10 @@ protected function configure(): void
 -- MyApp: user_list.sql
 SELECT id, name, email FROM users WHERE status = :status
 ```
+
+### PerformSql インターフェイス
+
+高度なSQL実行制御のために、`PerformSqlInterface`をインジェクトできます。SQL実行レイヤーへの直接アクセスを提供します。
 
 ## アノテーション / アトリビュート
 
