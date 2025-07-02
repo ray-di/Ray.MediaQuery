@@ -36,5 +36,6 @@ final class MediaQuerySqlTemplateModule extends AbstractModule
     protected function configure(): void
     {
         $this->bind()->annotatedWith(SqlTemplate::class)->toInstance($this->sqlTemplate);
+        $this->bind()->annotatedWith(PerformSqlInterface::class)->to(PerformTemplatedSql::class);
     }
 }

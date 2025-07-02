@@ -73,7 +73,7 @@ final class MediaQuerySqlTemplateModuleTest extends TestCase
             "{{ sql }}\n" .
             "/*\n" .
             " * End of query\n" .
-            " */";
+            ' */';
 
         $module = new MediaQuerySqlTemplateModule($complexTemplate);
         $injector = new Injector($module);

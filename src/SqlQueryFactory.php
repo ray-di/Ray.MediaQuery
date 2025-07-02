@@ -31,7 +31,7 @@ final class SqlQueryFactory
             $pagerFactory ?? new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), [])),
             new ParamConverter(),
             $injector,
-            new PerformSql(),
+            new PerformTemplatedSql('{{ sql }}'),
         );
     }
 }
