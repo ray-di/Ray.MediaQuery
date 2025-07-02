@@ -13,7 +13,6 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
-use Ray\MediaQuery\Annotation\SqlTemplate;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
 
@@ -28,7 +27,6 @@ use function is_object;
 use function json_encode;
 use function preg_replace;
 use function sprintf;
-use function str_replace;
 use function stripos;
 use function strpos;
 use function trim;
@@ -49,8 +47,7 @@ final class SqlQuery implements SqlQueryInterface
         private AuraSqlPagerFactoryInterface $pagerFactory,
         private ParamConverterInterface $paramConverter,
         private InjectorInterface $injector,
-        #[SqlTemplate]
-        private string $sqlTemplate = '{{ sql }}',
+        private PerformSqlInterface $performSql,
     ) {
     }
 
@@ -113,11 +110,10 @@ final class SqlQuery implements SqlQueryInterface
         $this->logger->start();
         ($this->paramConverter)($values);
         foreach ($sqls as $sql) {
-            $templatedSql = str_replace(['{{ id }}', '{{ sql }}'], [$sqlId, $sql], $this->sqlTemplate);
             /** @psalm-suppress InaccessibleProperty */
             try {
                 /** @var array<string, mixed> $values */
-                $pdoStatement = $this->pdo->perform($templatedSql, $values);
+                $pdoStatement = $this->performSql->perform($this->pdo, $sqlId, $sql, $values);
             } catch (PDOException $e) {
                 $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
 

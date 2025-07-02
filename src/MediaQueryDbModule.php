@@ -22,6 +22,7 @@ final class MediaQueryDbModule extends AbstractModule
     #[Override]
     protected function configure(): void
     {
+        $this->bind(PerformSqlInterface::class)->to(PerformSql::class);
         $this->bind(SqlQueryInterface::class)->to(SqlQuery::class);
         $this->bindInterceptor(
             $this->matcher->any(),

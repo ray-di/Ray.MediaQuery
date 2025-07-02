@@ -44,6 +44,7 @@ class SqlQueryTest extends TestCase
             new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), [])),
             new ParamConverter(),
             new Injector(),
+            new PerformSql(),
         );
     }
 
