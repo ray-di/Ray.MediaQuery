@@ -20,7 +20,7 @@ use Ray\MediaQuery\Annotation\SqlTemplate;
  *
  * * Example:
  *
- * "-- MyBlog: {{ id }}.sql\n{{ sql }" // With application name
+ * "-- MyBlog: {{ id }}.sql\n{{ sql }}" // With application name
  * "-- {{ id }}.sql\n{{ sql }}" // Without application name (default)
  */
 final class MediaQuerySqlTemplateModule extends AbstractModule
