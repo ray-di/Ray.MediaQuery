@@ -427,6 +427,37 @@ public function testAdd(): void
 Implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) and run
 You can also implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) to benchmark each media query and log it with the injected PSR logger.
 
+### PerformSql Interface
+
+For advanced SQL execution control, you can inject the `PerformSqlInterface` which provides direct access to the SQL execution layer.
+
+### SQL Template Configuration
+
+You can customize the SQL logging format using the `MediaQuerySqlTemplateModule`. This module allows you to define a template for how SQL queries are formatted in logs.
+
+```php
+use Ray\MediaQuery\MediaQuerySqlTemplateModule;
+
+protected function configure(): void
+{
+    // Default template: "-- {{ id }}.sql\n{{ sql }}"
+    $this->install(new MediaQuerySqlTemplateModule());
+    
+    // Custom template with application name
+    $this->install(new MediaQuerySqlTemplateModule("-- MyApp: {{ id }}.sql\n{{ sql }}"));
+}
+```
+
+Available template variables:
+- `{{ id }}`: The identifier for the SQL query
+- `{{ sql }}`: The SQL query string itself
+
+Example output with custom template:
+```sql
+-- MyApp: user_list.sql
+SELECT id, name, email FROM users WHERE status = :status
+```
+
 ## Annotations / Attributes
 
 You can use either [doctrine annotations](https://github.com/doctrine/annotations/) or [PHP8 attributes](https://www.php.net/manual/en/language.attributes.overview.php) can both be used. 
