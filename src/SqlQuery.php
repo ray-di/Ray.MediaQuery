@@ -47,6 +47,7 @@ final class SqlQuery implements SqlQueryInterface
         private AuraSqlPagerFactoryInterface $pagerFactory,
         private ParamConverterInterface $paramConverter,
         private InjectorInterface $injector,
+        private PerformSqlInterface $performSql,
     ) {
     }
 
@@ -112,7 +113,7 @@ final class SqlQuery implements SqlQueryInterface
             /** @psalm-suppress InaccessibleProperty */
             try {
                 /** @var array<string, mixed> $values */
-                $pdoStatement = $this->pdo->perform($sql, $values);
+                $pdoStatement = $this->performSql->perform($this->pdo, $sqlId, $sql, $values);
             } catch (PDOException $e) {
                 $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
 

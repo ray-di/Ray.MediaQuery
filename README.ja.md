@@ -426,6 +426,41 @@ public function testAdd(): void
 独自の[MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php)を実装して、
 各メディアクエリーのベンチマークを行ったり、インジェクトしたPSRロガーでログをする事もできます。
 
+### SQLテンプレート設定
+
+`MediaQuerySqlTemplateModule`を使用して、SQLログのフォーマットをカスタマイズできます。このモジュールにより、SQLクエリをログでどのようにフォーマットするかのテンプレートを定義できます。
+
+```php
+use Ray\MediaQuery\MediaQuerySqlTemplateModule;
+
+protected function configure(): void
+{
+    // デフォルトテンプレート: "-- {{ id }}.sql\n{{ sql }}"
+    $this->install(new MediaQuerySqlTemplateModule());
+    
+    // アプリケーション名付きカスタムテンプレート
+    $this->install(new MediaQuerySqlTemplateModule("-- MyApp: {{ id }}.sql\n{{ sql }}"));
+}
+```
+
+利用可能なテンプレート変数:
+- `{{ id }}`: SQLクエリの識別子
+- `{{ sql }}`: SQLクエリ文字列そのもの
+
+カスタムテンプレートでの出力例:
+```sql
+-- MyApp: user_list.sql
+SELECT id, name, email FROM users WHERE status = :status
+```
+
+### PerformSql インターフェイス
+
+高度なSQL実行制御のために、`PerformSqlInterface`をインジェクトできます。SQL実行レイヤーへの直接アクセスを提供します。
+
+例）
+ * ログインユーザーのIDをインジェクトしてSQLにコメント文として残す。
+ * 開発時に束縛した値をコメントやログに残す。
+
 ## アノテーション / アトリビュート
 
 属性を表すのに[doctrineアノテーション](https://github.com/doctrine/annotations/) 、[アトリビュート](https://www.php.net/manual/ja/language.attributes.overview.php) どちらも利用できます。 次の2つは同じものです。
