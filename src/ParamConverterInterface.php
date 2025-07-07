@@ -6,6 +6,10 @@ namespace Ray\MediaQuery;
 
 interface ParamConverterInterface
 {
-    /** @param array<string, mixed> $values */
+    /**
+     * @param array<string, mixed> $values
+     *
+     * @param-out array<string, mixed> $values
+     */
     public function __invoke(array &$values): void;
 }

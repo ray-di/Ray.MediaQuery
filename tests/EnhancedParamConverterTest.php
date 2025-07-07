@@ -6,17 +6,16 @@ namespace Ray\MediaQuery;
 
 use DateTime;
 use PHPUnit\Framework\TestCase;
+use Ray\InputQuery\ToArray;
 use Ray\MediaQuery\Exception\PropertyNameConflictException;
 
 class EnhancedParamConverterTest extends TestCase
 {
-    private EnhancedParamConverter $converter;
-    private ParamConverterInterface $baseConverter;
+    private ParamConverter $converter;
 
     protected function setUp(): void
     {
-        $this->baseConverter = new ParamConverter();
-        $this->converter = new EnhancedParamConverter($this->baseConverter);
+        $this->converter = new ParamConverter(new ToArray());
     }
 
     public function testFlattensSimpleInputObject(): void
@@ -52,22 +51,21 @@ class EnhancedParamConverterTest extends TestCase
         $todoInput = new TodoCreateInput(
             title: 'Buy milk',
             assignee: $assignee,
-            dueDate: $dueDate,
         );
 
-        $values = ['todo' => $todoInput];
+        $values = ['todo' => $todoInput, 'dueDate' => $dueDate];
         ($this->converter)($values);
 
-        // 階層を無視してフラット化され、DateTimeも変換される
-        $expected = [
-            'title' => 'Buy milk',
-            'givenName' => 'Jane',      // assigneeから直接展開
-            'familyName' => 'Smith',    // assigneeから直接展開
-            'email' => 'jane@example.com', // assigneeから直接展開
-            'dueDate' => '2024-01-15 10:00:00', // ParamConverterで変換済み
-        ];
+            // Flattened without regard to hierarchy, and DateTime is also converted.
+         $expected = [
+             'title' => 'Buy milk',
+             'givenName' => 'Jane',      // assigneeから直接展開
+             'familyName' => 'Smith',    // assigneeから直接展開
+             'email' => 'jane@example.com', // assigneeから直接展開
+             'dueDate' => '2024-01-15 10:00:00', // ParamConverterで変換済み
+         ];
 
-        $this->assertSame($expected, $values);
+         $this->assertSame($expected, $values);
     }
 
     public function testMixedInputAndRegularValues(): void

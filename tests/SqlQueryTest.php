@@ -14,6 +14,7 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\Injector;
+use Ray\InputQuery\ToArray;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\LogicException;
 use Ray\MediaQuery\Exception\PdoPerformException;
@@ -42,7 +43,7 @@ class SqlQueryTest extends TestCase
             __DIR__ . '/sql',
             $this->log,
             new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), [])),
-            new ParamConverter(),
+            new ParamConverter(new ToArray()),
             new Injector(),
         );
     }

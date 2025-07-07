@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use PHPUnit\Framework\TestCase;
+use Ray\InputQuery\ToArray;
 use Ray\MediaQuery\Exception\CouldNotBeConvertedException;
 use stdClass;
 
@@ -18,7 +19,7 @@ class ParamConverterTest extends TestCase
             'string_val' => new FakeString(),
             'array_val' => new FakeArray(),
         ];
-        (new ParamConverter())($values);
+        (new ParamConverter(new ToArray()))($values);
         $this->assertSame([
             'date_val' => UnixEpocTime::TEXT,
             'bool_val' => true,
@@ -31,6 +32,7 @@ class ParamConverterTest extends TestCase
     {
         $this->expectException(CouldNotBeConvertedException::class);
         $values = ['invalid' => new stdClass()];
-        (new ParamConverter())($values);
+        (new ParamConverter(new ToArray()))($values);
     }
+
 }

@@ -395,7 +395,7 @@ This feature provides:
 
 Note: Only objects with `#[Input]` attributes on their constructor parameters are flattened. Regular objects are passed through to the existing ParamConverter.
 
-## Pagenation
+## Pagination
 
 The `#[Pager]` annotation allows paging of SELECT queries.
 

@@ -11,7 +11,6 @@ final class TodoCreateInput
 {
     public function __construct(
         #[Input] public readonly string $title,
-        #[Input] public readonly UserInput $assignee,
-        #[Input] public readonly ?DateTimeInterface $dueDate
+        #[Input] public readonly UserInput $assignee
     ) {}
 }
