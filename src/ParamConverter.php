@@ -114,7 +114,7 @@ final class ParamConverter implements ParamConverterInterface
     public function convert(mixed $value): mixed
     {
         assert(is_object($value), 'convert() expects an object value');
-        
+
         if ($value instanceof DateTimeInterface) {
             return $value->format(self::MYSQL_DATETIME);
         }

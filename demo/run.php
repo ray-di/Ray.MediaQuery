@@ -44,4 +44,4 @@ $pdo->query(/** @lang sql */'CREATE TABLE IF NOT EXISTS user (
 $user = $injector->getInstance(User::class);
 $user->add('1', 'koriym');
 $userItem = $user->get('1');
-echo $userItem['name'] === 'koriym' ? 'It works!' : 'It dones not work.';
+echo !empty($userItem) && $userItem[0]['name'] === 'koriym' ? 'It works!' : 'It does not work.';

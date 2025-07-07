@@ -34,5 +34,4 @@ class ParamConverterTest extends TestCase
         $values = ['invalid' => new stdClass()];
         (new ParamConverter(new ToArray()))($values);
     }
-
 }
