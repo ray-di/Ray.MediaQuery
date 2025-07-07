@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.17.0] - 2025-07-07
 
+### Added
+- Support for Input object flattening in ParamConverter with #[Input] attribute
+- Enhanced parameter conversion with conflict detection for Input objects  
+- Comprehensive test coverage for Input object processing
+
 ### Changed
-- Refactor ParamConverter to include detailed parameter annotations and override attributes
-- Implement EnhancedParamConverter with named binding and add tests
+- Update ray/input-query dependency to ^0.2.0
+- Refactor ParamConverter with improved type annotations and static analysis compliance
+
+### Fixed
+- All static analysis errors (Psalm and PHPStan)
+- Remove unreachable code and add defensive assertions
+- Improve type safety throughout the codebase
 
 ## [0.16.0] - 2024-12-22
 
