@@ -332,7 +332,70 @@ Note that the default value of `null` for the value object argument is never use
 public function __invoke(Uuid $uuid = null): void; // UUID is generated and passed.
 ````
 
-## Pagenation
+## Input Object Flattening
+
+When using [Ray.InputQuery](https://github.com/ray-di/Ray.InputQuery), objects with the `#[Input]` attribute are automatically flattened to SQL parameters. This allows for structured input while maintaining flat database queries.
+
+```php
+use Ray\InputQuery\Attribute\Input;
+
+final class UserInput
+{
+    public function __construct(
+        #[Input] public readonly string $givenName,
+        #[Input] public readonly string $familyName,
+        #[Input] public readonly string $email
+    ) {}
+}
+
+final class TodoCreateInput
+{
+    public function __construct(
+        #[Input] public readonly string $title,
+        #[Input] public readonly UserInput $assignee,  // nested input
+        #[Input] public readonly ?DateTimeInterface $dueDate
+    ) {}
+}
+
+interface TodoInterface
+{
+    #[DbQuery('todo_create')]
+    public function create(TodoCreateInput $input): void;
+}
+```
+
+The nested structure is flattened for SQL binding:
+
+```php
+// Input object:
+TodoCreateInput {
+    title: "Buy milk",
+    assignee: UserInput {
+        givenName: "John",
+        familyName: "Doe",
+        email: "john@example.com"
+    },
+    dueDate: DateTime("2024-01-15")
+}
+
+// Flattened parameters for SQL:
+[
+    "title" => "Buy milk",
+    "givenName" => "John",      // directly from UserInput
+    "familyName" => "Doe",      // directly from UserInput  
+    "email" => "john@example.com", // directly from UserInput
+    "dueDate" => "2024-01-15 00:00:00"  // DateTime converted
+]
+```
+
+This feature provides:
+- **Type-safe input structures** while keeping SQL simple
+- **Resilience to refactoring** - object structure changes don't break SQL bindings
+- **Automatic parameter conversion** - DateTime and other value objects are converted as usual
+
+Note: Only objects with `#[Input]` attributes on their constructor parameters are flattened. Regular objects are passed through to the existing ParamConverter.
+
+## Pagination
 
 The `#[Pager]` annotation allows paging of SELECT queries.
 

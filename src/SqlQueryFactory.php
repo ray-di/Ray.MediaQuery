@@ -10,6 +10,7 @@ use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactoryInterface;
 use Ray\Di\InjectorInterface;
+use Ray\InputQuery\ToArray;
 
 final class SqlQueryFactory
 {
@@ -29,7 +30,7 @@ final class SqlQueryFactory
             $sqlDir,
             $logger ?? new MediaQueryLogger(),
             $pagerFactory ?? new AuraSqlPagerFactory(new AuraSqlPager(new DefaultView(), [])),
-            new ParamConverter(),
+            new ParamConverter(new ToArray()),
             $injector,
             new PerformTemplatedSql('{{ sql }}'),
         );
