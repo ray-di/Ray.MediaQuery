@@ -27,10 +27,10 @@ class UserController
         return $this->render('user.html.twig', ['user' => $user]);
     }
     
-    // Testing requires mocking the entire controller and all its dependencies
+    // Testing requires complex fake setup for the entire controller and all its dependencies
     public function testShowRequiresComplexSetup(): void
     {
-        // Must mock: userRepo, validateEmail, permissionService, imageService, render
+        // Must create fakes: userRepo, validateEmail, permissionService, imageService, render
         // Business logic mixed with presentation logic - difficult to isolate
     }
 }
@@ -125,7 +125,7 @@ final readonly class OrderDomainObject
 BDR Pattern accomplishes what was previously impossible: true object autonomy using SQL as the data foundation. Domain objects are self-contained with their own behavior and data, but their creation is powered by the full strength of SQL queries. This breakthrough proves that OOP principles and SQL performance can coexist perfectly.
 
 ### 2. **Minimal Integration Testing Strategy**  
-BDR Pattern enables a revolutionary testing approach: comprehensive unit testing at each layer eliminates the need for complex integration tests. Test the SQL queries with data fixtures, test the domain factories with mocked dependencies, and test domain object behavior in isolation. When each component is thoroughly tested independently, the integration between them becomes trivially reliable.
+BDR Pattern enables a revolutionary testing approach: comprehensive unit testing at each layer eliminates the need for complex integration tests. Test the SQL queries with data fixtures, test the domain factories with fake service implementations, and test domain object behavior in isolation. When each component is thoroughly tested independently, the integration between them becomes trivially reliable.
 
 ### 3. **Controller Simplification**
 Controllers become thin presentation layers that only fetch and render.
@@ -342,14 +342,12 @@ class ProductDomainFactoryTest extends TestCase
 {
     public function testCreatesRichDomainObject(): void
     {
-        // Arrange - mock all dependencies
-        $categoryService = $this->createMock(CategoryService::class);
-        $priceCalculator = $this->createMock(PriceCalculator::class);
-        $imageService = $this->createMock(ImageService::class);
-        
-        $categoryService->method('getCategory')->willReturn(new CategoryObject('Electronics'));
-        $priceCalculator->method('calculate')->willReturn(90.0);
-        $imageService->method('getThumbnail')->willReturn('thumb.jpg');
+        // Arrange - use fake implementations that AI tools can analyze
+        $categoryService = new FakeCategoryService([
+            1 => new CategoryObject('Electronics', 0.1)
+        ]);
+        $priceCalculator = new FakePriceCalculator();
+        $imageService = new FakeImageService();
         
         $factory = new ProductDomainFactory($categoryService, $priceCalculator, $imageService);
         
