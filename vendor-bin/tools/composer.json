@@ -2,11 +2,12 @@
     "require-dev": {
         "phpstan/phpstan": "^2.1.17",
         "doctrine/coding-standard": "^13.0.1",
-        "phpmd/phpmd": "^2.15",
+        "phpmd/phpmd": "^2.15.0",
         "phpmetrics/phpmetrics": "3.0.0-rc.8@RC",
         "squizlabs/php_codesniffer": "^3.9",
         "vimeo/psalm": "^6.11",
-        "rector/rector": "^2.0.16"
+        "rector/rector": "^2.0.16",
+        "maglnet/composer-require-checker": "^4.16"
     },
     "config": {
         "allow-plugins": {

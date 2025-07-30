@@ -80,6 +80,7 @@
             <property name="searchAnnotations" value="true"/>
         </properties>
     </rule>
+    
 
     <exclude-pattern>*/Fake/*</exclude-pattern>
     <exclude-pattern>*/tmp/*</exclude-pattern>

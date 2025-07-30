@@ -9,7 +9,7 @@ use Ray\Di\AbstractModule;
 
 final class MediaQueryModule extends AbstractModule
 {
-    /** @param list<DbQueryConfig|WebQueryConfig> $configs */
+    /** @param list<DbQueryConfig> $configs */
     public function __construct(
         private Queries $queries,
         private array $configs,
@@ -23,12 +23,7 @@ final class MediaQueryModule extends AbstractModule
     {
         $this->install(new MediaQueryBaseModule($this->queries));
         foreach ($this->configs as $config) {
-            if ($config instanceof DbQueryConfig) {
-                $this->install(new MediaQueryDbModule($config));
-                continue;
-            }
-
-            $this->install(new MediaQueryWebModule($config));
+            $this->install(new MediaQueryDbModule($config));
         }
     }
 }

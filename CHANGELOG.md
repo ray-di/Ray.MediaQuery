@@ -5,10 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.17.1] - 2025-07-30
+## [1.0.0-rc1] - 2025-07-30
 
-### Changed
+### BREAKING CHANGES
+- **Web API functionality has been moved to a separate package `ray/web-query`**
+- Removed all Web Query related classes from main package:
+  - `WebQueryInterceptor`, `WebApiQuery`, `WebQueryConfig`
+  - `MediaQueryWebModule`, `WebApiQueryInterface`
+  - `WebQuery` annotation, `WebApiList` qualifier
+  - `WebApiRequestException`
+- `MediaQueryModule` constructor no longer accepts `WebQueryConfig` in configs array
+- **Removed dependencies:**
+  - Web-related: `guzzlehttp/guzzle`, `psr/http-message`
+  - Annotation support: `doctrine/annotations`
+- **Annotation support (`doctrine/annotations`) has been removed in favor of PHP 8 Attributes**
+  - All `@DbQuery`, `@Pager` annotations must be migrated to `#[DbQuery]`, `#[Pager]` attributes
+- **CamelCaseTrait has been removed**
+  - Use `Ray\MediaQuery\StringCase::camel()` with constructor property promotion instead
+  - This promotes better code practices with explicit type safety and immutability
+
+### Added
+- Suggest `ray/web-query` package for Web API functionality in composer.json
+
+### Changed  
 - Update ray/input-query dependency to ^1.0
+- Package description changed from "Media access mapping Framework" to "Database access mapping Framework"
+
+### Migration Guide
+
+**For users with Web API queries:**
+- Install the new web package: `composer require ray/web-query`
+- Update module configuration to use separate `MediaQueryWebModule`
+
+**For migrating from annotations to attributes:**
+- Use Rector to automatically migrate: `vendor/bin/rector process`
+- Update `@DbQuery` → `#[DbQuery]`, `@Pager` → `#[Pager]`
+- Remove `doctrine/annotations` dependency after migration
+
+**For migrating from CamelCaseTrait:**  
+- Replace with constructor property promotion and `StringCase` utility
+- Use `StringCase::camel()` and `StringCase::snake()` for conversions
+
+**For DB-only users:** No changes required.
+
+**Detailed migration instructions:** See [MIGRATION.md](./MIGRATION.md)
 
 ## [0.17.0] - 2025-07-07
 
@@ -104,7 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Please refer to the git history for changes in earlier versions.
 
-[0.17.1]: https://github.com/ray-di/Ray.MediaQuery/compare/0.17.0...0.17.1
+[1.0.0-rc1]: https://github.com/ray-di/Ray.MediaQuery/compare/0.17.0...1.0.0-rc1
 [0.17.0]: https://github.com/ray-di/Ray.MediaQuery/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/ray-di/Ray.MediaQuery/compare/0.15.1...0.16.0
 [0.15.1]: https://github.com/ray-di/Ray.MediaQuery/compare/0.15.0...0.15.1

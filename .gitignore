@@ -7,4 +7,7 @@
 /.phpcs-cache
 /coverage.xml
 /tests/tmp/*
-/.phpunit.cache/test-results
+/.phpunit.cache/
+/.claude/
+/.qodo/
+/web-query/

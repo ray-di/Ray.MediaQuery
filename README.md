@@ -1,25 +1,31 @@
 # Ray.MediaQuery
 
-## Media access mapping framework
+## Database access mapping framework
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 [![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml)
 
-[日本語 (Japanese)](./README.ja.md)
+[日本語 (Japanese)](./README-ja.md)
 
 ## Overview
 
-`Ray.QueryModule` makes a query to an external media such as a database or Web API with a function object to be injected.
+`Ray.MediaQuery` provides database query abstraction through interface-based query definitions.
 
 ## Motivation
 
- * You can have a clear boundary between domain layer (usage code) and infrastructure layer (injected function) in code.
+ * This framework provides database query abstraction through interface-based query definitions.
  * Execution objects are generated automatically so you do not need to write procedural code for execution.
- * Since usage codes are indifferent to the actual state of external media, storage can be changed later. Easy parallel development and stabbing.
+ * Since usage codes are indifferent to the actual state of external media, storage can be changed later. Easy parallel development and stubbing.
 
 ## Composer install
 
     $ composer require ray/media-query
+
+For Web API queries, install the separate package:
+
+    $ composer require ray/web-query
+
+> **Note:** This package requires PHP 8.1+ and uses PHP 8 Attributes. Legacy annotation support (`@DbQuery`) is deprecated. Use Rector to migrate to attributes (`#[DbQuery]`).
 
 ## Getting Started
 
@@ -37,49 +43,22 @@ interface TodoAddInterface
 }
 ```
 
-### Web API
-
-Specify the Web request ID with the attribute `WebQuery`.
-
-```php
-interface PostItemInterface
-{
-    #[WebQuery('user_item')]
-    public function get(string $id): array;
-}
-```
-
-Create the web api path list file as `web_query.json`.
-
-```json
-{
-    "$schema": "https://ray-di.github.io/Ray.MediaQuery/schema/web_query.json",
-    "webQuery": [
-        {"id": "user_item", "method": "GET", "path": "https://{domain}/users/{id}"}
-    ]
-}
-```
-
 ### Module
 
-MediaQueryModule binds the execution of SQL and Web API requests to an interface by setting `DbQueryConfig` or `WebQueryConfig` or both.
+MediaQueryModule binds the execution of SQL to an interface by setting `DbQueryConfig`.
 
 ```php
 use Ray\AuraSqlModule\AuraSqlModule;
-use Ray\MediaQuery\ApiDomainModule;
 use Ray\MediaQuery\DbQueryConfig;
 use Ray\MediaQuery\MediaQueryModule;
 use Ray\MediaQuery\Queries;
-use Ray\MediaQuery\WebQueryConfig;
 
 protected function configure(): void
 {
     $this->install(
         new MediaQueryModule(
-            Queries::fromDir('/path/to/queryInterface'),[
-                new DbQueryConfig('/path/to/sql'),
-                new WebQueryConfig('/path/to/web_query.json', ['domain' => 'api.example.com'])
-            ],
+            Queries::fromDir('/path/to/queryInterface'),
+            new DbQueryConfig('/path/to/sql')
         ),
     );
     $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
@@ -150,20 +129,76 @@ final class Todo
 }
 ```
 
-Use `CameCaseTrait` to convert a property to camelCase.
+**Entity classes should use constructor property promotion (recommended):**
+
+For multi-word database columns (snake_case), mix constructor property promotion with explicit assignment:
 
 ```php
-use Ray\MediaQuery\CamelCaseTrait;
-
-class Invoice
+final class Invoice
 {
-    use CamelCaseTrait;
-
-    public $userName;
+    public readonly string $userName;
+    public readonly string $emailAddress;
+    
+    public function __construct(
+        public readonly string $id,        // Single word - direct mapping
+        public readonly string $title,     // Single word - direct mapping
+        string $user_name,                 // Multi-word - explicit assignment
+        string $email_address,             // Multi-word - explicit assignment
+    ) {
+        $this->userName = $user_name;
+        $this->emailAddress = $email_address;
+    }
 }
 ```
 
-If the entity has a constructor, the constructor will be called with the fetched data.
+**PHP 8.4+ readonly class:**
+
+```php
+final readonly class Invoice
+{
+    public string $userName;
+    public string $emailAddress;
+    
+    public function __construct(
+        public string $id,           // Single word - direct mapping
+        public string $title,        // Single word - direct mapping  
+        string $user_name,           // Multi-word - explicit assignment
+        string $email_address,       // Multi-word - explicit assignment
+    ) {
+        $this->userName = $user_name;
+        $this->emailAddress = $email_address;
+    }
+}
+```
+
+**Usage with database queries:**
+
+```php
+interface UserInterface
+{
+    #[DbQuery('user_list')]
+    /** @return array<Invoice> */
+    public function getUsers(): array;
+}
+
+// SQL file: user_list.sql  
+// SELECT id, title, user_name, email_address FROM invoices
+
+// PDO::FETCH_CLASS works directly - constructor parameters match column names!
+// - id → $id (direct)
+// - title → $title (direct)  
+// - user_name → $user_name parameter → $userName property
+// - email_address → $email_address parameter → $emailAddress property
+```
+
+**Benefits:**
+- Type safety with strict typing
+- Immutability with `readonly` properties  
+- Better IDE support and refactoring
+- No magic method overhead
+- Clear snake_case ↔ camelCase mapping
+
+**Note:** Constructor-less entities (with public properties) are discouraged as they lack type safety and immutability benefits of modern PHP.
 
 ```php
 final class Todo
