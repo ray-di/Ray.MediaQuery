@@ -78,6 +78,45 @@ interface ProductServiceInterface
     #[DbQuery('product_detail', factory: ProductDomainFactory::class)]
     public function __invoke(string $id): ProductDomainObject;
 }
+
+// Domain Objects - Rich business entities with ALL computed properties (truly immutable!)
+final readonly class UserDomainObject
+{
+    public function __construct(
+        public string $id,
+        public string $email,
+        public string $fullName,              // Computed: first_name + last_name
+        public array $permissions,            // Injected: from PermissionService
+        public bool $isActive,                // From SQL
+        public bool $canEdit,                 // Computed: has 'edit' permission AND active
+        public int $unreadNotifications,      // Injected: from NotificationService  
+        public string $avatarUrl,             // Computed: generated from email
+        public string $welcomeEmailStatus,    // Computed: 'sent' | 'pending' | 'failed'
+    ) {}
+}
+
+final readonly class OrderDomainObject
+{
+    public function __construct(
+        public string $id,
+        public array $items,                      // Order items with stock info from SQL JOIN
+        public float $subtotal,                   // Items total without tax
+        public float $totalTax,                   // Computed: sum of item-specific taxes (food 8%, others 10%)
+        public float $total,                      // Computed: subtotal + totalTax  
+        public string $status,                    // Current order status
+        public bool $isPending,                   // Computed: status === 'pending'
+        public bool $stockSufficientAtQueryTime,  // Computed: all items had sufficient stock
+        public bool $canFulfillNow,               // Computed: current stock check via InventoryService
+    ) {}
+}
+
+// Note: Business action methods like confirmOrder(), processPayment() can also be implemented.
+
+// ✅ Key OOP Principle: Tax calculation logic is encapsulated WITHIN the domain object.
+// This is maintainable OOP - business rules stay with the domain.
+// 
+// Procedural approach: Controller calculates tax, then passes it to order
+// OOP approach: Factory calculates tax, domain object encapsulates the complete business logic
 ```
 
 ## Key Benefits
@@ -417,9 +456,13 @@ interface UserRepositoryInterface
 
 The **Business Domain Repository Pattern (BDR Pattern)** represents the reconciliation of two powerful paradigms that were once considered incompatible. **SQL and OOP shake hands** in BDR Pattern, proving that the best solution isn't choosing sides, but finding the sweet spot where both excel.
 
-Traditional ORMs tried to make SQL invisible, pretending it didn't exist. BDR Pattern takes the opposite approach: **embrace SQL as a first-class citizen** while maintaining clean object-oriented design. 
+Traditional ORMs tried to make SQL invisible, **pretending it didn't exist**. This forced pretense created an artificial boundary that programmers have always felt uncomfortable with - the constant tension between relational thinking and object thinking.
 
-This is **domain collaboration at its finest** - BDR Pattern dissolves the boundaries between different media. SQL (declarative, set-based) and OOP (imperative, object-based) were once considered fundamentally incompatible paradigms. By melting these boundaries, BDR Pattern creates a new hybrid medium where each technology excels in its own domain while working together seamlessly. SQL handles what it does best (data retrieval and transformation), while OOP handles what it does best (behavior modeling and business logic). Instead of forcing one into the other's constraints, BDR Pattern demonstrates that:
+BDR Pattern takes the opposite approach: **embrace SQL as a first-class citizen** while maintaining clean object-oriented design. Where ORMs created discomfort through pretense, **BDR Pattern dissolved the boundaries entirely, eliminating them**.
+
+This is **domain collaboration at its finest** - BDR Pattern doesn't just bridge different paradigms, it **melts the boundaries between different media**. SQL (declarative, set-based) and OOP (imperative, object-based) were once considered fundamentally incompatible. Programmers have always felt an uneasiness at this boundary - forced to choose sides or live with awkward compromises.
+
+By dissolving these boundaries entirely, BDR Pattern creates a new hybrid medium where each technology excels in its own domain while working together seamlessly. **The discomfort is gone** - no more forced abstractions, no more pretending one paradigm doesn't exist. SQL handles what it does best (data retrieval and transformation), while OOP handles what it does best (behavior modeling and business logic). Instead of forcing one into the other's constraints, BDR Pattern demonstrates that:
 
 - **SQL stays SQL**: Complex queries, JOINs, window functions - all at maximum performance
 - **Objects stay objects**: Autonomous, behavior-rich domain models with proper encapsulation  
