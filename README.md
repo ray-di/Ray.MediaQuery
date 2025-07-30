@@ -254,6 +254,49 @@ final class TodoEntityFactory
 }
 ```
 
+#### Advanced Factory Usage
+
+Factories enable powerful transformations beyond simple database mapping:
+
+**Add computed properties:**
+```php
+final class OrderEntityFactory
+{
+    public function factory(string $id, float $amount): Order
+    {
+        return new Order(
+            id: $id,
+            amount: $amount,
+            tax: $amount * 0.1,          // Computed tax
+            total: $amount * 1.1,        // Computed total
+        );
+    }
+}
+```
+
+**Transform data with injected services:**
+```php
+final class UserEntityFactory
+{
+    public function __construct(
+        private EmailValidator $emailValidator,  // Injected by DI
+    ) {}
+    
+    public function factory(string $id, string $first_name, string $last_name, string $email): User
+    {
+        return new User(
+            id: $id,
+            firstName: $first_name,
+            lastName: $last_name,
+            fullName: "$first_name $last_name",              // Computed
+            email: $this->emailValidator->validate($email),  // Validated with DI service
+        );
+    }
+}
+```
+
+> **🏗️ Architecture Pattern**: Ray.MediaQuery enables the [**Business Domain Repository Pattern (BDR Pattern)**](./BDR_PATTERN.md) - an approach that transforms simple database queries into rich domain objects through dependency injection and business logic integration.
+
 ### Web API
 
 **Web API functionality has been moved to a separate package.** 

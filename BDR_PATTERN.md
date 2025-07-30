@@ -1,745 +1,598 @@
-# Business Domain Repository Pattern (BDR Pattern)
+# Business Domain Repository Pattern (BDR Pattern) - Practical Guide
 
-Ray.MediaQuery enables the **Business Domain Repository Pattern (BDR Pattern)** - an evolution of the traditional Repository Pattern that transforms simple database queries into rich domain objects through dependency injection and business logic integration.
+## Prologue: The End of a Long War
 
-## Pattern Overview
+Programmers have long suffered from the **uncomfortable boundary** between relational and object-oriented thinking.
 
-The BDR Pattern represents a paradigm shift where **Object-Oriented Programming and SQL become allies instead of adversaries**. Rather than hiding SQL behind abstraction layers, BDR Pattern embraces SQL's power while maintaining OOP principles, creating the best of both worlds: optimal database performance with clean, testable object-oriented design.
+Traditional ORMs tried to make SQL invisible, **pretending it didn't exist**. This forced pretense created an artificial boundary that developers have always felt uncomfortable with - the constant tension between wanting to leverage database power while maintaining object-oriented principles. It was like being torn between two worlds.
 
-The pattern elevates data access from simple CRUD operations to sophisticated business domain object construction, making controllers remarkably simple while centralizing complex business logic in testable, reusable components.
+**BDR Pattern completely dissolves this boundary.**
 
-### Traditional vs Business Domain Repository
+Instead of SQL and OOP being adversaries, **in BDR Pattern, SQL and OOP shake hands**. Each does what it does best while working in harmony.
 
-**Traditional Repository Pattern:**
+**The discomfort is gone.** No more forced abstractions, no more pretending one paradigm doesn't exist.
+
+## Executive Summary
+
+BDR Pattern represents a paradigm shift where **Object-Oriented Programming and SQL become allies instead of adversaries**. It achieves what was previously thought impossible: "OOP autonomy with SQL foundation," enabling:
+
+**Core Value Proposition:**
+- **SQL stays SQL**: Complex queries, JOINs, window functions - all at maximum performance
+- **Objects stay objects**: Autonomous, behavior-rich domain models with proper encapsulation
+- **The impossible becomes possible**: True object-oriented design powered by raw SQL performance
+- **Surgical testing**: Each component tested in isolation with crystal-clear boundaries
+
+## Why This Matters: Liberation from Developer Agony
+
+### You've Experienced This Before
+
+Monday morning, you're staring at a controller with scattered business logic. One change requires modifying six different controller methods. Writing tests requires setting up more than 10 mock objects.
+
+ORMs promised to be "object-oriented," but in reality:
+- Plagued by N+1 query problems
+- Can't write complex JOINs (or they're inefficient)
+- Generated SQL is unpredictable
+- Performance tuning is difficult
+
+**We've been trying to solve the wrong problem all along.**
+
+The problem isn't the difference between SQL and OOP. The problem is that **one has been trying to dominate the other**.
+
+### Daily Life with BDR Pattern
+
 ```php
-class UserController
+// Monday morning, same requirements
+public function showOrderDetails(string $id): Response
+{
+    $order = $this->orderRepo->getOrder($id);
+    return $this->render('order.html.twig', ['order' => $order]);
+}
+
+// That's it. Really.
+// Business logic is in factories
+// SQL is in optimized query files
+// Tests are independent at each layer
+```
+
+**It's time to reclaim your dignity as a developer.**
+
+## Problem and Solution
+
+### Traditional Approach Problems
+
+```php
+class OrderController
 {
     public function show(string $id): Response
     {
-        $user = $this->userRepo->findById($id); // Returns simple entity
+        $order = $this->orderRepo->findById($id); // Simple data
         
-        // Business logic scattered in controller - hard to test, poor readability
-        $user->email = $this->validateEmail($user->email);
-        $user->fullName = $user->first_name . ' ' . $user->last_name;
-        $user->permissions = $this->permissionService->getPermissions($user->role_id);
-        $user->profileImage = $this->imageService->getProfileImage($user->id);
+        // Business logic scattered in controller - testing nightmare!
+        // Call external services (PermissionService, VerificationService, PaymentGateway, etc.)
+        // Apply complex business rules based on multiple service results
+        // Transform and enrich data for presentation
+        // Handle conditional logic for user types, subscription levels, etc.
+        // Testing this controller requires mocking 6+ dependencies!
         
-        return $this->render('user.html.twig', ['user' => $user]);
-    }
-    
-    // Testing requires complex fake setup for the entire controller and all its dependencies
-    public function testShowRequiresComplexSetup(): void
-    {
-        // Must create fakes: userRepo, validateEmail, permissionService, imageService, render
-        // Business logic mixed with presentation logic - difficult to isolate
+        return $this->render('order.html.twig', compact('order', 'tax', 'shipping', 'canFulfill'));
     }
 }
 ```
 
-**Business Domain Repository Pattern (BDR Pattern):**
+### BDR Pattern Solution
+
 ```php
-class UserController
+class OrderController
 {
     public function show(string $id): Response
     {
-        // Repository uses natural 'get' method - clear and conventional
-        $domainUser = $this->userRepo->getUser($id);
+        // Repository returns complete domain object
+        $order = $this->orderRepo->getOrder($id);
         
-        // Controller only renders - no business logic, perfect readability
-        return $this->render('user.html.twig', ['user' => $domainUser]);
+        // Controller only renders - no business logic
+        return $this->render('order.html.twig', ['order' => $order]);
     }
 }
+```
 
-class ProductController
-{
-    public function show(string $id): Response
-    {
-        // Invoke syntax works well for single-entity services
-        $product = ($this->product)($id);
-        
-        return $this->render('product.html.twig', ['product' => $product]);
-    }
-}
+## Implementation Philosophy: Object Autonomy
 
-// Repository interface - conventional method naming
-interface UserRepositoryInterface 
-{
-    #[DbQuery('user_detail', factory: UserDomainFactory::class)]
-    public function getUser(string $id): UserDomainObject;
-    
-    #[DbQuery('user_list')]
-    /** @return array<UserDomainObject> */
-    public function getUsers(): array;
-}
+The most revolutionary achievement of BDR Pattern is **achieving true object autonomy while using SQL as the foundation**.
 
-// Service interface - invoke for single-purpose services
-interface ProductServiceInterface 
-{
-    #[DbQuery('product_detail', factory: ProductDomainFactory::class)]
-    public function __invoke(string $id): ProductDomainObject;
-}
+Previously, object autonomy and SQL efficiency were considered mutually exclusive. But BDR Pattern **makes the impossible possible**. Domain objects are self-contained with their own behavior and data, yet their creation is powered by the full strength of SQL queries.
 
-// Domain Objects - Rich business entities with ALL computed properties (truly immutable!)
-final readonly class UserDomainObject
-{
-    public function __construct(
-        public string $id,
-        public string $email,
-        public string $fullName,              // Computed: first_name + last_name
-        public array $permissions,            // Injected: from PermissionService
-        public bool $isActive,                // From SQL
-        public bool $canEdit,                 // Computed: has 'edit' permission AND active
-        public int $unreadNotifications,      // Injected: from NotificationService  
-        public string $avatarUrl,             // Computed: generated from email
-        public string $welcomeEmailStatus,    // Computed: 'sent' | 'pending' | 'failed'
-    ) {}
-}
-
+```php
+// This isn't just a data holder - it's an autonomous entity
 final readonly class OrderDomainObject
 {
     public function __construct(
         public string $id,
-        public array $items,                      // Order items with stock info from SQL JOIN
-        public float $subtotal,                   // Items total without tax
-        public float $totalTax,                   // Computed: sum of item-specific taxes (food 8%, others 10%)
-        public float $total,                      // Computed: subtotal + totalTax  
-        public string $status,                    // Current order status
-        public bool $isPending,                   // Computed: status === 'pending'
-        public bool $stockSufficientAtQueryTime,  // Computed: all items had sufficient stock
-        public bool $canFulfillNow,               // Computed: current stock check via InventoryService
-    ) {}
-}
-
-// Note: Business action methods like confirmOrder(), processPayment() can also be implemented.
-
-// ✅ Key OOP Principle: Tax calculation logic is encapsulated WITHIN the domain object.
-// This is maintainable OOP - business rules stay with the domain.
-// 
-// Procedural approach: Controller calculates tax, then passes it to order
-// OOP approach: Factory calculates tax, domain object encapsulates the complete business logic
-```
-
-## Key Benefits
-
-### 1. **Object Autonomy Achieved with SQL**
-BDR Pattern accomplishes what was previously impossible: true object autonomy using SQL as the data foundation. Domain objects are self-contained with their own behavior and data, but their creation is powered by the full strength of SQL queries. This breakthrough proves that OOP principles and SQL performance can coexist perfectly.
-
-### 2. **Minimal Integration Testing Strategy**  
-BDR Pattern enables a revolutionary testing approach: comprehensive unit testing at each layer eliminates the need for complex integration tests. Test the SQL queries with data fixtures, test the domain factories with fake service implementations, and test domain object behavior in isolation. When each component is thoroughly tested independently, the integration between them becomes trivially reliable.
-
-### 3. **Controller Simplification**
-Controllers become thin presentation layers that only fetch and render.
-
-### 4. **Business Logic Centralization**
-All domain logic is centralized in factories, making it reusable and testable.
-
-### 5. **Maximum Performance with Raw SQL**
-Direct SQL queries provide optimal performance without ORM overhead, enabling complex JOINs, window functions, and database-specific optimizations. No N+1 queries, no unnecessary data loading - just the exact data you need in a single optimized query.
-
-### 6. **AI Transparency and Comprehension**
-The clear separation of concerns and explicit dependencies make the codebase highly transparent to AI tools. Unlike complex ORM abstractions that obscure the relationship between code and data, BDR Pattern's explicit SQL queries and focused factories provide AI with complete context:
-
-- **What data is accessed**: Visible in SQL files
-- **How data is transformed**: Clear in factory methods  
-- **What services are used**: Explicit in constructor dependencies
-- **Business logic flow**: Traceable from query → factory → domain object
-
-This transparency enables superior AI-assisted development, from code analysis to automated refactoring.
-
-### 7. **SQL Power + DI Flexibility**
-Leverage complex SQL queries while maintaining dependency injection benefits.
-
-### 8. **Rich Domain Objects**
-Transform simple database rows into sophisticated business entities.
-
-## BDR Pattern Architecture
-
-```
-Controller
-    ↓
-Repository Interface (#[DbQuery] + Factory)
-    ↓
-SQL Query → Raw Data
-    ↓
-Factory (+ Injected Services)
-    ↓
-Rich Domain Object
-```
-
-## Core Components
-
-### 1. Repository Interface
-```php
-interface ProductRepositoryInterface
-{
-    // Repository uses conventional 'get' methods - natural and clear
-    #[DbQuery('product_detail', factory: ProductDomainFactory::class)]
-    public function getProduct(string $id): ProductDomainObject;
-    
-    #[DbQuery('product_list', factory: ProductDomainFactory::class)]
-    /** @return array<ProductDomainObject> */
-    public function getProducts(int $categoryId): array;
-    
-    #[DbQuery('active_products', factory: ProductDomainFactory::class)]
-    /** @return array<ProductDomainObject> */
-    public function getActiveProducts(): array;
-}
-
-// Usage examples:
-// $product = $this->productRepo->getProduct('product-123');    // Repository method
-// $products = $this->productRepo->getProducts(1);              // Collection method
-// $active = $this->productRepo->getActiveProducts();           // Filtered collection
-```
-
-### 2. Domain Factory
-```php
-final class ProductDomainFactory
-{
-    public function __construct(
-        private CategoryService $categoryService,
-        private PriceCalculator $priceCalculator,
-        private ImageService $imageService,
-        private ReviewService $reviewService,
+        public array $items,
+        public float $subtotal,
+        public float $tax,
+        public float $shipping,
+        public float $total,
+        public bool $canFulfill,
     ) {}
     
-    public function factory(
-        string $id,
-        string $name,
-        int $category_id,
-        float $base_price,
-        int $review_count,
-        float $avg_rating
-    ): ProductDomainObject {
-        return new ProductDomainObject(
-            id: $id,
-            name: $name,
-            category: $this->categoryService->getCategory($category_id),
-            basePrice: $base_price,
-            finalPrice: $this->priceCalculator->calculate($base_price, $category_id),
-            thumbnailUrl: $this->imageService->getThumbnail($id),
-            reviewSummary: $this->reviewService->getSummary($review_count, $avg_rating),
-            canPurchase: $this->priceCalculator->isAvailable($id),
-        );
-    }
-}
-```
-
-### 3. Rich Domain Object
-```php
-final readonly class ProductDomainObject
-{
-    public function __construct(
-        public string $id,
-        public string $name,
-        public CategoryObject $category,           // Rich object, not just ID
-        public float $basePrice,
-        public float $finalPrice,                  // Calculated price
-        public string $thumbnailUrl,               // Generated URL
-        public ReviewSummary $reviewSummary,       // Computed summary
-        public bool $canPurchase,                  // Business rule result
-    ) {}
-    
-    // Object autonomy: Domain objects expose behavior, not just data
-    public function getDisplayPrice(): string
+    // Object knows its own destiny
+    public function canProcess(): bool
     {
-        return number_format($this->finalPrice, 2);
+        return $this->canFulfill && $this->isPending();
     }
     
-    public function hasDiscount(): bool
+    // Object understands its own state
+    public function requiresManagerApproval(): bool
     {
-        return $this->finalPrice < $this->basePrice;
+        return $this->total > 1000000;
     }
     
-    public function getDiscountPercentage(): int
+    // Object has its own behavior
+    public function getBusinessPriority(): string
     {
-        if (!$this->hasDiscount()) {
-            return 0;
-        }
-        return (int) round((($this->basePrice - $this->finalPrice) / $this->basePrice) * 100);
-    }
-    
-    public function isAffordable(float $budget): bool
-    {
-        return $this->finalPrice <= $budget;
-    }
-    
-    public function getCategoryName(): string
-    {
-        return $this->category->name;
-    }
-}
-```
-
-## Advanced BDR Patterns
-
-### Multi-Service Orchestration
-```php
-final class OrderDomainFactory
-{
-    public function __construct(
-        private PaymentService $paymentService,
-        private ShippingService $shippingService,
-        private InventoryService $inventoryService,
-        private TaxCalculator $taxCalculator,
-    ) {}
-    
-    public function factory(string $id, string $items_json, string $region): OrderDomainObject
-    {
-        $items = json_decode($items_json, true);
-        
-        // Orchestrate multiple services
-        $availableItems = $this->inventoryService->checkAvailability($items);
-        $shipping = $this->shippingService->calculate($availableItems, $region);
-        $tax = $this->taxCalculator->calculate($availableItems, $region);
-        $paymentMethods = $this->paymentService->getAvailableMethods($region);
-        
-        return new OrderDomainObject(
-            id: $id,
-            items: $availableItems,
-            shipping: $shipping,
-            tax: $tax,
-            total: $shipping->cost + $tax->amount + array_sum($availableItems),
-            paymentMethods: $paymentMethods,
-            canProcess: count($availableItems) > 0,
-        );
-    }
-}
-```
-
-### External API Integration
-```php
-final class UserProfileDomainFactory
-{
-    public function __construct(
-        private SocialMediaService $socialService,
-        private NotificationService $notificationService,
-        private AnalyticsService $analyticsService,
-    ) {}
-    
-    public function factory(string $id, string $email, string $social_handles): UserProfileDomainObject
-    {
-        $socialData = $this->socialService->getProfiles(json_decode($social_handles, true));
-        $notifications = $this->notificationService->getUnreadCount($id);
-        $analytics = $this->analyticsService->getUserStats($id);
-        
-        return new UserProfileDomainObject(
-            id: $id,
-            email: $email,
-            socialProfiles: $socialData,
-            unreadNotifications: $notifications,
-            activityStats: $analytics,
-            isInfluencer: $socialData->totalFollowers > 10000,
-        );
-    }
-}
-```
-
-## Testing BDR Pattern
-
-### Factory Unit Tests
-```php
-class ProductDomainFactoryTest extends TestCase
-{
-    public function testCreatesRichDomainObject(): void
-    {
-        // Arrange - use fake implementations that AI tools can analyze
-        $categoryService = new FakeCategoryService([
-            1 => new CategoryObject('Electronics', 0.1)
-        ]);
-        $priceCalculator = new FakePriceCalculator();
-        $imageService = new FakeImageService();
-        
-        $factory = new ProductDomainFactory($categoryService, $priceCalculator, $imageService);
-        
-        // Act
-        $product = $factory->factory('p1', 'Phone', 1, 100.0, 5, 4.5);
-        
-        // Assert - test the complete domain object
-        $this->assertEquals('p1', $product->id);
-        $this->assertEquals(90.0, $product->finalPrice);
-        $this->assertTrue($product->hasDiscount());
-    }
-}
-```
-
-### Integration Tests
-```php
-class ProductRepositoryIntegrationTest extends TestCase
-{
-    public function testGetProductReturnsRichDomainObject(): void
-    {
-        // Act - test the complete BDR flow
-        $product = $this->productRepository->getProduct('product-1');
-        
-        // Assert - verify rich domain object
-        $this->assertInstanceOf(ProductDomainObject::class, $product);
-        $this->assertNotEmpty($product->thumbnailUrl);
-        $this->assertInstanceOf(CategoryObject::class, $product->category);
-        $this->assertIsFloat($product->finalPrice);
-    }
-}
-```
-
-## Best Practices
-
-### 1. **Follow OOP Principles**
-- Domain objects should expose behavior, not just data
-- Each object should be autonomous and self-managing
-- Encapsulate business rules within domain objects
-
-### 2. **Three-Layer Testing Strategy**
-BDR Pattern enables minimal integration testing through comprehensive unit testing at each layer:
-
-- **SQL Layer**: Test queries with database fixtures - verify correct data retrieval
-- **Factory Layer**: Test transformation logic with fake service implementations - verify business rules  
-- **Domain Object Layer**: Test behavior methods in isolation - verify object autonomy
-
-Use concrete fake implementations instead of mocks - they're more maintainable, reusable across tests, and can be analyzed by AI tools. When each layer is thoroughly tested independently, integration between them becomes predictably reliable, eliminating the need for complex end-to-end integration tests.
-
-### 3. **Single Responsibility Factories**
-Each factory should focus on creating one type of domain object.
-
-### 4. **Immutable Domain Objects**
-Use `readonly` properties to ensure domain objects can't be modified after creation.
-
-### 5. **Meaningful Method Names**
-Repository methods should express business intent: `getActiveProducts()`, `getUserProfile()`.
-
-### 6. **Error Handling**
-Factories should validate data and provide meaningful error messages.
-
-### 7. **Performance Considerations**
-- Cache expensive external API calls
-- Use efficient SQL queries
-- Consider lazy loading for expensive operations
-
-### 8. **Documentation**
-Document complex business rules and external dependencies.
-
-## Migration from Traditional Repository
-
-### Step 1: Identify Business Logic in Controllers
-```php
-// Before: Logic scattered in controller
-$user = $this->userRepo->find($id);
-$user->fullName = $user->firstName . ' ' . $user->lastName;
-$user->permissions = $this->permissionService->get($user->roleId);
-```
-
-### Step 2: Create Domain Factory
-```php
-// After: Logic centralized in factory
-final class UserDomainFactory
-{
-    public function factory(string $firstName, string $lastName, int $roleId): UserDomainObject
-    {
-        return new UserDomainObject(
-            fullName: $firstName . ' ' . $lastName,
-            permissions: $this->permissionService->get($roleId),
-        );
-    }
-}
-```
-
-### Step 3: Update Repository Interface
-```php
-interface UserRepositoryInterface
-{
-    #[DbQuery('user_detail', factory: UserDomainFactory::class)]
-    public function getUser(string $id): UserDomainObject;
-}
-```
-
-## Conclusion
-
-The **Business Domain Repository Pattern (BDR Pattern)** represents the reconciliation of two powerful paradigms that were once considered incompatible. **SQL and OOP shake hands** in BDR Pattern, proving that the best solution isn't choosing sides, but finding the sweet spot where both excel.
-
-Traditional ORMs tried to make SQL invisible, **pretending it didn't exist**. This forced pretense created an artificial boundary that programmers have always felt uncomfortable with - the constant tension between relational thinking and object thinking.
-
-BDR Pattern takes the opposite approach: **embrace SQL as a first-class citizen** while maintaining clean object-oriented design. Where ORMs created discomfort through pretense, **BDR Pattern dissolved the boundaries entirely, eliminating them**.
-
-This is **domain collaboration at its finest** - BDR Pattern doesn't just bridge different paradigms, it **melts the boundaries between different media**. SQL (declarative, set-based) and OOP (imperative, object-based) were once considered fundamentally incompatible. Programmers have always felt an uneasiness at this boundary - forced to choose sides or live with awkward compromises.
-
-By dissolving these boundaries entirely, BDR Pattern creates a new hybrid medium where each technology excels in its own domain while working together seamlessly. **The discomfort is gone** - no more forced abstractions, no more pretending one paradigm doesn't exist. SQL handles what it does best (data retrieval and transformation), while OOP handles what it does best (behavior modeling and business logic). Instead of forcing one into the other's constraints, BDR Pattern demonstrates that:
-
-- **SQL stays SQL**: Complex queries, JOINs, window functions - all at maximum performance
-- **Objects stay objects**: Autonomous, behavior-rich domain models with proper encapsulation  
-- **OOP autonomy with SQL foundation**: The impossible becomes possible - true object-oriented design powered by raw SQL performance
-- **Testing becomes surgical**: Each component tested in isolation with crystal-clear boundaries
-- **Code becomes readable**: Business intent expressed clearly at every level
-
-By combining the power of SQL with dependency injection and business logic centralization, BDR Pattern enables:
-
-- **Simplified Controllers**: Focus purely on presentation
-- **Rich Domain Objects**: Complete business entities with computed properties
-- **Centralized Business Logic**: Reusable, testable domain construction
-- **Maximum Performance**: Direct SQL without ORM overhead
-- **Service Integration**: Seamlessly incorporate external services and APIs
-
-Ray.MediaQuery makes BDR Pattern implementation straightforward through its factory system and dependency injection integration, transforming how we think about data access in modern PHP applications.
-
-**The long-standing war between SQL and OOP is over. They're not enemies—they're collaborators, each excelling in their own domain while building something greater together.**
-
-## References
-
-- [ORM is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood's influential blog post that highlighted the fundamental challenges of traditional ORM approaches
-
----
-
-# Advanced Factory Implementation Patterns
-
-This section covers advanced factory patterns that implement the BDR Pattern using sophisticated dependency injection and business logic.
-
-## Enterprise Data Enrichment
-
-**Master Data Lookup with Repository Pattern:**
-```php
-final class ProductEntityFactory
-{
-    public function __construct(
-        private CategoryRepository $categoryRepo,     // Injected by DI
-        private PriceCalculator $priceCalculator,     // Injected by DI
-        private ImageService $imageService,           // Injected by DI
-    ) {}
-    
-    public function factory(string $id, string $name, int $category_id, float $base_price): Product
-    {
-        // Leverage injected services
-        $category = $this->categoryRepo->findById($category_id);
-        $finalPrice = $this->priceCalculator->calculate($base_price, $category->discountRate);
-        $imageUrl = $this->imageService->getThumbnail($id);
-        
-        return new Product(
-            id: $id,
-            name: $name,
-            categoryId: $category_id,
-            categoryName: $category->name,        // From injected repository
-            basePrice: $base_price,
-            finalPrice: $finalPrice,              // Calculated with injected service
-            thumbnailUrl: $imageUrl,              // Generated with injected service
-        );
-    }
-}
-```
-
-## Data Validation and Security
-
-**Complete Data Validation Pipeline:**
-```php
-final class UserEntityFactory
-{
-    public function __construct(
-        private EmailValidator $emailValidator,       // Injected by DI
-        private PhoneFormatter $phoneFormatter,       // Injected by DI
-        private SecurityService $securityService,     // Injected by DI
-    ) {}
-    
-    public function factory(string $id, string $email, string $phone, string $status): User
-    {
-        // Validate and sanitize data using injected services
-        $validatedEmail = $this->emailValidator->validate($email);
-        $formattedPhone = $this->phoneFormatter->format($phone);
-        $isActive = $this->securityService->checkUserStatus($status, $id);
-        
-        return new User(
-            id: $id,
-            email: $validatedEmail,           // Validated email
-            phone: $formattedPhone,           // Formatted phone number
-            isActive: $isActive,              // Security-checked status
-            hasValidEmail: $validatedEmail !== null,  // Computed validation result
-        );
-    }
-}
-```
-
-## Complex Business Logic Integration
-
-**Multi-Service Orchestration:**
-```php
-final class OrderEntityFactory
-{
-    public function __construct(
-        private JsonValidator $jsonValidator,         // Injected by DI
-        private TaxCalculator $taxCalculator,         // Injected by DI
-        private InventoryService $inventoryService,   // Injected by DI
-        private ShippingService $shippingService,    // Injected by DI
-    ) {}
-    
-    public function factory(string $id, string $items_json, float $amount, string $region): Order
-    {
-        // Validate and process JSON data
-        $validatedItems = $this->jsonValidator->parseAndValidate($items_json);
-        
-        // Calculate taxes based on region
-        $tax = $this->taxCalculator->calculate($amount, $region);
-        
-        // Check inventory and calculate shipping
-        $availableItems = $this->inventoryService->checkAvailability($validatedItems);
-        $shippingCost = $this->shippingService->calculateCost($availableItems, $region);
-        
-        return new Order(
-            id: $id,
-            items: $availableItems,               // Validated and inventory-checked
-            amount: $amount,
-            tax: $tax,                            // Region-specific tax calculation
-            shippingCost: $shippingCost,          // Dynamic shipping calculation
-            total: $amount + $tax + $shippingCost, // Complete total
-            canFulfill: count($availableItems) > 0,  // Business logic
-        );
-    }
-}
-```
-
-## External API Integration
-
-**Enrich Data from External Services:**
-```php
-final class AddressEntityFactory
-{
-    public function __construct(
-        private PostalCodeService $postalCodeService,  // External API
-        private GeolocationService $geoService,        // External API
-        private WeatherService $weatherService,        // External API
-    ) {}
-    
-    public function factory(string $id, string $postal_code, string $country): Address
-    {
-        // Enrich with external data
-        $addressDetails = $this->postalCodeService->lookup($postal_code, $country);
-        $coordinates = $this->geoService->getCoordinates($addressDetails->fullAddress);
-        $currentWeather = $this->weatherService->getCurrent($coordinates);
-        
-        return new Address(
-            id: $id,
-            postalCode: $postal_code,
-            country: $country,
-            city: $addressDetails->city,              // From postal service
-            region: $addressDetails->region,          // From postal service
-            latitude: $coordinates->lat,              // From geo service
-            longitude: $coordinates->lng,             // From geo service
-            currentTemperature: $currentWeather->temp, // From weather service
-        );
-    }
-}
-```
-
-## Conditional Entity Creation
-
-**Polymorphic Object Creation:**
-```php
-final class NotificationEntityFactory
-{
-    public function __construct(
-        private EmailService $emailService,
-        private SmsService $smsService,
-        private PushService $pushService,
-    ) {}
-    
-    public function factory(string $type, string $recipient, string $data): NotificationInterface
-    {
-        $parsedData = json_decode($data, true);
-        
-        return match ($type) {
-            'email' => new EmailNotification(
-                recipient: $recipient,
-                subject: $parsedData['subject'],
-                body: $parsedData['body'],
-                template: $this->emailService->getTemplate($parsedData['template_id'])
-            ),
-            'sms' => new SmsNotification(
-                phoneNumber: $this->smsService->formatNumber($recipient),
-                message: $parsedData['message'],
-                priority: $parsedData['priority'] ?? 'normal'
-            ),
-            'push' => new PushNotification(
-                deviceToken: $recipient,
-                title: $parsedData['title'],
-                body: $parsedData['body'],
-                badge: $this->pushService->calculateBadgeCount($recipient)
-            ),
-            default => throw new InvalidNotificationTypeException($type),
+        return match(true) {
+            $this->total > 5000000 => 'critical',
+            $this->total > 1000000 => 'high',
+            $this->total > 100000 => 'medium',
+            default => 'normal'
         };
     }
 }
 ```
 
-## Performance Considerations
+**This is the essence of BDR Pattern** - objects aren't just data containers, but autonomous entities with business domain knowledge.
 
-**Caching and Optimization:**
+## Implementation Guide
+
+### 1. Repository Interface Definition
+
 ```php
-final class CachedUserEntityFactory
+interface OrderRepositoryInterface
+{
+    #[DbQuery('order_detail', factory: OrderDomainFactory::class)]
+    public function getOrder(string $id): OrderDomainObject;
+    
+    #[DbQuery('active_orders', factory: OrderDomainFactory::class)]
+    /** @return array<OrderDomainObject> */
+    public function getActiveOrders(): array;
+}
+```
+
+### 2. SQL Query (order_detail.sql)
+
+```sql
+SELECT 
+    o.id,
+    o.customer_id,
+    o.region,
+    o.status,
+    o.created_at,
+    JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'product_id', oi.product_id,
+            'name', p.name,
+            'quantity', oi.quantity,
+            'price', oi.price,
+            'current_stock', p.stock
+        )
+    ) as items
+FROM orders o
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+WHERE o.id = :id
+GROUP BY o.id
+```
+
+### 3. Domain Factory Implementation
+
+```php
+final class OrderDomainFactory
 {
     public function __construct(
-        private CacheInterface $cache,
-        private ProfileService $profileService,
-        private PermissionService $permissionService,
+        private TaxCalculator $taxCalculator,
+        private ShippingService $shippingService,
+        private InventoryService $inventoryService,
     ) {}
     
-    public function factory(string $id, string $email, int $role_id): User
-    {
-        // Cache expensive operations
-        $cacheKey = "user_profile_{$id}";
-        $profile = $this->cache->get($cacheKey) 
-            ?? $this->cache->set($cacheKey, $this->profileService->getProfile($id), 3600);
+    public function factory(
+        string $id,
+        string $customer_id,
+        string $region,
+        string $status,
+        string $items_json
+    ): OrderDomainObject {
+        $items = json_decode($items_json, true);
         
-        $permissions = $this->permissionService->getPermissions($role_id);
+        // Centralize business logic in factory
+        $validatedItems = $this->inventoryService->validateStock($items);
+        $subtotal = array_sum(array_map(fn($item) => $item['price'] * $item['quantity'], $items));
+        $tax = $this->taxCalculator->calculate($validatedItems, $region);
+        $shipping = $this->shippingService->calculate($validatedItems, $region);
         
-        return new User(
+        return new OrderDomainObject(
             id: $id,
-            email: $email,
-            profile: $profile,                    // Cached profile data
-            permissions: $permissions,            // Role-based permissions
-            canEdit: in_array('edit', $permissions),  // Computed permission
+            customerId: $customer_id,
+            region: $region,
+            status: $status,
+            items: $validatedItems,
+            subtotal: $subtotal,
+            tax: $tax,
+            shipping: $shipping,
+            total: $subtotal + $tax + $shipping,
+            canFulfill: count($validatedItems) === count($items) && $status === 'pending',
+            insufficientStockItems: $this->getInsufficientStockItems($items, $validatedItems),
+        );
+    }
+    
+    private function getInsufficientStockItems(array $original, array $validated): array
+    {
+        // Business logic to identify insufficient stock items
+        return array_filter($original, fn($item) => 
+            !in_array($item['product_id'], array_column($validated, 'product_id'))
         );
     }
 }
 ```
 
-## Factory Testing Patterns
+### 4. Rich Domain Object
 
-**Unit Testing with Fake Implementations:**
 ```php
-class ProductEntityFactoryTest extends TestCase
+final readonly class OrderDomainObject
 {
-    public function testFactoryCreatesProductWithEnrichedData(): void
-    {
-        // Arrange - Use concrete fake implementations that AI tools can analyze
-        $categoryRepo = new FakeCategoryRepository([
-            1 => new Category('electronics', 'Electronics', 0.1)
-        ]);
-        $priceCalculator = new FakePriceCalculator();
-        $imageService = new FakeImageService();
-        
-        $factory = new ProductEntityFactory($categoryRepo, $priceCalculator, $imageService);
-        
-        // Act
-        $product = $factory->factory('product-1', 'Smartphone', 1, 100.0);
-        
-        // Assert - Clear, traceable test logic
-        $this->assertEquals('product-1', $product->id);
-        $this->assertEquals('Smartphone', $product->name);
-        $this->assertEquals('Electronics', $product->categoryName);
-        $this->assertEquals(90.0, $product->finalPrice);
-        $this->assertEquals('https://fake-service.com/product-1/thumb.jpg', $product->thumbnailUrl);
-    }
-}
-
-// Fake implementations - reusable across tests
-final class FakeCategoryRepository implements CategoryRepositoryInterface
-{
-    public function __construct(private array $categories = []) {}
+    public function __construct(
+        public string $id,
+        public string $customerId,
+        public string $region,
+        public string $status,
+        public array $items,                    // Stock-validated items
+        public float $subtotal,
+        public float $tax,                      // Region-calculated
+        public float $shipping,                 // Calculated shipping
+        public float $total,                    // All-inclusive total
+        public bool $canFulfill,                // Business rules applied
+        public array $insufficientStockItems,   // Insufficient stock items list
+    ) {}
     
-    public function findById(int $id): Category
+    // Domain object behavior
+    public function getDisplayTotal(): string
     {
-        return $this->categories[$id] ?? throw new CategoryNotFoundException();
+        return '$' . number_format($this->total, 2);
     }
-}
-
-final class FakePriceCalculator implements PriceCalculatorInterface
-{
-    public function calculate(float $basePrice, float $discountRate): float
+    
+    public function hasInsufficientStock(): bool
     {
-        return $basePrice * (1 - $discountRate);
+        return count($this->insufficientStockItems) > 0;
+    }
+    
+    public function getTaxRate(): float
+    {
+        return $this->subtotal > 0 ? ($this->tax / $this->subtotal) * 100 : 0;
+    }
+    
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+    
+    public function canProcess(): bool
+    {
+        return $this->canFulfill && $this->isPending();
     }
 }
 ```
+
+## AI Era Adaptation: Ultimate Transparency
+
+Another innovation of BDR Pattern is creating **codebases that are completely transparent to AI tools**.
+
+Traditional ORM's complex abstraction layers were black boxes for AI:
+- Unclear what SQL would be executed
+- Difficult to track where business logic resides
+- Implicit dependencies hard to understand
+
+In BDR Pattern, everything is explicit:
+- **What data is accessed**: Visible in SQL files
+- **How it's transformed**: Clear in factory methods
+- **What services are used**: Explicit in constructors
+- **Business logic flow**: Traceable from query → factory → domain object
+
+```sql
+-- order_detail.sql - AI can read and understand this
+SELECT 
+    o.id,
+    o.region,
+    JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'product_id', oi.product_id,
+            'quantity', oi.quantity,
+            'price', oi.price
+        )
+    ) as items
+FROM orders o
+JOIN order_items oi ON o.id = oi.order_id
+WHERE o.id = :id
+```
+
+```php
+// Factory - AI fully grasps dependencies and logic
+public function __construct(
+    private TaxCalculator $taxCalculator,      // Explicit dependency
+    private ShippingService $shippingService,  // Explicit dependency
+) {}
+```
+
+**This isn't just improved readability.** AI assistants can deeply understand your codebase and provide more accurate suggestions and automation.
+
+## 3-Layer Testing Strategy: Liberation from Integration Test Hell
+
+One of BDR Pattern's most revolutionary benefits is that **complex integration tests become almost unnecessary**.
+
+### Traditional Testing Nightmare
+
+Everyone has experienced:
+- Integration tests taking 30 minutes to run
+- Unstable tests dependent on database state
+- Mock setup alone exceeding 100 lines
+- Mysterious "sometimes failing" tests
+
+**BDR Pattern ends this nightmare.**
+
+### Why Integration Tests Become Unnecessary
+
+Each layer is **completely independent**, so testing each individually means the combination will obviously work:
+
+1. **SQL Query**: Does it return correct data for inputs?
+2. **Factory**: Does it correctly transform data into domain objects?
+3. **Domain Object**: Does it correctly implement business rules?
+
+If these are individually correct, the combination is necessarily correct. **Mathematically obvious.**
+
+### 1. SQL Layer Tests
+
+```php
+class OrderQueryTest extends DatabaseTestCase
+{
+    public function testOrderDetailQuery(): void
+    {
+        // Prepare data fixtures
+        $this->insertOrder('order-1', 'customer-1', 'tokyo', 'pending');
+        $this->insertOrderItem('order-1', 'product-1', 2, 1000);
+        
+        // Execute query
+        $result = $this->executeQuery('order_detail.sql', ['id' => 'order-1']);
+        
+        // Verify results
+        $this->assertEquals('order-1', $result[0]['id']);
+        $this->assertJson($result[0]['items']);
+    }
+}
+```
+
+### 2. Factory Layer Tests
+
+```php
+class OrderDomainFactoryTest extends TestCase
+{
+    public function testCreatesRichDomainObject(): void
+    {
+        // Use fake implementations (AI tools can analyze)
+        $taxCalculator = new FakeTaxCalculator(['tokyo' => 0.08]);
+        $shippingService = new FakeShippingService(['tokyo' => 500]);
+        $inventoryService = new FakeInventoryService(['product-1' => 10]);
+        
+        $factory = new OrderDomainFactory($taxCalculator, $shippingService, $inventoryService);
+        
+        // Test factory
+        $order = $factory->factory(
+            'order-1',
+            'customer-1',
+            'tokyo',
+            'pending',
+            '[{"product_id": "product-1", "quantity": 2, "price": 1000}]'
+        );
+        
+        // Verify business logic results
+        $this->assertEquals(2000, $order->subtotal);
+        $this->assertEquals(160, $order->tax);      // 8%
+        $this->assertEquals(500, $order->shipping);
+        $this->assertEquals(2660, $order->total);
+        $this->assertTrue($order->canFulfill);
+    }
+}
+```
+
+### 3. Domain Object Tests
+
+```php
+class OrderDomainObjectTest extends TestCase
+{
+    public function testDomainObjectBehavior(): void
+    {
+        $order = new OrderDomainObject(
+            id: 'order-1',
+            customerId: 'customer-1',
+            region: 'tokyo',
+            status: 'pending',
+            items: [['product_id' => 'p1', 'quantity' => 2]],
+            subtotal: 2000,
+            tax: 160,
+            shipping: 500,
+            total: 2660,
+            canFulfill: true,
+            insufficientStockItems: []
+        );
+        
+        // Test behavior
+        $this->assertEquals('$2,660.00', $order->getDisplayTotal());
+        $this->assertEquals(8.0, $order->getTaxRate());
+        $this->assertTrue($order->canProcess());
+        $this->assertFalse($order->hasInsufficientStock());
+    }
+}
+```
+
+**Important:** Since each layer is independently tested, integration issues are extremely rare. This eliminates the need to write complex, brittle integration tests.
+
+## Practical Pattern Collection
+
+### Polymorphic Domain Objects
+
+```php
+final class UserDomainFactory
+{
+    public function factory(string $id, string $email, string $subscription_type): UserInterface
+    {
+        // Dynamic object creation based on business rules
+        return match ($subscription_type) {
+            'free' => new FreeUser(
+                id: $id,
+                email: $email,
+                maxProjects: 3,
+                adsEnabled: true,
+            ),
+            'premium' => new PremiumUser(
+                id: $id,
+                email: $email,
+                maxProjects: 100,
+                prioritySupport: true,
+            ),
+            'enterprise' => new EnterpriseUser(
+                id: $id,
+                email: $email,
+                dedicatedSupport: true,
+                ssoEnabled: true,
+            ),
+        };
+    }
+}
+```
+
+### External API Integration
+
+```php
+final class ProductDomainFactory
+{
+    public function __construct(
+        private ExchangeRateService $exchangeRate,  // External API
+        private ReviewService $reviewService,       // External API
+    ) {}
+    
+    public function factory(string $id, string $name, float $price_usd): ProductDomainObject
+    {
+        // Enrich with external service data
+        $priceJpy = $this->exchangeRate->convert($price_usd, 'USD', 'JPY');
+        $reviews = $this->reviewService->getReviewSummary($id);
+        
+        return new ProductDomainObject(
+            id: $id,
+            name: $name,
+            priceUsd: $price_usd,
+            priceJpy: $priceJpy,
+            reviewAverage: $reviews->average,
+            reviewCount: $reviews->count,
+            isPopular: $reviews->average >= 4.0 && $reviews->count >= 10,
+        );
+    }
+}
+```
+
+### Caching Strategy
+
+```php
+final class CachedUserDomainFactory
+{
+    public function __construct(
+        private CacheInterface $cache,
+        private PermissionService $permissionService,
+    ) {}
+    
+    public function factory(string $id, int $role_id): UserDomainObject
+    {
+        // Cache expensive operations
+        $cacheKey = "permissions_role_{$role_id}";
+        $permissions = $this->cache->remember($cacheKey, 3600, 
+            fn() => $this->permissionService->getPermissions($role_id)
+        );
+        
+        return new UserDomainObject(
+            id: $id,
+            permissions: $permissions,
+            canEdit: in_array('edit', $permissions),
+            canDelete: in_array('delete', $permissions),
+        );
+    }
+}
+```
+
+## Migration from Existing Projects
+
+### Step 1: Identify Business Logic
+
+```php
+// Before: Identify logic scattered in controllers
+class ProductController
+{
+    public function show($id)
+    {
+        $product = $this->repo->find($id);
+        
+        // Identify these business logic pieces
+        $product->finalPrice = $this->calculatePrice($product);
+        $product->inStock = $this->inventory->check($product->id);
+        $product->reviews = $this->reviewService->get($product->id);
+        
+        return view('product', compact('product'));
+    }
+}
+```
+
+### Step 2: Create Domain Factory
+
+```php
+// After: Move logic to factory
+final class ProductDomainFactory
+{
+    public function factory($id, $basePrice, $categoryId): ProductDomainObject
+    {
+        return new ProductDomainObject(
+            id: $id,
+            finalPrice: $this->calculatePrice($basePrice, $categoryId),
+            inStock: $this->inventory->check($id),
+            reviews: $this->reviewService->get($id),
+        );
+    }
+}
+```
+
+### Step 3: Gradual Migration
+
+1. **Start with new features** - Implement new functionality with BDR Pattern
+2. **Prioritize high-traffic endpoints** - Greatest performance improvement impact
+3. **Leverage test coverage** - Maintain existing tests while migrating
+4. **Share knowledge with team** - Communicate factory pattern benefits
+
+## Conclusion: Dawn of a New Era
+
+BDR Pattern represents **domain collaboration at its finest**. It doesn't just bridge different paradigms - it **melts the boundaries between different media**.
+
+SQL (declarative, set-based) and OOP (imperative, object-based) were once considered fundamentally incompatible. Programmers have always felt uneasiness at this boundary - forced to choose sides or live with awkward compromises.
+
+**In BDR Pattern, this discomfort completely disappears.**
+
+Traditional ORMs tried to make SQL **invisible, pretending it didn't exist**. The artificial boundaries this created. The cognitive dissonance it forced on programmers. BDR Pattern dissolves all of this.
+
+The result:
+- **Controllers become astonishingly simple** - purely focused on presentation
+- **Business logic finds its natural home** - factories as proper residence
+- **Testing becomes surgical precision** - each layer independently ensures quality
+- **Performance without compromise** - unleashing SQL's full power
+
+**The long war is over.**
+
+SQL and OOP aren't enemies. They're collaborators, each excelling in their own domain while building something greater together.
+
+**In BDR Pattern, the impossible becomes possible.**
+
+## References
+
+- [ORM is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood's seminal 2006 article highlighting the fundamental challenges of traditional ORM approaches. BDR Pattern represents one answer to the problems he raised.
