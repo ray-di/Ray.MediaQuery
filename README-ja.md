@@ -170,7 +170,7 @@ interface TodoList
 
 ```php
 $pages = ($todoList)();
-$cnt = count($page); // count()をした時にカウントSQLが生成されクエリーが行われます。
+$cnt = count($pages); // count()をした時にカウントSQLが生成されクエリーが行われます。
 $page = $pages[2]; // 配列アクセスをした時にそのページのDBクエリーが行われます。
 
 // $page->data // sliced data
