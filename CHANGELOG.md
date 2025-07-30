@@ -15,14 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `WebQuery` annotation, `WebApiList` qualifier
   - `WebApiRequestException`
 - `MediaQueryModule` constructor no longer accepts `WebQueryConfig` in configs array
-- **Removed dependencies:**
-  - Web-related: `guzzlehttp/guzzle`, `psr/http-message`
-  - Annotation support: `doctrine/annotations`
 - **Annotation support (`doctrine/annotations`) has been removed in favor of PHP 8 Attributes**
   - All `@DbQuery`, `@Pager` annotations must be migrated to `#[DbQuery]`, `#[Pager]` attributes
 - **CamelCaseTrait has been removed**
   - Use `Ray\MediaQuery\StringCase::camel()` with constructor property promotion instead
   - This promotes better code practices with explicit type safety and immutability
+- **Removed dependencies:** `guzzlehttp/guzzle`, `psr/http-message`, `doctrine/annotations`
 
 ### Added
 - Suggest `ray/web-query` package for Web API functionality in composer.json

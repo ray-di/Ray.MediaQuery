@@ -25,7 +25,7 @@ For Web API queries, install the separate package:
 
     $ composer require ray/web-query
 
-> **Note:** This package requires PHP 8.1+ and uses PHP 8 Attributes. Legacy annotation support (`@DbQuery`) is deprecated. Use Rector to migrate to attributes (`#[DbQuery]`).
+> **Note:** For migration from older versions, see [MIGRATION.md](./MIGRATION.md).
 
 ## Getting Started
 
@@ -256,46 +256,9 @@ final class TodoEntityFactory
 
 ### Web API
 
-* Customization such as header for authentication is done by binding Guzzle's `ClientInterface`.
+**Web API functionality has been moved to a separate package.** 
 
-```php
-$this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvider::class);
-```
-
-#### Array return type
-
-When the return type of the method is an array, the JSON in the HTTP response body will be automatically decoded and returned as an array.
-
-```php
-interface PostItemInterface
-{
-    #[WebQuery('user_item')]
-    public function item(string $id): array;
-}
-```
-
-#### String return type
-
-When the return type of the method is a string, the raw response body will be returned without any modifications.
-
-```php
-interface PostItemInterface
-{
-    #[WebQuery('user_item')]
-    public function item(string $id): string;
-}
-```
-
-#### HttpMessageInterface return type
-
-When the return type of the method is a MessageInterface, the entire response will be returned as an object compatible with the PSR-7 HTTP Message Interface.
-```php
-interface PostItemInterface
-{
-    #[WebQuery('user_item')]
-    public function item(string $id): Psr\Http\Message\MessageInterface;
-}
-```
+For Web API queries, please see the [ray/web-query](https://github.com/ray-di/Ray.WebQuery) package documentation.
 
 ## Parameters
 
@@ -312,7 +275,7 @@ interface TaskAddInterface
 }
 ```
 
-The value will be converted to a date formatted string at SQL execution time or Web API request time.
+The value will be converted to a date formatted string at SQL execution time.
 
 ```sql
 INSERT INTO task (title, created_at) VALUES (:title, :createdAt); # 2021-2-14 00:00:00
@@ -589,6 +552,7 @@ $ php demo/run.php
 
 This library supports PHP 8.1 to 8.4.
 Aura.Sql has different major versions for different PHP versions:
+
 - Aura.Sql v5.x: Recommended for PHP 8.1 - 8.3.
 - Aura.Sql v6.x: Recommended for PHP 8.4 and newer.
 
