@@ -1,62 +1,60 @@
-# Business Domain Repository Pattern (BDR Pattern) - Practical Guide
+# Business Domain Repository Pattern (BDR Pattern) Practical Guide
 
-## Prologue: The End of a Long War
+## Introduction
 
-Programmers have long suffered from the **uncomfortable boundary** between relational and object-oriented thinking.
+Programmers have long grappled with the **boundary** between relational and object-oriented thinking. This problem is known as the "Object-Relational Impedance Mismatch," referring to the fundamental incompatibility between the tabular data of relational databases and the hierarchical object structures of object-oriented programming.
 
-Traditional ORMs tried to make SQL invisible, **pretending it didn't exist**. This forced pretense created an artificial boundary that developers have always felt uncomfortable with - the constant tension between wanting to leverage database power while maintaining object-oriented principles. It was like being torn between two worlds.
+Traditional ORMs attempted to abstract SQL away, **making it invisible**. This abstraction created boundaries that developers constantly felt. We want to leverage the power of databases while maintaining object-oriented principles. How to reconcile these two desires has always been a challenge.
 
-**BDR Pattern completely dissolves this boundary.**
+**The BDR Pattern dissolves this boundary.**
 
-Instead of SQL and OOP being adversaries, **in BDR Pattern, SQL and OOP shake hands**. Each does what it does best while working in harmony.
+**In the BDR Pattern, SQL and OOP shake hands**. Each performs what it does best while working in harmony.
 
-**The discomfort is gone.** No more forced abstractions, no more pretending one paradigm doesn't exist.
+The friction caused by boundaries is eliminated. There's no longer a need for forced abstractions or for one paradigm to pretend the other doesn't exist.
 
 ## Executive Summary
 
-BDR Pattern represents a paradigm shift where **Object-Oriented Programming and SQL become allies instead of adversaries**. It achieves what was previously thought impossible: "OOP autonomy with SQL foundation," enabling:
+The BDR Pattern presents a new paradigm where **Object-Oriented Programming and SQL work in harmony**. It achieves "OOP autonomy with SQL foundation" and enables:
 
-**Core Value Proposition:**
-- **SQL stays SQL**: Complex queries, JOINs, window functions - all at maximum performance
-- **Objects stay objects**: Autonomous, behavior-rich domain models with proper encapsulation
-- **The impossible becomes possible**: True object-oriented design powered by raw SQL performance
-- **Surgical testing**: Each component tested in isolation with crystal-clear boundaries
+**Core Value Propositions:**
+- **SQL remains SQL**: Complex queries, JOINs, window functions - all at maximum performance
+- **Objects remain objects**: Autonomous domain models with rich behavior
+- **Leveraging both strengths**: Achieving both object-oriented design and SQL performance
+- **Clear testing**: Each component can be tested independently
 
-## Why This Matters: Liberation from Developer Agony
+## Why This Matters
 
-### You've Experienced This Before
+### Common Scenarios in Development
 
-Monday morning, you're staring at a controller with scattered business logic. One change requires modifying six different controller methods. Writing tests requires setting up more than 10 mock objects.
+Complex business logic scattered across controllers. One change requires modifications to multiple methods, and testing requires numerous mock objects.
 
-ORMs promised to be "object-oriented," but in reality:
-- Plagued by N+1 query problems
-- Can't write complex JOINs (or they're inefficient)
-- Generated SQL is unpredictable
-- Performance tuning is difficult
+When using ORMs, we encounter characteristics such as:
+- Need to handle N+1 query problems
+- Constraints in expressing complex JOINs
+- Difficulty predicting generated SQL
+- Creative workarounds needed for performance tuning
 
-**We've been trying to solve the wrong problem all along.**
+**The BDR Pattern proposes a different approach.**
 
-The problem isn't the difference between SQL and OOP. The problem is that **one has been trying to dominate the other**.
+It leverages the strengths of both SQL and OOP, allowing each to shine in their respective domains.
 
-### Daily Life with BDR Pattern
+### The BDR Pattern Approach
 
 ```php
-// Monday morning, same requirements
 public function showOrderDetails(string $id): Response
 {
     $order = $this->orderRepo->getOrder($id);
     return $this->render('order.html.twig', ['order' => $order]);
 }
 
-// That's it. Really.
-// Business logic is in factories
-// SQL is in optimized query files
-// Tests are independent at each layer
+// Business logic in factories
+// SQL in optimized query files
+// Tests in independent layers
 ```
 
-**It's time to reclaim your dignity as a developer.**
+Simple structure improves maintainability and readability.
 
-## Problem and Solution
+## The Problem and Solution
 
 ### Traditional Approach Problems
 
@@ -68,10 +66,11 @@ class OrderController
         $order = $this->orderRepo->findById($id); // Simple data
         
         // Business logic scattered in controller - testing nightmare!
-        // Call external services (PermissionService, VerificationService, PaymentGateway, etc.)
-        // Apply complex business rules based on multiple service results
-        // Transform and enrich data for presentation
-        // Handle conditional logic for user types, subscription levels, etc.
+        $items = $this->inventoryService->checkStock($order->items);
+        $tax = $this->taxCalculator->calculate($items, $order->region);
+        $shipping = $this->shippingService->calculate($items, $order->region);
+        $canFulfill = $this->validateOrder($items, $order->status);
+        
         // Testing this controller requires mocking 6+ dependencies!
         
         return $this->render('order.html.twig', compact('order', 'tax', 'shipping', 'canFulfill'));
@@ -95,52 +94,36 @@ class OrderController
 }
 ```
 
-## Implementation Philosophy: Object Autonomy
+## Object Autonomy
 
-The most revolutionary achievement of BDR Pattern is **achieving true object autonomy while using SQL as the foundation**.
+The BDR Pattern achieves something important: **true object autonomy with SQL as the foundation**.
 
-Previously, object autonomy and SQL efficiency were considered mutually exclusive. But BDR Pattern **makes the impossible possible**. Domain objects are self-contained with their own behavior and data, yet their creation is powered by the full strength of SQL queries.
+Balancing object autonomy and SQL efficiency was traditionally considered difficult. The BDR Pattern achieves this balance. Domain objects are self-contained with their own behavior and data, while their creation is efficiently powered by SQL queries.
 
 ```php
-// This isn't just a data holder - it's an autonomous entity
-final readonly class OrderDomainObject
+// Leveraging the power of DI in domain objects
+final readonly class UserDomainObject
 {
     public function __construct(
         public string $id,
-        public array $items,
-        public float $subtotal,
-        public float $tax,
-        public float $shipping,
-        public float $total,
-        public bool $canFulfill,
+        public string $name,
+        public string $role,
+        // Service injected from factory
+        private PermissionService $permissionService,
     ) {}
     
-    // Object knows its own destiny
-    public function canProcess(): bool
+    // Dynamic business rules through injected service
+    public function canEdit(Document $document): bool
     {
-        return $this->canFulfill && $this->isPending();
-    }
-    
-    // Object understands its own state
-    public function requiresManagerApproval(): bool
-    {
-        return $this->total > 1000000;
-    }
-    
-    // Object has its own behavior
-    public function getBusinessPriority(): string
-    {
-        return match(true) {
-            $this->total > 5000000 => 'critical',
-            $this->total > 1000000 => 'high',
-            $this->total > 100000 => 'medium',
-            default => 'normal'
-        };
+        // Impossible with ORM entities - depends on external service
+        // Test env: FakePermissionService (everyone can edit)
+        // Production: RealPermissionService (complex permission checks)
+        return $this->permissionService->canEdit($this, $document);
     }
 }
 ```
 
-**This is the essence of BDR Pattern** - objects aren't just data containers, but autonomous entities with business domain knowledge.
+In the BDR Pattern, objects are not mere data containers but domain objects containing business logic.
 
 ## Implementation Guide
 
@@ -226,7 +209,7 @@ final class OrderDomainFactory
     
     private function getInsufficientStockItems(array $original, array $validated): array
     {
-        // Business logic to identify insufficient stock items
+        // Business logic to identify items with insufficient stock
         return array_filter($original, fn($item) => 
             !in_array($item['product_id'], array_column($validated, 'product_id'))
         );
@@ -246,51 +229,231 @@ final readonly class OrderDomainObject
         public string $status,
         public array $items,                    // Stock-validated items
         public float $subtotal,
-        public float $tax,                      // Region-calculated
+        public float $tax,                      // Calculated by region
         public float $shipping,                 // Calculated shipping
-        public float $total,                    // All-inclusive total
-        public bool $canFulfill,                // Business rules applied
-        public array $insufficientStockItems,   // Insufficient stock items list
+        public float $total,                    // Complete total
+        public bool $canFulfill,                // Business rule applied
+        public array $insufficientStockItems,   // List of insufficient stock items
+        // Injected business rule engine - impossible with ORM
+        private BusinessRuleEngine $ruleEngine,
     ) {}
     
     // Domain object behavior
     public function getDisplayTotal(): string
     {
-        return '$' . number_format($this->total, 2);
-    }
-    
-    public function hasInsufficientStock(): bool
+        return '
+
+## Three-Layer Testing Strategy: Simple and Reliable Testing
+
+One of the important advantages of the BDR Pattern is that **testing becomes simple and reliable**.
+
+### Common Testing Challenges
+
+Common challenges in testing include:
+- Integration tests taking a long time to run
+- Test instability due to database state dependencies
+- Complex mock setups
+- Intermittently failing tests
+
+**The BDR Pattern provides a better way.**
+
+### Why Testing Becomes Simple
+
+Because each layer is **independent**, if each is tested individually, the combination naturally works:
+
+1. **SQL Query**: Does it return correct data for the input?
+2. **Factory**: Does it correctly transform data into domain objects?
+3. **Domain Object**: Does it correctly implement business rules?
+
+If these are individually correct, the combination is necessarily correct. **It's a logical structure.**
+
+### 1. SQL Layer Testing
+
+```php
+class UserQueryTest extends DatabaseTestCase
+{
+    public function testUserByIdQuery(): void
     {
-        return count($this->insufficientStockItems) > 0;
-    }
-    
-    public function getTaxRate(): float
-    {
-        return $this->subtotal > 0 ? ($this->tax / $this->subtotal) * 100 : 0;
-    }
-    
-    public function isPending(): bool
-    {
-        return $this->status === 'pending';
-    }
-    
-    public function canProcess(): bool
-    {
-        return $this->canFulfill && $this->isPending();
+        // Prepare test data
+        $this->insertUser('user-1', 'Alice', 'alice@example.com', 'editor');
+        
+        // Execute query
+        $result = $this->executeQuery('user_by_id.sql', ['id' => 'user-1']);
+        
+        // Verify results
+        $this->assertEquals('Alice', $result[0]['name']);
+        $this->assertEquals('editor', $result[0]['role']);
     }
 }
 ```
 
-## AI Era Adaptation: Ultimate Transparency
+### 2. Factory Layer Testing
 
-Another innovation of BDR Pattern is creating **codebases that are completely transparent to AI tools**.
+```php
+class UserDomainFactoryTest extends TestCase
+{
+    public function testCreatesUserWithInjectedService(): void
+    {
+        // Inject fake service
+        $permissionService = new FakePermissionService();
+        $factory = new UserDomainFactory($permissionService);
+        
+        // Test factory
+        $user = $factory->factory('user-1', 'Alice', 'alice@example.com', 'editor');
+        
+        // Verify object is created correctly
+        $this->assertEquals('Alice', $user->name);
+        $this->assertEquals('editor', $user->role);
+        
+        // Confirm injected service works
+        $document = new Document('doc-1', 'user-1');
+        $this->assertTrue($user->canEdit($document));
+    }
+}
+```
 
-Traditional ORM's complex abstraction layers were black boxes for AI:
+### 3. Domain Object Testing
+
+```php
+class UserDomainObjectTest extends TestCase
+{
+    public function testCanEditWithDifferentPermissionServices(): void
+    {
+        $document = new Document('doc-1', 'user-2');
+        
+        // Restrictive service
+        $strictService = new StrictPermissionService();
+        $user1 = new UserDomainObject('user-1', 'Alice', 'alice@example.com', 'editor', $strictService);
+        $this->assertFalse($user1->canEdit($document)); // Cannot edit others' documents
+        
+        // Permissive service
+        $relaxedService = new RelaxedPermissionService();
+        $user2 = new UserDomainObject('user-1', 'Alice', 'alice@example.com', 'editor', $relaxedService);
+        $this->assertTrue($user2->canEdit($document)); // Editors can edit all documents
+    }
+}
+```
+
+Because each layer is tested independently, integration issues are extremely rare. This eliminates the need for complex and fragile integration tests.
+
+## Practical Patterns
+
+### Polymorphic Domain Objects
+
+```php
+final class UserDomainFactory
+{
+    public function factory(string $id, string $email, string $type): UserInterface
+    {
+        return match ($type) {
+            'free' => new FreeUser($id, $email, maxStorage: 100),
+            'premium' => new PremiumUser($id, $email, maxStorage: 1000),
+        };
+    }
+}
+```
+
+### External API Integration
+
+```php
+final class ProductDomainFactory
+{
+    public function __construct(
+        private PriceService $priceService,  // External API
+    ) {}
+    
+    public function factory(string $id, string $name): ProductDomainObject
+    {
+        return new ProductDomainObject(
+            id: $id,
+            name: $name,
+            currentPrice: $this->priceService->getCurrentPrice($id),
+        );
+    }
+}
+```
+
+### Caching Strategy
+
+```php
+final class UserDomainFactory
+{
+    public function __construct(
+        private CacheInterface $cache,
+        private PermissionService $permissionService,
+    ) {}
+    
+    public function factory(string $id, string $name, string $role): UserDomainObject
+    {
+        // Cache expensive permission lookups
+        $permissions = $this->cache->remember(
+            "permissions_{$role}", 
+            3600, 
+            fn() => $this->permissionService->getPermissions($role)
+        );
+        
+        return new UserDomainObject($id, $name, $role, $permissions);
+    }
+}
+```
+
+## Migration from Existing Projects
+
+### Step 1: Identify Business Logic
+
+```php
+// Before: Logic scattered in controller
+class ProductController
+{
+    public function show($id)
+    {
+        $product = $this->repo->find($id);
+        
+        // Identify this business logic
+        $product->finalPrice = $this->calculatePrice($product);
+        $product->inStock = $this->inventory->check($product->id);
+        $product->reviews = $this->reviewService->get($product->id);
+        
+        return view('product', compact('product'));
+    }
+}
+```
+
+### Step 2: Create Domain Factory
+
+```php
+// After: Move logic to factory
+final class ProductDomainFactory
+{
+    public function factory($id, $basePrice, $categoryId): ProductDomainObject
+    {
+        return new ProductDomainObject(
+            id: $id,
+            finalPrice: $this->calculatePrice($basePrice, $categoryId),
+            inStock: $this->inventory->check($id),
+            reviews: $this->reviewService->get($id),
+        );
+    }
+}
+```
+
+### Step 3: Gradual Migration
+
+1. **Start with new features** - Implement new features with BDR Pattern
+2. **Prioritize high-traffic endpoints** - Greater performance improvement impact
+3. **Leverage existing test coverage** - Migrate while utilizing existing tests
+4. **Share knowledge within the team** - Share the benefits of the factory pattern
+
+## Adapting to the AI Era: Achieving Transparency
+
+Another advantage of the BDR Pattern is creating a **codebase transparent to AI tools**.
+
+Complex abstraction layers of traditional ORMs were black boxes to AI:
 - Unclear what SQL would be executed
-- Difficult to track where business logic resides
+- Difficult to trace where business logic exists
 - Implicit dependencies hard to understand
 
-In BDR Pattern, everything is explicit:
+In the BDR Pattern, everything is explicit:
 - **What data is accessed**: Visible in SQL files
 - **How it's transformed**: Clear in factory methods
 - **What services are used**: Explicit in constructors
@@ -314,40 +477,98 @@ WHERE o.id = :id
 ```
 
 ```php
-// Factory - AI fully grasps dependencies and logic
+// Factory - AI fully understands dependencies and logic
 public function __construct(
     private TaxCalculator $taxCalculator,      // Explicit dependency
     private ShippingService $shippingService,  // Explicit dependency
 ) {}
 ```
 
-**This isn't just improved readability.** AI assistants can deeply understand your codebase and provide more accurate suggestions and automation.
+This transparency enables AI assistants to deeply understand your codebase and provide more accurate suggestions and automation.
 
-## 3-Layer Testing Strategy: Liberation from Integration Test Hell
+## Summary
 
-One of BDR Pattern's most revolutionary benefits is that **complex integration tests become almost unnecessary**.
+The BDR Pattern presents **one form of domain collaboration**. It not only bridges different paradigms but also **dissolves boundaries between different media**.
 
-### Traditional Testing Nightmare
+SQL (declarative, set-based) and OOP (imperative, object-based). How to combine these technologies with different characteristics has been a long-standing challenge.
 
-Everyone has experienced:
-- Integration tests taking 30 minutes to run
-- Unstable tests dependent on database state
-- Mock setup alone exceeding 100 lines
-- Mysterious "sometimes failing" tests
+**The BDR Pattern provides one approach to this challenge.**
 
-**BDR Pattern ends this nightmare.**
+The boundaries created by traditional ORMs abstracting SQL. The BDR Pattern dissolves these and creates new harmony.
 
-### Why Integration Tests Become Unnecessary
+The results achieved are:
+- **Controllers become simple** - Focus on presentation
+- **Business logic in the right place** - Placed in factories
+- **Testing is clear and independent** - Each layer ensures quality independently
+- **No performance compromise** - Maximize SQL performance
 
-Each layer is **completely independent**, so testing each individually means the combination will obviously work:
+**SQL and OOP work in harmony.**
 
-1. **SQL Query**: Does it return correct data for inputs?
+In the BDR Pattern, each excels in its own domain while building something greater together.
+
+## References
+
+- [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood (2006) . number_format($this->total, 2);
+  }
+
+  public function hasInsufficientStock(): bool
+  {
+  return count($this->insufficientStockItems) > 0;
+  }
+
+  public function getTaxRate(): float
+  {
+  return $this->subtotal > 0 ? ($this->tax / $this->subtotal) * 100 : 0;
+  }
+
+  public function isPending(): bool
+  {
+  return $this->status === 'pending';
+  }
+
+  public function canProcess(): bool
+  {
+  return $this->canFulfill && $this->isPending();
+  }
+
+  // Dynamic business rules through injected service
+  public function getBusinessPriority(): string
+  {
+  // Impossible with ORM entities - depends on external service
+  // Test environment: Relaxed thresholds (e.g., high priority at $100+)
+  // Production: Strict thresholds (e.g., high priority at $10,000+)
+  // Peak season: Different thresholds
+  // VIP customers: Special rules apply
+  return $this->ruleEngine->calculatePriority($this);
+  }
+  }
+```
+
+## Three-Layer Testing Strategy: Simple and Reliable Testing
+
+One of the important advantages of the BDR Pattern is that **testing becomes simple and reliable**.
+
+### Common Testing Challenges
+
+Common challenges in testing include:
+- Integration tests taking a long time to run
+- Test instability due to database state dependencies
+- Complex mock setups
+- Intermittently failing tests
+
+**The BDR Pattern provides a better way.**
+
+### Why Testing Becomes Simple
+
+Because each layer is **independent**, if each is tested individually, the combination naturally works:
+
+1. **SQL Query**: Does it return correct data for the input?
 2. **Factory**: Does it correctly transform data into domain objects?
 3. **Domain Object**: Does it correctly implement business rules?
 
-If these are individually correct, the combination is necessarily correct. **Mathematically obvious.**
+If these are individually correct, the combination is necessarily correct. **It's a logical structure.**
 
-### 1. SQL Layer Tests
+### 1. SQL Layer Testing
 
 ```php
 class OrderQueryTest extends DatabaseTestCase
@@ -368,14 +589,14 @@ class OrderQueryTest extends DatabaseTestCase
 }
 ```
 
-### 2. Factory Layer Tests
+### 2. Factory Layer Testing
 
 ```php
 class OrderDomainFactoryTest extends TestCase
 {
     public function testCreatesRichDomainObject(): void
     {
-        // Use fake implementations (AI tools can analyze)
+        // Use fake implementations (analyzable by AI tools)
         $taxCalculator = new FakeTaxCalculator(['tokyo' => 0.08]);
         $shippingService = new FakeShippingService(['tokyo' => 500]);
         $inventoryService = new FakeInventoryService(['product-1' => 10]);
@@ -401,7 +622,7 @@ class OrderDomainFactoryTest extends TestCase
 }
 ```
 
-### 3. Domain Object Tests
+### 3. Domain Object Testing
 
 ```php
 class OrderDomainObjectTest extends TestCase
@@ -431,9 +652,9 @@ class OrderDomainObjectTest extends TestCase
 }
 ```
 
-**Important:** Since each layer is independently tested, integration issues are extremely rare. This eliminates the need to write complex, brittle integration tests.
+Because each layer is tested independently, integration issues are extremely rare. This eliminates the need for complex and fragile integration tests.
 
-## Practical Pattern Collection
+## Practical Patterns
 
 ### Polymorphic Domain Objects
 
@@ -479,7 +700,7 @@ final class ProductDomainFactory
     
     public function factory(string $id, string $name, float $price_usd): ProductDomainObject
     {
-        // Enrich with external service data
+        // Enrich with data from external services
         $priceJpy = $this->exchangeRate->convert($price_usd, 'USD', 'JPY');
         $reviews = $this->reviewService->getReviewSummary($id);
         
@@ -529,14 +750,14 @@ final class CachedUserDomainFactory
 ### Step 1: Identify Business Logic
 
 ```php
-// Before: Identify logic scattered in controllers
+// Before: Logic scattered in controller
 class ProductController
 {
     public function show($id)
     {
         $product = $this->repo->find($id);
         
-        // Identify these business logic pieces
+        // Identify this business logic
         $product->finalPrice = $this->calculatePrice($product);
         $product->inStock = $this->inventory->check($product->id);
         $product->reviews = $this->reviewService->get($product->id);
@@ -566,33 +787,73 @@ final class ProductDomainFactory
 
 ### Step 3: Gradual Migration
 
-1. **Start with new features** - Implement new functionality with BDR Pattern
-2. **Prioritize high-traffic endpoints** - Greatest performance improvement impact
-3. **Leverage test coverage** - Maintain existing tests while migrating
-4. **Share knowledge with team** - Communicate factory pattern benefits
+1. **Start with new features** - Implement new features with BDR Pattern
+2. **Prioritize high-traffic endpoints** - Greater performance improvement impact
+3. **Leverage existing test coverage** - Migrate while utilizing existing tests
+4. **Share knowledge within the team** - Share the benefits of the factory pattern
 
-## Conclusion: Dawn of a New Era
+## Adapting to the AI Era: Achieving Transparency
 
-BDR Pattern represents **domain collaboration at its finest**. It doesn't just bridge different paradigms - it **melts the boundaries between different media**.
+Another advantage of the BDR Pattern is creating a **codebase transparent to AI tools**.
 
-SQL (declarative, set-based) and OOP (imperative, object-based) were once considered fundamentally incompatible. Programmers have always felt uneasiness at this boundary - forced to choose sides or live with awkward compromises.
+Complex abstraction layers of traditional ORMs were black boxes to AI:
+- Unclear what SQL would be executed
+- Difficult to trace where business logic exists
+- Implicit dependencies hard to understand
 
-**In BDR Pattern, this discomfort completely disappears.**
+In the BDR Pattern, everything is explicit:
+- **What data is accessed**: Visible in SQL files
+- **How it's transformed**: Clear in factory methods
+- **What services are used**: Explicit in constructors
+- **Business logic flow**: Traceable from query → factory → domain object
 
-Traditional ORMs tried to make SQL **invisible, pretending it didn't exist**. The artificial boundaries this created. The cognitive dissonance it forced on programmers. BDR Pattern dissolves all of this.
+```sql
+-- order_detail.sql - AI can read and understand this
+SELECT 
+    o.id,
+    o.region,
+    JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'product_id', oi.product_id,
+            'quantity', oi.quantity,
+            'price', oi.price
+        )
+    ) as items
+FROM orders o
+JOIN order_items oi ON o.id = oi.order_id
+WHERE o.id = :id
+```
 
-The result:
-- **Controllers become astonishingly simple** - purely focused on presentation
-- **Business logic finds its natural home** - factories as proper residence
-- **Testing becomes surgical precision** - each layer independently ensures quality
-- **Performance without compromise** - unleashing SQL's full power
+```php
+// Factory - AI fully understands dependencies and logic
+public function __construct(
+    private TaxCalculator $taxCalculator,      // Explicit dependency
+    private ShippingService $shippingService,  // Explicit dependency
+) {}
+```
 
-**The long war is over.**
+This transparency enables AI assistants to deeply understand your codebase and provide more accurate suggestions and automation.
 
-SQL and OOP aren't enemies. They're collaborators, each excelling in their own domain while building something greater together.
+## Summary
 
-**In BDR Pattern, the impossible becomes possible.**
+The BDR Pattern presents **one form of domain collaboration**. It not only bridges different paradigms but also **dissolves boundaries between different media**.
+
+SQL (declarative, set-based) and OOP (imperative, object-based). How to combine these technologies with different characteristics has been a long-standing challenge.
+
+**The BDR Pattern provides one approach to this challenge.**
+
+The boundaries created by traditional ORMs abstracting SQL. The BDR Pattern dissolves these and creates new harmony.
+
+The results achieved are:
+- **Controllers become simple** - Focus on presentation
+- **Business logic in the right place** - Placed in factories
+- **Testing is clear and independent** - Each layer ensures quality independently
+- **No performance compromise** - Maximize SQL performance
+
+**SQL and OOP work in harmony.**
+
+In the BDR Pattern, each excels in its own domain while building something greater together.
 
 ## References
 
-- [ORM is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood's seminal 2006 article highlighting the fundamental challenges of traditional ORM approaches. BDR Pattern represents one answer to the problems he raised.
+- [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood (2006)
