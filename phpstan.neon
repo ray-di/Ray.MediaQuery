@@ -4,7 +4,6 @@ parameters:
     - src
     - tests
   excludePaths:
-  		- tests/Fake/*
-  		- tests/tmp/*
-  		- src/MediaQueryModule.php
-  		- src/CamelCaseTrait.php
+    - tests/Fake/*
+    - tests/tmp/*
+    - src/MediaQueryModule.php

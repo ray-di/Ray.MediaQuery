@@ -10,8 +10,18 @@
 /phpcs.xml        export-ignore
 /phpmd.xml        export-ignore
 /phpstan.neon     export-ignore
+/psalm.xml        export-ignore
+/rector.php       export-ignore
 /phpunit.xml.dist export-ignore
 /.github          export-ignore
+/CLAUDE.md        export-ignore
+/.claude          export-ignore
+/.qodo            export-ignore
+/vendor-bin       export-ignore
+/demo             export-ignore
+/composer-require-checker.json export-ignore
+/docs             export-ignore
+
 
 # Configure diff output for .php and .phar files.
 *.php diff=php

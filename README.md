@@ -1,25 +1,31 @@
 # Ray.MediaQuery
 
-## Media access mapping framework
+## Database access mapping framework
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 [![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml)
 
-[日本語 (Japanese)](./README.ja.md)
+[日本語 (Japanese)](./README-ja.md)
 
 ## Overview
 
-`Ray.QueryModule` makes a query to an external media such as a database or Web API with a function object to be injected.
+`Ray.MediaQuery` provides database query abstraction through interface-based query definitions.
 
 ## Motivation
 
- * You can have a clear boundary between domain layer (usage code) and infrastructure layer (injected function) in code.
+ * This framework provides database query abstraction through interface-based query definitions.
  * Execution objects are generated automatically so you do not need to write procedural code for execution.
- * Since usage codes are indifferent to the actual state of external media, storage can be changed later. Easy parallel development and stabbing.
+ * Since usage codes are indifferent to the actual state of external media, storage can be changed later. Easy parallel development and stubbing.
 
 ## Composer install
 
     $ composer require ray/media-query
+
+For Web API queries, install the separate package:
+
+    $ composer require ray/web-query
+
+> **Note:** For migration from older versions, see [MIGRATION.md](./MIGRATION.md).
 
 ## Getting Started
 
@@ -37,49 +43,22 @@ interface TodoAddInterface
 }
 ```
 
-### Web API
-
-Specify the Web request ID with the attribute `WebQuery`.
-
-```php
-interface PostItemInterface
-{
-    #[WebQuery('user_item')]
-    public function get(string $id): array;
-}
-```
-
-Create the web api path list file as `web_query.json`.
-
-```json
-{
-    "$schema": "https://ray-di.github.io/Ray.MediaQuery/schema/web_query.json",
-    "webQuery": [
-        {"id": "user_item", "method": "GET", "path": "https://{domain}/users/{id}"}
-    ]
-}
-```
-
 ### Module
 
-MediaQueryModule binds the execution of SQL and Web API requests to an interface by setting `DbQueryConfig` or `WebQueryConfig` or both.
+MediaQueryModule binds the execution of SQL to an interface by setting `DbQueryConfig`.
 
 ```php
 use Ray\AuraSqlModule\AuraSqlModule;
-use Ray\MediaQuery\ApiDomainModule;
 use Ray\MediaQuery\DbQueryConfig;
 use Ray\MediaQuery\MediaQueryModule;
 use Ray\MediaQuery\Queries;
-use Ray\MediaQuery\WebQueryConfig;
 
 protected function configure(): void
 {
     $this->install(
         new MediaQueryModule(
-            Queries::fromDir('/path/to/queryInterface'),[
-                new DbQueryConfig('/path/to/sql'),
-                new WebQueryConfig('/path/to/web_query.json', ['domain' => 'api.example.com'])
-            ],
+            Queries::fromDir('/path/to/queryInterface'),
+            new DbQueryConfig('/path/to/sql')
         ),
     );
     $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
@@ -123,8 +102,8 @@ interface TodoItemInterface
 }
 ```
 
-* If the result is a `row`(`array<string, scalar>`), specify `type:'row'`. The type is not necessary for `row_list`(`array<int, array<string, scalar>>`).
-* SQL files can contain multiple SQL statements. In that case, the return value is the last line of the SELECT.
+- If the result is a `row`(`array<string, scalar>`), specify `type:'row'`. The type is not necessary for `row_list`(`array<int, array<string, scalar>>`).
+- SQL files can contain multiple SQL statements. In that case, the return value is the last line of the SELECT.
 
 #### Entity
 
@@ -150,20 +129,76 @@ final class Todo
 }
 ```
 
-Use `CameCaseTrait` to convert a property to camelCase.
+**Entity classes should use constructor property promotion (recommended):**
+
+For multi-word database columns (snake_case), mix constructor property promotion with explicit assignment:
 
 ```php
-use Ray\MediaQuery\CamelCaseTrait;
-
-class Invoice
+final class Invoice
 {
-    use CamelCaseTrait;
-
-    public $userName;
+    public readonly string $userName;
+    public readonly string $emailAddress;
+    
+    public function __construct(
+        public readonly string $id,        // Single word - direct mapping
+        public readonly string $title,     // Single word - direct mapping
+        string $user_name,                 // Multi-word - explicit assignment
+        string $email_address,             // Multi-word - explicit assignment
+    ) {
+        $this->userName = $user_name;
+        $this->emailAddress = $email_address;
+    }
 }
 ```
 
-If the entity has a constructor, the constructor will be called with the fetched data.
+**PHP 8.4+ readonly class:**
+
+```php
+final readonly class Invoice
+{
+    public string $userName;
+    public string $emailAddress;
+    
+    public function __construct(
+        public string $id,           // Single word - direct mapping
+        public string $title,        // Single word - direct mapping  
+        string $user_name,           // Multi-word - explicit assignment
+        string $email_address,       // Multi-word - explicit assignment
+    ) {
+        $this->userName = $user_name;
+        $this->emailAddress = $email_address;
+    }
+}
+```
+
+**Usage with database queries:**
+
+```php
+interface UserInterface
+{
+    #[DbQuery('user_list')]
+    /** @return array<Invoice> */
+    public function getUsers(): array;
+}
+
+// SQL file: user_list.sql  
+// SELECT id, title, user_name, email_address FROM invoices
+
+// PDO::FETCH_CLASS works directly - constructor parameters match column names!
+// - id → $id (direct)
+// - title → $title (direct)  
+// - user_name → $user_name parameter → $userName property
+// - email_address → $email_address parameter → $emailAddress property
+```
+
+**Benefits:**
+- Type safety with strict typing
+- Immutability with `readonly` properties  
+- Better IDE support and refactoring
+- No magic method overhead
+- Clear snake_case ↔ camelCase mapping
+
+**Note:** Constructor-less entities (with public properties) are discouraged as they lack type safety and immutability benefits of modern PHP.
 
 ```php
 final class Todo
@@ -219,48 +254,54 @@ final class TodoEntityFactory
 }
 ```
 
+#### Advanced Factory Usage
+
+Factories enable powerful transformations beyond simple database mapping:
+
+**Add computed properties:**
+```php
+final class OrderEntityFactory
+{
+    public function factory(string $id, float $amount): Order
+    {
+        return new Order(
+            id: $id,
+            amount: $amount,
+            tax: $amount * 0.1,          // Computed tax
+            total: $amount * 1.1,        // Computed total
+        );
+    }
+}
+```
+
+**Transform data with injected services:**
+```php
+final class UserEntityFactory
+{
+    public function __construct(
+        private EmailValidator $emailValidator,  // Injected by DI
+    ) {}
+    
+    public function factory(string $id, string $first_name, string $last_name, string $email): User
+    {
+        return new User(
+            id: $id,
+            firstName: $first_name,
+            lastName: $last_name,
+            fullName: "$first_name $last_name",              // Computed
+            email: $this->emailValidator->validate($email),  // Validated with DI service
+        );
+    }
+}
+```
+
+> **🏗️ Architecture Pattern**: Ray.MediaQuery enables the [**Business Domain Repository Pattern (BDR Pattern)**](./BDR_PATTERN.md) - an approach that transforms simple database queries into rich domain objects through dependency injection and business logic integration.
+
 ### Web API
 
-* Customization such as header for authentication is done by binding Guzzle's `ClientInterface`.
+**Web API functionality has been moved to a separate package.** 
 
-```php
-$this->bind(ClientInterface::class)->toProvider(YourGuzzleClientProvider::class);
-```
-
-#### Array return type
-
-When the return type of the method is an array, the JSON in the HTTP response body will be automatically decoded and returned as an array.
-
-```php
-interface PostItemInterface
-{
-    #[WebQuery('user_item')]
-    public function item(string $id): array;
-}
-```
-
-#### String return type
-
-When the return type of the method is a string, the raw response body will be returned without any modifications.
-
-```php
-interface PostItemInterface
-{
-    #[WebQuery('user_item')]
-    public function item(string $id): string;
-}
-```
-
-#### HttpMessageInterface return type
-
-When the return type of the method is a MessageInterface, the entire response will be returned as an object compatible with the PSR-7 HTTP Message Interface.
-```php
-interface PostItemInterface
-{
-    #[WebQuery('user_item')]
-    public function item(string $id): Psr\Http\Message\MessageInterface;
-}
-```
+For Web API queries, please see the [ray/web-query](https://github.com/ray-di/Ray.WebQuery) package documentation.
 
 ## Parameters
 
@@ -277,7 +318,7 @@ interface TaskAddInterface
 }
 ```
 
-The value will be converted to a date formatted string at SQL execution time or Web API request time.
+The value will be converted to a date formatted string at SQL execution time.
 
 ```sql
 INSERT INTO task (title, created_at) VALUES (:title, :createdAt); # 2021-2-14 00:00:00
@@ -524,19 +565,13 @@ Example)
  * Injecting the ID of a logged-in user and leaving it as a comment statement in SQL.
  * Leave bound values in comments or logs during development
 
-## Annotations / Attributes
-
-You can use either [doctrine annotations](https://github.com/doctrine/annotations/) or [PHP8 attributes](https://www.php.net/manual/en/language.attributes.overview.php) can both be used. 
-The next two are the same.
+## Attributes
 
 ```php
 use Ray\MediaQuery\Annotation\DbQuery;
 
 #[DbQuery('user_add')]
-public function add1(string $id, string $title): void;
-
-/** @DbQuery("user_add") */
-public function add2(string $id, string $title): void;
+public function add(string $id, string $title): void;
 ```
 
 ## Testing Ray.MediaQuery
@@ -554,6 +589,7 @@ $ php demo/run.php
 
 This library supports PHP 8.1 to 8.4.
 Aura.Sql has different major versions for different PHP versions:
+
 - Aura.Sql v5.x: Recommended for PHP 8.1 - 8.3.
 - Aura.Sql v6.x: Recommended for PHP 8.4 and newer.
 
