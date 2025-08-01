@@ -17,7 +17,6 @@
 /CLAUDE.md        export-ignore
 /.claude          export-ignore
 /.qodo            export-ignore
-/BDR_PATTERN.md   export-ignore
 /vendor-bin       export-ignore
 /demo             export-ignore
 /composer-require-checker.json export-ignore

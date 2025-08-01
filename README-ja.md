@@ -182,6 +182,8 @@ $page = $pages[2]; // 配列アクセスをした時にそのページのDBク�
 // (string) $page // pager html
 ```
 
+> **🏗️ アーキテクチャパターン**: Ray.MediaQueryは[**Business Domain Repository Pattern (BDRパターン)**](./BDR_PATTERN-ja.md)を可能にします。これは、依存性注入とビジネスロジック統合を通じて、シンプルなデータベースクエリを豊富なドメインオブジェクトに変換するアプローチです。
+
 ## デモ
 
 テストとデモを行うためには以下のようにします。
