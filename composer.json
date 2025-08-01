@@ -93,7 +93,8 @@
         }
     },
     "suggest": {
-        "koriym/csv-entities": "Provides one-to-many entity relation"
+        "koriym/csv-entities": "Provides one-to-many entity relation",
+        "ray/web-query": "For Web API query support"
     },
     "extra": {
         "bamarni-bin": {
