@@ -1,4 +1,4 @@
-しつも# Business Domain Repository Pattern（BDRパターン）実践ガイド
+# Business Domain Repository Pattern（BDRパターン）実践ガイド
 
 ## はじめに
 
@@ -175,6 +175,7 @@ final class OrderDomainFactory
         private TaxCalculator $taxCalculator,
         private ShippingService $shippingService,
         private InventoryService $inventoryService,
+        private BusinessRuleEngine $ruleEngine,
     ) {}
     
     public function factory(
@@ -204,6 +205,7 @@ final class OrderDomainFactory
             total: $subtotal + $tax + $shipping,
             canFulfill: count($validatedItems) === count($items) && $status === 'pending',
             insufficientStockItems: $this->getInsufficientStockItems($items, $validatedItems),
+            ruleEngine: $this->ruleEngine,
         );
     }
     
@@ -333,8 +335,9 @@ class OrderDomainFactoryTest extends TestCase
         $taxCalculator = new FakeTaxCalculator(['tokyo' => 0.08]);
         $shippingService = new FakeShippingService(['tokyo' => 500]);
         $inventoryService = new FakeInventoryService(['product-1' => 10]);
+        $ruleEngine = new FakeBusinessRuleEngine();
         
-        $factory = new OrderDomainFactory($taxCalculator, $shippingService, $inventoryService);
+        $factory = new OrderDomainFactory($taxCalculator, $shippingService, $inventoryService, $ruleEngine);
         
         // ファクトリーをテスト
         $order = $factory->factory(
@@ -362,6 +365,7 @@ class OrderDomainObjectTest extends TestCase
 {
     public function testDomainObjectBehavior(): void
     {
+        $ruleEngine = new FakeBusinessRuleEngine();
         $order = new OrderDomainObject(
             id: 'order-1',
             customerId: 'customer-1',
@@ -373,7 +377,8 @@ class OrderDomainObjectTest extends TestCase
             shipping: 500,
             total: 2660,
             canFulfill: true,
-            insufficientStockItems: []
+            insufficientStockItems: [],
+            ruleEngine: $ruleEngine,
         );
         
         // 振る舞いをテスト

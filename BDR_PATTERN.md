@@ -177,6 +177,7 @@ final class OrderDomainFactory
         private TaxCalculator $taxCalculator,
         private ShippingService $shippingService,
         private InventoryService $inventoryService,
+        private BusinessRuleEngine $ruleEngine,
     ) {}
     
     public function factory(
@@ -206,6 +207,7 @@ final class OrderDomainFactory
             total: $subtotal + $tax + $shipping,
             canFulfill: count($validatedItems) === count($items) && $status === 'pending',
             insufficientStockItems: $this->getInsufficientStockItems($items, $validatedItems),
+            ruleEngine: $this->ruleEngine,
         );
     }
     
@@ -243,7 +245,41 @@ final readonly class OrderDomainObject
     // Domain object behavior
     public function getDisplayTotal(): string
     {
-        return '
+        return '$' . number_format($this->total, 2);
+    }
+
+    public function hasInsufficientStock(): bool
+    {
+        return count($this->insufficientStockItems) > 0;
+    }
+
+    public function getTaxRate(): float
+    {
+        return $this->subtotal > 0 ? ($this->tax / $this->subtotal) * 100 : 0;
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function canProcess(): bool
+    {
+        return $this->canFulfill && $this->isPending();
+    }
+
+    // Dynamic business rules through injected service
+    public function getBusinessPriority(): string
+    {
+        // Impossible with ORM entities - depends on external service
+        // Test environment: Relaxed thresholds (e.g., high priority at $100+)
+        // Production: Strict thresholds (e.g., high priority at $10,000+)
+        // Peak season: Different thresholds
+        // VIP customers: Special rules apply
+        return $this->ruleEngine->calculatePriority($this);
+    }
+}
+```
 
 ## Three-Layer Testing Strategy: Simple and Reliable Testing
 
@@ -510,43 +546,7 @@ In the BDR Pattern, each excels in its own domain while building something great
 
 ## References
 
-- [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood (2006) . number_format($this->total, 2);
-  }
-
-  public function hasInsufficientStock(): bool
-  {
-  return count($this->insufficientStockItems) > 0;
-  }
-
-  public function getTaxRate(): float
-  {
-  return $this->subtotal > 0 ? ($this->tax / $this->subtotal) * 100 : 0;
-  }
-
-  public function isPending(): bool
-  {
-  return $this->status === 'pending';
-  }
-
-  public function canProcess(): bool
-  {
-  return $this->canFulfill && $this->isPending();
-  }
-
-  // Dynamic business rules through injected service
-  public function getBusinessPriority(): string
-  {
-  // Impossible with ORM entities - depends on external service
-  // Test environment: Relaxed thresholds (e.g., high priority at $100+)
-  // Production: Strict thresholds (e.g., high priority at $10,000+)
-  // Peak season: Different thresholds
-  // VIP customers: Special rules apply
-  return $this->ruleEngine->calculatePriority($this);
-  }
-  }
-```
-
-## Three-Layer Testing Strategy: Simple and Reliable Testing
+- [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood (2006)
 
 One of the important advantages of the BDR Pattern is that **testing becomes simple and reliable**.
 
@@ -602,8 +602,9 @@ class OrderDomainFactoryTest extends TestCase
         $taxCalculator = new FakeTaxCalculator(['tokyo' => 0.08]);
         $shippingService = new FakeShippingService(['tokyo' => 500]);
         $inventoryService = new FakeInventoryService(['product-1' => 10]);
+        $ruleEngine = new FakeBusinessRuleEngine();
         
-        $factory = new OrderDomainFactory($taxCalculator, $shippingService, $inventoryService);
+        $factory = new OrderDomainFactory($taxCalculator, $shippingService, $inventoryService, $ruleEngine);
         
         // Test factory
         $order = $factory->factory(
@@ -631,6 +632,7 @@ class OrderDomainObjectTest extends TestCase
 {
     public function testDomainObjectBehavior(): void
     {
+        $ruleEngine = new FakeBusinessRuleEngine();
         $order = new OrderDomainObject(
             id: 'order-1',
             customerId: 'customer-1',
@@ -642,7 +644,8 @@ class OrderDomainObjectTest extends TestCase
             shipping: 500,
             total: 2660,
             canFulfill: true,
-            insufficientStockItems: []
+            insufficientStockItems: [],
+            ruleEngine: $ruleEngine,
         );
         
         // Test behavior
@@ -656,143 +659,6 @@ class OrderDomainObjectTest extends TestCase
 
 Because each layer is tested independently, integration issues are extremely rare. This eliminates the need for complex and fragile integration tests.
 
-## Practical Patterns
-
-### Polymorphic Domain Objects
-
-```php
-final class UserDomainFactory
-{
-    public function factory(string $id, string $email, string $subscription_type): UserInterface
-    {
-        // Dynamic object creation based on business rules
-        return match ($subscription_type) {
-            'free' => new FreeUser(
-                id: $id,
-                email: $email,
-                maxProjects: 3,
-                adsEnabled: true,
-            ),
-            'premium' => new PremiumUser(
-                id: $id,
-                email: $email,
-                maxProjects: 100,
-                prioritySupport: true,
-            ),
-            'enterprise' => new EnterpriseUser(
-                id: $id,
-                email: $email,
-                dedicatedSupport: true,
-                ssoEnabled: true,
-            ),
-        };
-    }
-}
-```
-
-### External API Integration
-
-```php
-final class ProductDomainFactory
-{
-    public function __construct(
-        private ExchangeRateService $exchangeRate,  // External API
-        private ReviewService $reviewService,       // External API
-    ) {}
-    
-    public function factory(string $id, string $name, float $price_usd): ProductDomainObject
-    {
-        // Enrich with data from external services
-        $priceJpy = $this->exchangeRate->convert($price_usd, 'USD', 'JPY');
-        $reviews = $this->reviewService->getReviewSummary($id);
-        
-        return new ProductDomainObject(
-            id: $id,
-            name: $name,
-            priceUsd: $price_usd,
-            priceJpy: $priceJpy,
-            reviewAverage: $reviews->average,
-            reviewCount: $reviews->count,
-            isPopular: $reviews->average >= 4.0 && $reviews->count >= 10,
-        );
-    }
-}
-```
-
-### Caching Strategy
-
-```php
-final class CachedUserDomainFactory
-{
-    public function __construct(
-        private CacheInterface $cache,
-        private PermissionService $permissionService,
-    ) {}
-    
-    public function factory(string $id, int $role_id): UserDomainObject
-    {
-        // Cache expensive operations
-        $cacheKey = "permissions_role_{$role_id}";
-        $permissions = $this->cache->remember($cacheKey, 3600, 
-            fn() => $this->permissionService->getPermissions($role_id)
-        );
-        
-        return new UserDomainObject(
-            id: $id,
-            permissions: $permissions,
-            canEdit: in_array('edit', $permissions),
-            canDelete: in_array('delete', $permissions),
-        );
-    }
-}
-```
-
-## Migration from Existing Projects
-
-### Step 1: Identify Business Logic
-
-```php
-// Before: Logic scattered in controller
-class ProductController
-{
-    public function show($id)
-    {
-        $product = $this->repo->find($id);
-        
-        // Identify this business logic
-        $product->finalPrice = $this->calculatePrice($product);
-        $product->inStock = $this->inventory->check($product->id);
-        $product->reviews = $this->reviewService->get($product->id);
-        
-        return view('product', compact('product'));
-    }
-}
-```
-
-### Step 2: Create Domain Factory
-
-```php
-// After: Move logic to factory
-final class ProductDomainFactory
-{
-    public function factory($id, $basePrice, $categoryId): ProductDomainObject
-    {
-        return new ProductDomainObject(
-            id: $id,
-            finalPrice: $this->calculatePrice($basePrice, $categoryId),
-            inStock: $this->inventory->check($id),
-            reviews: $this->reviewService->get($id),
-        );
-    }
-}
-```
-
-### Step 3: Gradual Migration
-
-1. **Start with new features** - Implement new features with BDR Pattern
-2. **Prioritize high-traffic endpoints** - Greater performance improvement impact
-3. **Leverage existing test coverage** - Migrate while utilizing existing tests
-4. **Share knowledge within the team** - Share the benefits of the factory pattern
 
 ## Adapting to the AI Era: Achieving Transparency
 

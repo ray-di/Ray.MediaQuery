@@ -19,11 +19,15 @@
 
 ## インストール
 
-    $ composer require ray/media-query
+```shell
+composer require ray/media-query
+```
 
 Web APIクエリーの場合は、別パッケージをインストールしてください：
 
-    $ composer require ray/web-query
+```shell
+composer require ray/web-query
+```
 
 > **注意:** このパッケージはPHP 8.1+が必要で、PHP 8 Attributesを使用します。レガシーアノテーション（`@DbQuery`）は非推奨です。Rectorを使用してattributes（`#[DbQuery]`）に移行してください。
 
@@ -188,9 +192,9 @@ $page = $pages[2]; // 配列アクセスをした時にそのページのDBク�
 
 テストとデモを行うためには以下のようにします。
 
-```
-$ git clone https://github.com/ray-di/Ray.MediaQuery.git
-$ cd Ray.MediaQuery
-$ composer tests
-$ php demo/run.php
+```shell
+git clone https://github.com/ray-di/Ray.MediaQuery.git
+cd Ray.MediaQuery
+composer tests
+php demo/run.php
 ```
