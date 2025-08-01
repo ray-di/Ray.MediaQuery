@@ -1,5 +1,7 @@
 # Business Domain Repository Pattern (BDR Pattern) Practical Guide
 
+[日本語 (Japanese)](./BDR_PATTERN-ja.md)
+
 ## Introduction
 
 Programmers have long grappled with the **boundary** between relational and object-oriented thinking. This problem is known as the "Object-Relational Impedance Mismatch," referring to the fundamental incompatibility between the tabular data of relational databases and the hierarchical object structures of object-oriented programming.
