@@ -565,19 +565,13 @@ Example)
  * Injecting the ID of a logged-in user and leaving it as a comment statement in SQL.
  * Leave bound values in comments or logs during development
 
-## Annotations / Attributes
-
-You can use either [doctrine annotations](https://github.com/doctrine/annotations/) or [PHP8 attributes](https://www.php.net/manual/en/language.attributes.overview.php) can both be used. 
-The next two are the same.
+## Attributes
 
 ```php
 use Ray\MediaQuery\Annotation\DbQuery;
 
 #[DbQuery('user_add')]
-public function add1(string $id, string $title): void;
-
-/** @DbQuery("user_add") */
-public function add2(string $id, string $title): void;
+public function add(string $id, string $title): void;
 ```
 
 ## Testing Ray.MediaQuery
