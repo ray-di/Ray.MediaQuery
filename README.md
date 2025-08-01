@@ -102,8 +102,8 @@ interface TodoItemInterface
 }
 ```
 
-* If the result is a `row`(`array<string, scalar>`), specify `type:'row'`. The type is not necessary for `row_list`(`array<int, array<string, scalar>>`).
-* SQL files can contain multiple SQL statements. In that case, the return value is the last line of the SELECT.
+- If the result is a `row`(`array<string, scalar>`), specify `type:'row'`. The type is not necessary for `row_list`(`array<int, array<string, scalar>>`).
+- SQL files can contain multiple SQL statements. In that case, the return value is the last line of the SELECT.
 
 #### Entity
 

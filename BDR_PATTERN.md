@@ -489,7 +489,7 @@ Another advantage of the BDR Pattern is creating a **codebase transparent to AI 
 Complex abstraction layers of traditional ORMs were black boxes to AI:
 - Unclear what SQL would be executed
 - Difficult to trace where business logic exists
-- Implicit dependencies hard to understand
+- Implicit dependencies difficult to understand
 
 In the BDR Pattern, everything is explicit:
 - **What data is accessed**: Visible in SQL files

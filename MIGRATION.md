@@ -173,6 +173,8 @@ $camelKeys = array_map([StringCase::class, 'camel'], array_keys($data));
 $user = new User(...array_combine($camelKeys, array_values($data)));
 ```
 
+**Note:** The spread operator (`...`) used in these examples requires PHP 7.4+. Since you're already using PHP 8.1+, this feature is available.
+
 ### Database Query Solutions
 
 **For database queries with snake_case columns:**
