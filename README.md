@@ -295,7 +295,7 @@ final class UserEntityFactory
 }
 ```
 
-> **🏗️ Architecture Pattern**: Ray.MediaQuery enables the [**Business Domain Repository Pattern (BDR Pattern)**](./BDR_PATTERN.md) - an approach that transforms simple database queries into rich domain objects through dependency injection and business logic integration.
+> **🏗️ Architecture Pattern**: Ray.MediaQuery enables the [**Business Domain Repository Pattern (BDR Pattern)**](./docs/BDR_PATTERN.md) - an approach that transforms simple database queries into rich domain objects through dependency injection and business logic integration.
 
 ### Web API
 

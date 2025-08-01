@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ray-di.github.io/Ray.MediaQuery/schemas/query.json",
+  "title": "Ray.MediaQuery Query Context",
+  "description": "Context schema for database query operations in Ray.MediaQuery",
+  "type": "object",
+  "properties": {
+    "queryId": {
+      "type": "string",
+      "description": "Unique identifier for the query"
+    },
+    "operation": {
+      "type": "string",
+      "enum": ["select", "insert", "update", "delete", "database_query"],
+      "description": "Type of database operation"
+    },
+    "sqlFile": {
+      "type": ["string", "null"],
+      "description": "Path to the SQL file containing the query"
+    },
+    "sqlContent": {
+      "type": ["string", "null"],
+      "description": "Actual SQL query content"
+    }
+  },
+  "required": ["queryId", "operation"],
+  "additionalProperties": false
+}

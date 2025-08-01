@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ray-di.github.io/Ray.MediaQuery/schemas/entity.json",
+  "title": "Ray.MediaQuery Entity Context",
+  "description": "Context schema for entity hydration operations in Ray.MediaQuery",
+  "type": "object",
+  "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["hydrate", "fetch", "fetch_and_hydrate", "create"],
+      "description": "Type of entity operation"
+    },
+    "entityClass": {
+      "type": "string",
+      "description": "Fully qualified class name of the entity"
+    },
+    "fetchMethod": {
+      "type": "string",
+      "enum": ["FetchClass", "FetchFactory", "FetchAssoc", "FetchNewInstance", "FetchStaticFactory", "FetchInjectionFactory", "auto_detected"],
+      "description": "Method used to fetch/create entities"
+    },
+    "entityCount": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Number of entities created or processed"
+    },
+    "factoryClass": {
+      "type": ["string", "null"],
+      "description": "Factory class used for entity creation (if applicable)"
+    }
+  },
+  "required": ["operation", "entityClass", "fetchMethod"],
+  "additionalProperties": false
+}

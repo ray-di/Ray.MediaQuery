@@ -1,0 +1,1 @@
+/Users/akihito/git/BEAR.Resource

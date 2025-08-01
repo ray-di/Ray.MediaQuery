@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ray-di.github.io/Ray.MediaQuery/schemas/event.json",
+  "title": "Ray.MediaQuery Event Context",
+  "description": "Context schema for logging events in Ray.MediaQuery operations",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "Event message describing what happened"
+    },
+    "level": {
+      "type": "string",
+      "enum": ["debug", "info", "notice", "warning", "error", "critical", "alert", "emergency"],
+      "default": "info",
+      "description": "Log level of the event"
+    },
+    "data": {
+      "type": ["object", "array", "null"],
+      "description": "Additional contextual data for the event"
+    }
+  },
+  "required": ["message"],
+  "additionalProperties": false
+}

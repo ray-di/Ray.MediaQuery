@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ray-di.github.io/Ray.MediaQuery/schemas/database.json",
+  "title": "Ray.MediaQuery Database Context",
+  "description": "Context schema for database operations in Ray.MediaQuery",
+  "type": "object",
+  "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["execute", "prepare", "connect", "transaction"],
+      "description": "Type of database operation"
+    },
+    "dsn": {
+      "type": "string",
+      "description": "Database connection string (DSN)"
+    },
+    "executionTime": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "Query execution time in seconds"
+    },
+    "affectedRows": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Number of rows affected by the operation"
+    }
+  },
+  "required": ["operation", "dsn"],
+  "additionalProperties": false
+}

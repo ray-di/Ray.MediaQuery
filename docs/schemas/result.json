@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ray-di.github.io/Ray.MediaQuery/schemas/result.json",
+  "title": "Ray.MediaQuery Result Context",
+  "description": "Context schema for operation results in Ray.MediaQuery",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["success", "failure", "error", "warning", "partial"],
+      "description": "Status of the operation result"
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Error message if the operation failed"
+    },
+    "metadata": {
+      "type": ["object", "null"],
+      "description": "Additional metadata about the operation result",
+      "properties": {
+        "execution_time": {
+          "type": "number",
+          "minimum": 0
+        },
+        "memory_usage": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "query_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "result": {
+      "description": "The actual query result data (entities, arrays, scalars)"
+    },
+    "resultCount": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Number of items in the result set"
+    }
+  },
+  "required": ["status"],
+  "additionalProperties": false
+}
