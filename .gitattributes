@@ -21,7 +21,6 @@
 /demo             export-ignore
 /composer-require-checker.json export-ignore
 /docs             export-ignore
-/psalm-baseline.xml export-ignore
 
 
 # Configure diff output for .php and .phar files.
