@@ -659,49 +659,6 @@ class OrderDomainObjectTest extends TestCase
 
 Because each layer is tested independently, integration issues are extremely rare. This eliminates the need for complex and fragile integration tests.
 
-
-## Adapting to the AI Era: Achieving Transparency
-
-Another advantage of the BDR Pattern is creating a **codebase transparent to AI tools**.
-
-Complex abstraction layers of traditional ORMs were black boxes to AI:
-- Unclear what SQL would be executed
-- Difficult to trace where business logic exists
-- Implicit dependencies hard to understand
-
-In the BDR Pattern, everything is explicit:
-- **What data is accessed**: Visible in SQL files
-- **How it's transformed**: Clear in factory methods
-- **What services are used**: Explicit in constructors
-- **Business logic flow**: Traceable from query → factory → domain object
-
-```sql
--- order_detail.sql - AI can read and understand this
-SELECT 
-    o.id,
-    o.region,
-    JSON_ARRAYAGG(
-        JSON_OBJECT(
-            'product_id', oi.product_id,
-            'quantity', oi.quantity,
-            'price', oi.price
-        )
-    ) as items
-FROM orders o
-JOIN order_items oi ON o.id = oi.order_id
-WHERE o.id = :id
-```
-
-```php
-// Factory - AI fully understands dependencies and logic
-public function __construct(
-    private TaxCalculator $taxCalculator,      // Explicit dependency
-    private ShippingService $shippingService,  // Explicit dependency
-) {}
-```
-
-This transparency enables AI assistants to deeply understand your codebase and provide more accurate suggestions and automation.
-
 ## Summary
 
 The BDR Pattern presents **one form of domain collaboration**. It not only bridges different paradigms but also **dissolves boundaries between different media**.
