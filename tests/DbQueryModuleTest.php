@@ -6,6 +6,7 @@ namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
 use PDO;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
@@ -249,7 +250,7 @@ class DbQueryModuleTest extends TestCase
     }
 
     /** @return array<array<class-string>> */
-    public function queryInterfaceProvider(): array
+    public static function queryInterfaceProvider(): array
     {
         return [
             [TodoFactoryInterface::class],
@@ -257,11 +258,8 @@ class DbQueryModuleTest extends TestCase
         ];
     }
 
-    /**
-     * @param class-string $queryInterface
-     *
-     * @dataProvider queryInterfaceProvider
-     */
+    /** @param class-string $queryInterface */
+    #[DataProvider('queryInterfaceProvider')]
     public function testStaticFactory(string $queryInterface): void
     {
         /** @var TodoFactoryInterface|TodoFactoryUnionInterface $todoList */

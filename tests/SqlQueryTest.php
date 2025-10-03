@@ -9,6 +9,7 @@ use DateTime;
 use Pagerfanta\View\DefaultView;
 use PDO;
 use PDOStatement;
+use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPager;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerFactory;
@@ -60,14 +61,14 @@ class SqlQueryTest extends TestCase
         $this->assertStringContainsString('query: todo_add({"id":"1","title":"run"})', (string) $this->log);
     }
 
-    /** @depends testExec */
+    #[Depends('testExec')]
     public function testGetRow(): void
     {
         $result = $this->sqlQuery->getRow('todo_item', ['id' => '1']);
         $this->assertSame($this->insertData, $result);
     }
 
-    /** @depends testExec */
+    #[Depends('testExec')]
     public function testGetRowNotFound(): void
     {
         $result = $this->sqlQuery->getRow('todo_item', ['id' => '__invalid__']);
@@ -75,7 +76,7 @@ class SqlQueryTest extends TestCase
         $this->assertNull($result);
     }
 
-    /** @depends testExec */
+    #[Depends('testExec')]
     public function testGetRowList(): void
     {
         $result = $this->sqlQuery->getRowList('todo_list', []);
@@ -97,11 +98,8 @@ class SqlQueryTest extends TestCase
         return $pages;
     }
 
-    /**
-     * @param Pages<mixed> $pages
-     *
-     * @depends testPager
-     */
+    /** @param Pages<mixed> $pages */
+    #[Depends('testPager')]
     public function testPagerCount(Pages $pages): void
     {
         $this->assertSame(2, count($pages));
@@ -136,38 +134,29 @@ class SqlQueryTest extends TestCase
         $this->sqlQuery->exec('__not_exists', []);
     }
 
-    /** @depends testDateTime */
+    #[Depends('testDateTime')]
     public function testGetStatement(SqlQuery $sqlQuery): void
     {
         $this->assertInstanceOf(PDOStatement::class, $sqlQuery->getStatement());
     }
 
-    /**
-     * @param Pages<mixed> $pages
-     *
-     * @depends testPager
-     */
+    /** @param Pages<mixed> $pages */
+    #[Depends('testPager')]
     public function testOffsetExists(Pages $pages): void
     {
         $this->assertTrue(isset($pages[1]));
     }
 
-    /**
-     * @param Pages<mixed> $pages
-     *
-     * @depends testPager
-     */
+    /** @param Pages<mixed> $pages */
+    #[Depends('testPager')]
     public function testOffsetSet(Pages $pages): void
     {
         $this->expectException(LogicException::class);
         $pages[1] = '';
     }
 
-    /**
-     * @param Pages<mixed> $pages
-     *
-     * @depends testPager
-     */
+    /** @param Pages<mixed> $pages */
+    #[Depends('testPager')]
     public function testOffsetUnset(Pages $pages): void
     {
         $this->expectException(LogicException::class);

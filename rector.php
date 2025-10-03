@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Rector\CodeQuality\Rector\Class_\InlineConstructorDefaultToPropertyRector;
 use Rector\Config\RectorConfig;
 use Rector\Php80\Rector\Class_\AnnotationToAttributeRector;
-use Rector\Ray\AnnotationBinding\Rector\ClassMethod\AnnotationBindingRector;
+use Rector\PHPUnit\Set\PHPUnitSetList;
 use Rector\Set\ValueObject\LevelSetList;
 
 return static function (RectorConfig $rectorConfig): void {
@@ -17,11 +17,11 @@ return static function (RectorConfig $rectorConfig): void {
 
     // register a single rule
     $rectorConfig->rule(InlineConstructorDefaultToPropertyRector::class);
-    $rectorConfig->rule(AnnotationBindingRector::class);
     $rectorConfig->rule(AnnotationToAttributeRector::class);
 
     // define sets of rules
         $rectorConfig->sets([
-            LevelSetList::UP_TO_PHP_80
+            LevelSetList::UP_TO_PHP_80,
+            PHPUnitSetList::PHPUNIT_100,
         ]);
 };

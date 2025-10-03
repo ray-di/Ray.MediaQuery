@@ -10,5 +10,5 @@ use Ray\MediaQuery\Annotation\DbQuery;
 interface PromiseAddInterface
 {
     #[DbQuery('promise_add')]
-    public function add(string $id, string $title, DateTimeInterface $time = null): void;
+    public function add(string $id, string $title, DateTimeInterface|null $time = null): void;
 }
