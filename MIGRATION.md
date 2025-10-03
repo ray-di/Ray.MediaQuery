@@ -1,6 +1,6 @@
-# Migration Guide: Ray.MediaQuery 1.0.0-rc1
+# Migration Guide: Ray.MediaQuery 1.0.0
 
-This guide provides detailed instructions for migrating to Ray.MediaQuery 1.0.0-rc1.
+This guide provides detailed instructions for migrating to Ray.MediaQuery 1.0.0.
 
 ## Web API Functionality Migration
 
@@ -212,7 +212,7 @@ $user = new User(...array_combine($camelKeys, array_values($data)));
    ```
 
 3. **Factory Pattern**:
-   ```php
+```php
    class UserFactory
    {
        public static function fromDbRow(array $row): User
