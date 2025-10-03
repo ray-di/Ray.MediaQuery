@@ -17,7 +17,7 @@
         "koriym/attributes": "^1.0",
         "koriym/csv-entities": "^1.0",
         "koriym/null-object": "^1.0.1",
-        "koriym/semantic-logger": "1.x-dev",
+        "koriym/semantic-logger": "0.2.0",
         "nikic/php-parser": "^4.15 || ^5.0",
         "pagerfanta/pagerfanta": "^3.5",
         "phpdocumentor/reflection-docblock": "^5.3",

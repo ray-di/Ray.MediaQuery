@@ -81,12 +81,12 @@ final class SemanticLogSchemaValidationTest extends TestCase
         $this->assertTrue($validation['valid'], 'Validation errors: ' . implode(', ', $validation['errors']));
 
         // Output context data to test tmp directory
-        $testDir = __DIR__ . '/tmp/' . self::class;
+        $testDir = __DIR__ . '/tmp';
         if (! is_dir($testDir)) {
             mkdir($testDir, 0755, true);
         }
 
-        $outputFile = $testDir . '/' . __FUNCTION__ . '.json';
+        $outputFile = $testDir . '/' . basename(self::class) . '.json';
         file_put_contents($outputFile, json_encode($contextData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         // Validate that schema validation succeeded

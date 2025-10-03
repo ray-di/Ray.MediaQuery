@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Aura\Sql\ExtendedPdoInterface;
+use Koriym\SemanticLogger\SemanticLoggerInterface;
 use Override;
 use PDO;
 use PDOException;
@@ -15,6 +16,8 @@ use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
+use Ray\MediaQuery\SemanticLog\Context\QueryContext;
+use Ray\MediaQuery\SemanticLog\Context\ResultContext;
 
 use function array_pop;
 use function assert;
@@ -22,13 +25,16 @@ use function count;
 use function explode;
 use function file_exists;
 use function file_get_contents;
+use function implode;
 use function is_array;
 use function is_object;
 use function json_encode;
 use function preg_replace;
 use function sprintf;
+use function str_starts_with;
 use function stripos;
 use function strpos;
+use function strtolower;
 use function trim;
 
 use const JSON_THROW_ON_ERROR;
@@ -43,7 +49,7 @@ final class SqlQuery implements SqlQueryInterface
         private ExtendedPdoInterface $pdo,
         #[SqlDir]
         private string $sqlDir,
-        private MediaQueryLoggerInterface $logger,
+        private SemanticLoggerInterface $logger,
         private AuraSqlPagerFactoryInterface $pagerFactory,
         private ParamConverterInterface $paramConverter,
         private InjectorInterface $injector,
@@ -107,29 +113,58 @@ final class SqlQuery implements SqlQueryInterface
     {
         $sqlFile = sprintf('%s/%s.sql', $this->sqlDir, $sqlId);
         $sqls = $this->getSqls($sqlFile);
-        $this->logger->start();
-        ($this->paramConverter)($values);
-        foreach ($sqls as $sql) {
-            /** @psalm-suppress InaccessibleProperty */
-            try {
-                /** @var array<string, mixed> $values */
-                $pdoStatement = $this->performSql->perform($this->pdo, $sqlId, $sql, $values);
-            } catch (PDOException $e) {
-                $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
-
-                throw new PdoPerformException($msg);
+        
+        $queryContext = new QueryContext(
+            queryId: $sqlId,
+            operation: $this->getOperationType($sqls[0] ?? ''),
+            sqlFile: $sqlFile,
+            sqlContent: implode(';', $sqls)
+        );
+        
+        $queryId = $this->logger->open($queryContext);
+        
+        try {
+            ($this->paramConverter)($values);
+            
+            foreach ($sqls as $sql) {
+                /** @psalm-suppress InaccessibleProperty */
+                try {
+                    /** @var array<string, mixed> $values */
+                    $pdoStatement = $this->performSql->perform($this->pdo, $sqlId, $sql, $values);
+                } catch (PDOException $e) {
+                    $msg = sprintf('%s in %s.sql with values %s', $e->getMessage(), $sqlId, json_encode($values, JSON_THROW_ON_ERROR));
+                    
+                    $this->logger->close(new ResultContext(
+                        status: 'error',
+                        error: $msg
+                    ), $queryId);
+                    
+                    throw new PdoPerformException($msg);
+                }
             }
+
+            $this->pdoStatement = $pdoStatement;
+            $lastQuery = $pdoStatement->queryString;
+            $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
+            $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
+            $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
+            
+            $this->logger->close(new ResultContext(
+                status: 'success',
+                metadata: ['resultCount' => count($result)]
+            ), $queryId);
+
+            return $result;
+        } catch (PdoPerformException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            $this->logger->close(new ResultContext(
+                status: 'error',
+                error: $e->getMessage()
+            ), $queryId);
+            
+            throw $e;
         }
-
-        $this->pdoStatement = $pdoStatement;
-        $lastQuery = $pdoStatement->queryString;
-        $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
-        $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
-        $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
-        /** @var array<string, mixed> $values */
-        $this->logger->log($sqlId, $values);
-
-        return $result;
     }
 
     /** @return array<mixed> */
@@ -194,5 +229,25 @@ final class SqlQuery implements SqlQueryInterface
         $sql = (string) file_get_contents($sqlFile);
 
         return trim($sql, "; \n\r\t\v\0");
+    }
+
+    private function getOperationType(string $sql): string
+    {
+        $sql = trim(strtolower($sql));
+        
+        if (str_starts_with($sql, 'select') || str_starts_with($sql, 'with')) {
+            return 'select';
+        }
+        if (str_starts_with($sql, 'insert')) {
+            return 'insert';
+        }
+        if (str_starts_with($sql, 'update')) {
+            return 'update';
+        }
+        if (str_starts_with($sql, 'delete')) {
+            return 'delete';
+        }
+        
+        return 'execute';
     }
 }
