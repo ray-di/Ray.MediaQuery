@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-rc2] - 2025-10-03
+
+### Changed
+- Updated pagerfanta/pagerfanta dependency to ^3.5 || ^4.7
+
 ## [1.0.0-rc1] - 2025-07-30
 
 ### BREAKING CHANGES
@@ -56,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive test coverage for Input object processing
 
 ### Changed
+
 - Update ray/input-query dependency to ^0.2.0
 - Refactor ParamConverter with improved type annotations and static analysis compliance
 
@@ -142,6 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Please refer to the git history for changes in earlier versions.
 
+[1.0.0-rc2]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0-rc1...1.0.0-rc2
 [1.0.0-rc1]: https://github.com/ray-di/Ray.MediaQuery/compare/0.17.0...1.0.0-rc1
 [0.17.0]: https://github.com/ray-di/Ray.MediaQuery/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/ray-di/Ray.MediaQuery/compare/0.15.1...0.16.0
