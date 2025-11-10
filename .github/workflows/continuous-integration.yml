@@ -37,8 +37,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       # Define defaults here where they can be used in steps
-      DEFAULT_OLD_STABLE: '["8.1", "8.2", "8.3"]'
-      DEFAULT_CURRENT_STABLE: '8.4'
+      DEFAULT_OLD_STABLE: '["8.2", "8.3", "8.4"]'
+      DEFAULT_CURRENT_STABLE: '8.5'
     strategy:
       fail-fast: false
       matrix:
@@ -47,7 +47,7 @@ jobs:
         #   - If inputs.old_stable is NOT provided by the caller, its `default: '[]'` in the `inputs` definition is used.
         # For push/pull_request/workflow_dispatch (where inputs.old_stable is an empty string "" if not set via dispatch UI):
         #   - The default is hardcoded here due to GitHub Actions matrix limitations with env variables
-        php-version: ${{ fromJson(inputs.old_stable || '["8.1", "8.2", "8.3"]') }}
+        php-version: ${{ fromJson(inputs.old_stable || '["8.2", "8.3", "8.4"]') }}
         dependencies: [highest, lowest]
         os: [ubuntu-latest]
         experimental: [false]
@@ -55,11 +55,11 @@ jobs:
           # For workflow_call: inputs.current_stable is required and its value is used.
           # For push/pull_request/workflow_dispatch (where inputs.current_stable is an empty string "" if not set via dispatch UI):
           #   - The default is hardcoded here due to GitHub Actions matrix limitations with env variables
-          - php-version: ${{ inputs.current_stable || '8.4' }}
+          - php-version: ${{ inputs.current_stable || '8.5' }}
             os: windows-latest
             dependencies: highest
             experimental: false
-          - php-version: ${{ inputs.current_stable || '8.4' }}
+          - php-version: ${{ inputs.current_stable || '8.5' }}
             os: ubuntu-latest
             dependencies: highest
             experimental: false
@@ -68,7 +68,7 @@ jobs:
         exclude:
           # Skip lowest dependencies test for current stable PHP version
           # This prevents aura/sql ^5 from being installed on the latest PHP version where it may not be fully compatible
-          - php-version: ${{ inputs.current_stable || '8.4' }}
+          - php-version: ${{ inputs.current_stable || '8.5' }}
             dependencies: lowest
 
     continue-on-error: ${{ matrix.experimental }}
