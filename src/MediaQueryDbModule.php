@@ -10,6 +10,14 @@ use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Qualifier\FactoryMethod;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 
+/**
+ * Database query module - provides SQL-specific bindings.
+ *
+ * This is an internal implementation module. Users should use MediaQuerySqlModule
+ * instead of using this module directly.
+ *
+ * @internal
+ */
 final class MediaQueryDbModule extends AbstractModule
 {
     public function __construct(
