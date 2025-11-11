@@ -12,6 +12,14 @@ use Ray\Di\Scope;
 use Ray\InputQuery\ToArray;
 use Ray\InputQuery\ToArrayInterface;
 
+/**
+ * Base module for MediaQuery framework - provides common bindings.
+ *
+ * This is an internal implementation module. Users should use MediaQuerySqlModule
+ * or MediaQueryWebModule instead of using this module directly.
+ *
+ * @internal
+ */
 final class MediaQueryBaseModule extends AbstractModule
 {
     public function __construct(
