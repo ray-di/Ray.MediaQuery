@@ -64,9 +64,9 @@ jobs:
             dependencies: highest
             experimental: false
           # Note: Current stable PHP version with lowest dependencies is intentionally excluded
-          # to avoid aura/sql v5 compatibility issues with the latest PHP version
+          # to avoid aura/sql compatibility issues with the latest PHP versions
         exclude:
-          # Skip lowest dependencies test for PHP 8.4+ where aura/sql v5 is incompatible
+          # Skip lowest dependencies test for PHP 8.4+ where aura/sql v4 (lowest) is incompatible
           - php-version: '8.4'
             dependencies: lowest
           - php-version: ${{ inputs.current_stable || '8.5' }}
