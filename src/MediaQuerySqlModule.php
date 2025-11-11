@@ -22,8 +22,17 @@ use Ray\Di\AbstractModule;
  * ));
  * ```
  *
- * For advanced use cases requiring explicit query class selection, use MediaQueryBaseModule
- * and MediaQueryDbModule directly.
+ * For advanced use cases requiring explicit query class selection or custom configuration,
+ * create your own module that wraps the internal modules:
+ * ```php
+ * class MyQueryModule extends AbstractModule {
+ *     protected function configure(): void {
+ *         $queries = Queries::fromClasses([UserInterface::class, OrderInterface::class]);
+ *         $this->install(new MediaQueryBaseModule($queries));
+ *         $this->install(new MediaQueryDbModule(new DbQueryConfig('/path/to/sql')));
+ *     }
+ * }
+ * ```
  */
 final class MediaQuerySqlModule extends AbstractModule
 {
