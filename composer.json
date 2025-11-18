@@ -1,6 +1,6 @@
 {
     "name": "ray/media-query",
-    "description": "Database access mapping Framework",
+    "description": "PHP interface-based SQL framework",
     "license": "MIT",
     "authors": [
         {
@@ -13,15 +13,15 @@
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "ext-tokenizer": "*",
-        "aura/sql": "^4.0 || ^5.0 || ^6.0",
+        "aura/sql": "^5.0 || ^6.0",
         "koriym/csv-entities": "^1.0",
         "koriym/null-object": "^1.0.1",
         "pagerfanta/pagerfanta": "^3.5 || ^4.7",
         "phpdocumentor/reflection-docblock": "^5.3",
         "phpdocumentor/type-resolver": "^1.6.1",
-        "ray/aop": "^2.10.4",
-        "ray/aura-sql-module": "^1.13.7",
-        "ray/di": "^2.14",
+        "ray/aop": "^2.19",
+        "ray/aura-sql-module": "^1.13.6",
+        "ray/di": "^2.19",
         "ray/input-query": "^1.0"
     },
     "require-dev": {

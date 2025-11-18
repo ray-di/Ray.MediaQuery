@@ -1,6 +1,6 @@
 # Ray.MediaQuery
 
-## データベースアクセスマッピングフレームワーク
+## PHPインターフェースベースSQLフレームワーク
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 [![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml)
@@ -9,13 +9,13 @@
 
 ## 概要
 
-`Ray.MediaQuery`はインターフェイスベースのクエリー定義によるデータベースクエリー抽象化を提供します。
+`Ray.MediaQuery`はPHPインターフェースとSQL実行を束縛します。リポジトリインターフェースをメソッドと共に定義し、SQLクエリーIDで注釈を付けると、フレームワークがAOPと依存性注入を使用して自動的に実装を生成します。
 
-## モチベーション
-
-* このフレームワークはインターフェイスベースのクエリー定義によるデータベースクエリー抽象化を提供します。
-* 実行オブジェクトは自動生成されるため、実行のための手続き的なコードを書く必要がありません。
-* 使用コードは外部メディアの実際の状態に関係ないため、ストレージを後から変更できます。並列開発とスタブ作成が容易です。
+**主な機能:**
+ * **実装コード不要** - インターフェースを定義するだけで、実行可能な実装を自動取得
+ * **レイヤーの分離** - ドメイン層（PHPインターフェース）がインフラ層（SQL）から独立
+ * **型安全** - エンティティハイドレーション対応で完全なPHP型チェック
+ * **テスト容易** - インターフェースのモック化が容易で並列開発やテストがしやすい
 
 ## インストール
 

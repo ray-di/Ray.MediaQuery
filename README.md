@@ -1,6 +1,6 @@
 # Ray.MediaQuery
 
-## Database access mapping framework
+## PHP interface-based SQL framework
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 [![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml)
@@ -9,13 +9,13 @@
 
 ## Overview
 
-`Ray.MediaQuery` provides database query abstraction through interface-based query definitions.
+`Ray.MediaQuery` binds PHP interfaces to SQL execution. Define repository interfaces with methods, annotate them with SQL query IDs, and the framework automatically generates implementations using AOP and dependency injection.
 
-## Motivation
-
- * This framework provides database query abstraction through interface-based query definitions.
- * Execution objects are generated automatically so you do not need to write procedural code for execution.
- * Since usage codes are indifferent to the actual state of external media, storage can be changed later. Easy parallel development and stubbing.
+**Key Features:**
+ * **No implementation code needed** - Define interfaces, get executable implementations automatically
+ * **Clean separation** - Domain layer (PHP interfaces) stays independent from infrastructure layer (SQL)
+ * **Type-safe** - Full PHP type checking with entity hydration support
+ * **Testable** - Easy to mock interfaces for parallel development and testing
 
 ## Composer install
 
