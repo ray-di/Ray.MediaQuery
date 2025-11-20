@@ -154,47 +154,308 @@ $user = $userRepo->find('user-123');
 
 ## Advanced Features
 
-### 🏗️ Business Domain Repository Pattern
+### 🔄 Result Mapping & Entity Hydration
 
-Ray.MediaQuery enables the [**BDR Pattern**](./BDR_PATTERN.md) - combining efficient SQL queries with rich domain objects through dependency injection:
+Ray.MediaQuery automatically hydrates query results based on your return type declarations:
 
+**Single Entity:**
 ```php
-#[DbQuery('complex_report', factory: ReportFactory::class)]
-public function getReport(DateTimeInterface $from = null): Report;
-// Factory receives DI services to enrich data with business logic
+interface UserRepository
+{
+    #[DbQuery('user_find')]
+    public function find(string $id): ?User;  // Returns User or null
+}
+
+class User
+{
+    public function __construct(
+        public readonly string $id,
+        public readonly string $name,
+        public readonly string $email
+    ) {}
+}
 ```
 
-### 📄 Pagination Support
-
+**Entity Array:**
 ```php
-#[DbQuery('product_list'), Pager(perPage: 20)]
-public function getProducts(): PagesInterface;
+interface UserRepository
+{
+    #[DbQuery('user_list')]
+    /** @return array<User> */
+    public function findAll(): array;  // Returns User[]
+}
 ```
 
-### 🔄 Value Objects & Type Conversion
-
+**Raw Array (single row):**
 ```php
-// Automatic conversion for DateTime, custom VOs, and more
-#[DbQuery('add_task')]  
-public function add(string $title, UserId $user, DateTimeInterface $due = null): void;
+interface UserRepository
+{
+    #[DbQuery('user_stats', type: 'row')]
+    public function getStats(string $id): array;  // ['total' => 10, 'active' => 5]
+}
 ```
 
-### 📦 Structured Input with Flattening
-
-Keep methods clean with input objects. `#[Input]` attributes automatically flatten nested objects into SQL parameters:
-
+**Raw Array (multiple rows):**
 ```php
-#[DbQuery('user_search')]
-public function search(UserSearchInput $input): array;
-// Nested objects are flattened: input.address.city becomes :city
+interface UserRepository
+{
+    #[DbQuery('user_list')]
+    public function listRaw(): array;  // [['id' => '1', ...], ['id' => '2', ...]]
+}
 ```
 
-### 🎯 Flexible Result Mapping
+**Constructor Property Promotion (Recommended):**
 
-- Arrays for simple data
-- Entity hydration for domain objects
-- Factory transformation for complex logic
-- Custom result processors
+Use constructor property promotion for type-safe, immutable entities:
+
+```php
+final class Invoice
+{
+    public function __construct(
+        public readonly string $id,
+        public readonly string $title,
+        public readonly string $userName,      // camelCase property
+        public readonly string $emailAddress,  // camelCase property
+    ) {}
+}
+
+// SQL: SELECT id, title, user_name, email_address FROM invoices
+// Ray.MediaQuery handles snake_case → camelCase conversion automatically
+```
+
+For PHP 8.4+, use readonly classes:
+
+```php
+final readonly class Invoice
+{
+    public function __construct(
+        public string $id,
+        public string $title,
+        public string $userName,
+        public string $emailAddress,
+    ) {}
+}
+```
+
+### 🏭 Factory Pattern for Complex Objects
+
+Use factories when entities need computed properties or injected services:
+
+**Basic Factory:**
+```php
+interface OrderRepository
+{
+    #[DbQuery('order_detail', factory: OrderFactory::class)]
+    public function getOrder(string $id): Order;
+}
+
+class OrderFactory
+{
+    public function factory(string $id, float $amount): Order
+    {
+        return new Order(
+            id: $id,
+            amount: $amount,
+            tax: $amount * 0.1,      // Computed
+            total: $amount * 1.1,    // Computed
+        );
+    }
+}
+```
+
+**Factory with Dependency Injection:**
+```php
+class OrderFactory
+{
+    public function __construct(
+        private TaxCalculator $taxCalc,       // Injected
+        private ShippingService $shipping,    // Injected
+    ) {}
+
+    public function factory(string $id, float $amount, string $region): Order
+    {
+        return new Order(
+            id: $id,
+            amount: $amount,
+            tax: $this->taxCalc->calculate($amount, $region),
+            shipping: $this->shipping->calculate($region),
+        );
+    }
+}
+```
+
+**Polymorphic Entities:**
+```php
+class UserFactory
+{
+    public function factory(string $id, string $type, string $email): UserInterface
+    {
+        return match ($type) {
+            'free' => new FreeUser($id, $email, maxStorage: 100),
+            'premium' => new PremiumUser($id, $email, maxStorage: 1000),
+        };
+    }
+}
+```
+
+> **🏗️ Architecture Pattern**: Factories enable the [**BDR Pattern**](./BDR_PATTERN.md) - combining efficient SQL with rich domain objects through dependency injection.
+
+### 📥 Smart Parameter Handling
+
+**DateTime Automatic Conversion:**
+```php
+interface TaskRepository
+{
+    #[DbQuery('task_add')]
+    public function add(string $title, DateTimeInterface $createdAt = null): void;
+}
+
+// SQL: INSERT INTO tasks (title, created_at) VALUES (:title, :createdAt)
+// DateTime converted to: '2024-01-15 10:30:00'
+// null injects current time automatically
+```
+
+**Value Objects:**
+```php
+class UserId implements ToScalarInterface
+{
+    public function __construct(private int $value) {}
+
+    public function toScalar(): int
+    {
+        return $this->value;
+    }
+}
+
+interface MemoRepository
+{
+    #[DbQuery('memo_add')]
+    public function add(string $memo, UserId $userId): void;
+}
+
+// UserId automatically converted via toScalar()
+```
+
+**Parameter Injection:**
+```php
+interface TodoRepository
+{
+    #[DbQuery('todo_add')]
+    public function add(string $title, Uuid $id = null): void;
+}
+
+// null triggers DI: Uuid is generated and injected automatically
+```
+
+### 📦 Input Object Flattening
+
+Structure your input while keeping SQL simple with `Ray.InputQuery`:
+
+```php
+use Ray\InputQuery\Attribute\Input;
+
+class UserInput
+{
+    public function __construct(
+        #[Input] public readonly string $givenName,
+        #[Input] public readonly string $familyName,
+        #[Input] public readonly string $email
+    ) {}
+}
+
+class TodoInput
+{
+    public function __construct(
+        #[Input] public readonly string $title,
+        #[Input] public readonly UserInput $assignee,  // Nested
+        #[Input] public readonly ?DateTimeInterface $dueDate
+    ) {}
+}
+
+interface TodoRepository
+{
+    #[DbQuery('todo_create')]
+    public function create(TodoInput $input): void;
+}
+
+// Input flattened automatically:
+// :title, :givenName, :familyName, :email, :dueDate
+```
+
+### 📄 Pagination
+
+Enable lazy-loaded pagination with the `#[Pager]` attribute:
+
+**Basic Pagination:**
+```php
+use Ray\MediaQuery\PagesInterface;
+
+interface ProductRepository
+{
+    #[DbQuery('product_list'), Pager(perPage: 20, template: '/{?page}')]
+    public function getProducts(): PagesInterface;
+}
+
+$pages = $productRepo->getProducts();
+$count = count($pages);  // Executes COUNT query
+$page = $pages[1];       // Executes SELECT with LIMIT/OFFSET
+
+// Page object properties:
+// $page->data          // Items for this page
+// $page->current       // Current page number
+// $page->total         // Total pages
+// $page->hasNext       // Has next page?
+// $page->hasPrevious   // Has previous page?
+// (string) $page       // Pager HTML
+```
+
+**Dynamic Page Size:**
+```php
+interface ProductRepository
+{
+    #[DbQuery('product_list'), Pager(perPage: 'perPage', template: '/{?page}')]
+    public function getProducts(int $perPage): PagesInterface;
+}
+```
+
+**With Entity Hydration:**
+```php
+interface ProductRepository
+{
+    #[DbQuery('product_list'), Pager(perPage: 20)]
+    /** @return PagesInterface<Product> */
+    public function getProducts(): PagesInterface;
+}
+
+// Each page's data is hydrated to Product entities
+```
+
+### 🔍 Direct SQL Execution
+
+For advanced use cases, inject `SqlQueryInterface` directly:
+
+```php
+use Ray\MediaQuery\SqlQueryInterface;
+
+class CustomRepository
+{
+    public function __construct(
+        private SqlQueryInterface $sqlQuery
+    ) {}
+
+    public function complexQuery(array $params): array
+    {
+        return $this->sqlQuery->getRowList('complex_query', $params);
+    }
+}
+```
+
+**Available Methods:**
+- `getRow($queryId, $params)` - Single row
+- `getRowList($queryId, $params)` - Multiple rows
+- `exec($queryId, $params)` - Execute without result
+- `getStatement()` - Get PDO statement
+- `getPages()` - Get paginated results
 
 ## Philosophy: Boundaries That Dissolve
 
