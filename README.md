@@ -35,27 +35,57 @@ Define interfaces, get working repositories. No boilerplate, no mapping configur
 Use the full power of your database - window functions, CTEs, custom functions. If it runs in your database, it works with Ray.MediaQuery.
 
 ### Rich Domain Objects via Dependency Injection
-Transform database rows into rich domain objects with business logic, not just data containers:
+
+**Traditional ORMs give you data objects. Business logic ends up in controllers.**
+Ray.MediaQuery transforms SQL results into rich domain objects through factories with dependency injection.
 
 ```php
-#[DbQuery('order_detail', factory: OrderDomainFactory::class)]
-public function getOrder(string $id): Order;
+interface OrderRepository
+{
+    #[DbQuery('order_detail', factory: OrderDomainFactory::class)]
+    public function getOrder(string $id): Order;
+}
 
-// Your domain object gets injected services and computed properties
-class Order {
+// Factory injects services and enriches data from SQL
+class OrderDomainFactory
+{
+    public function __construct(
+        private TaxService $taxService,
+        private InventoryService $inventory,
+        private RuleEngine $rules,
+    ) {}
+
+    public function factory(string $id, float $subtotal): Order
+    {
+        return new Order(
+            id: $id,
+            subtotal: $subtotal,
+            tax: $this->taxService->calculate($subtotal),
+            canShip: $this->inventory->check($id),
+            rules: $this->rules,
+        );
+    }
+}
+
+// Domain object with business logic
+class Order
+{
     public function __construct(
         public string $id,
         public float $subtotal,
-        public float $tax,           // Calculated by TaxService
-        public bool $canShip,        // Determined by InventoryService
-        private RuleEngine $rules,   // Injected for business logic
+        public float $tax,
+        public bool $canShip,
+        private RuleEngine $rules,
     ) {}
-    
-    public function getPriority(): string {
+
+    public function getPriority(): string
+    {
         return $this->rules->calculatePriority($this);
     }
 }
 ```
+
+> See [BDR Pattern Guide](./BDR_PATTERN.md) for the architectural approach behind this design.
 
 ### Test Each Layer Independently
 SQL queries, factories, and domain objects can all be tested in isolation. When each layer works, the combination works.
