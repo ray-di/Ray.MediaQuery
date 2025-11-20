@@ -21,7 +21,7 @@
         "phpdocumentor/type-resolver": "^1.6.1",
         "ray/aop": "^2.19",
         "ray/aura-sql-module": "^1.17",
-        "ray/di": "^2.16",
+        "ray/di": "^2.19",
         "ray/input-query": "^1.0"
     },
     "require-dev": {
