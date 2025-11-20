@@ -1,386 +1,398 @@
 # Ray.MediaQuery
 
-## Database access mapping framework
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 [![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml)
 
-[日本語 (Japanese)](./README-ja.md)
+## Interface-Driven SQL for PHP
 
-## Overview
+**Ray.MediaQuery lets SQL be SQL and Objects be Objects.**
 
-`Ray.MediaQuery` provides database query abstraction through interface-based query definitions.
-
-## Motivation
-
- * This framework provides database query abstraction through interface-based query definitions.
- * Execution objects are generated automatically so you do not need to write procedural code for execution.
- * Since usage codes are indifferent to the actual state of external media, storage can be changed later. Easy parallel development and stubbing.
-
-## Composer install
-
-    $ composer require ray/media-query
-
-For Web API queries, install the separate package:
-
-    $ composer require ray/web-query
-
-> **Note:** For migration from older versions, see [MIGRATION.md](./MIGRATION.md).
-
-## Getting Started
-
-Define the interface for media access.
-
-### DB
-
-Specify the SQL ID with the attribute `DbQuery`.
+Traditional ORMs try to hide SQL behind object abstractions. Ray.MediaQuery takes a different approach:
 
 ```php
-interface TodoAddInterface
+// 1. Define your interface
+interface UserRepository
 {
-    #[DbQuery('user_add')]
-    public function add(string $id, string $title): void;
+    #[DbQuery('user_by_id')]
+    public function find(string $id): User;
 }
+
+// 2. Write your SQL
+-- user_by_id.sql
+SELECT * FROM users WHERE id = :id
+
+// 3. That's it. No implementation needed.
+// Ray.MediaQuery generates everything else.
 ```
 
-### Module
+## Why Ray.MediaQuery?
 
-MediaQueryModule binds the execution of SQL to an interface by setting `DbQueryConfig`.
+### Zero Implementation Code
+Define interfaces, get working repositories. No boilerplate, no mapping configuration.
+
+### SQL Excellence Without Compromise
+Use the full power of your database - window functions, CTEs, custom functions. If it runs in your database, it works with Ray.MediaQuery.
+
+### Rich Domain Objects via Dependency Injection
+
+**Traditional ORMs give you data objects. Business logic ends up in controllers.**
+Ray.MediaQuery transforms SQL results into rich domain objects through factories with dependency injection.
 
 ```php
-use Ray\AuraSqlModule\AuraSqlModule;
-use Ray\MediaQuery\DbQueryConfig;
-use Ray\MediaQuery\MediaQueryModule;
-use Ray\MediaQuery\Queries;
-
-protected function configure(): void
+interface OrderRepository
 {
-    $this->install(
-        new MediaQueryModule(
-            Queries::fromDir('/path/to/queryInterface'),
-            new DbQueryConfig('/path/to/sql')
-        ),
-    );
-    $this->install(new AuraSqlModule('mysql:host=localhost;dbname=test', 'username', 'password'));
+    #[DbQuery('order_detail', factory: OrderDomainFactory::class)]
+    public function getOrder(string $id): Order;
 }
-```
 
-Note: MediaQueryModule requires AuraSqlModule to be installed.
-
-### Request object injection
-
-You do not need to prepare an implementation class. It is generated and injected from the interface.
-
-```php
-class Todo
+// Factory injects services and enriches data from SQL
+class OrderDomainFactory
 {
     public function __construct(
-        private TodoAddInterface $todoAdd
+        private TaxService $taxService,
+        private InventoryService $inventory,
+        private RuleEngine $rules,
     ) {}
 
-    public function add(string $id, string $title): void
+    public function factory(string $id, float $subtotal): Order
     {
-        $this->todoAdd->add($id, $title);
+        return new Order(
+            id: $id,
+            subtotal: $subtotal,
+            tax: $this->taxService->calculate($subtotal),
+            canShip: $this->inventory->check($id),
+            rules: $this->rules,
+        );
+    }
+}
+
+// Domain object with business logic
+class Order
+{
+    public function __construct(
+        public string $id,
+        public float $subtotal,
+        public float $tax,
+        public bool $canShip,
+        private RuleEngine $rules,
+    ) {}
+
+    public function getPriority(): string
+    {
+        return $this->rules->calculatePriority($this);
     }
 }
 ```
 
-### DbQuery
+> See [BDR Pattern Guide](./BDR_PATTERN.md) for the architectural approach behind this design.
 
-When the method is called, the SQL specified by the ID is bound with the method argument and executed.
-For example, if the ID is `todo_item`, the `todo_item.sql` SQL statement is bound with `['id => $id]` and executed.
+### Test Each Layer Independently
+SQL queries, factories, and domain objects can all be tested in isolation. When each layer works, the combination works.
+
+### AI-Era Transparency
+Unlike ORM magic, everything is explicit and readable - perfect for AI assistants to understand and help with your codebase.
+
+## Core Concept: Interface-Driven Design
+
+Ray.MediaQuery binds PHP interfaces directly to SQL execution. No abstract query builders, no hidden SQL generation, no runtime surprises.
 
 ```php
-interface TodoItemInterface
+interface TodoRepository
 {
-    #[DbQuery('todo_item', type: 'row')]
-    public function item(string $id): array;
-
+    #[DbQuery('add_todo')]
+    public function add(string $id, string $title): void;
+    
     #[DbQuery('todo_list')]
     /** @return array<Todo> */
-    public function list(string $id): array;
+    public function findByUser(string $userId): array;
+    
+    #[DbQuery('stats', factory: StatsFactory::class)]
+    public function getStats(string $userId): UserStats;
 }
 ```
 
-- If the result is a `row`(`array<string, scalar>`), specify `type:'row'`. The type is not necessary for `row_list`(`array<int, array<string, scalar>>`).
-- SQL files can contain multiple SQL statements. In that case, the return value is the last line of the SELECT.
+The framework handles:
+- SQL file discovery and execution
+- Parameter binding with type conversion
+- Result hydration to entities or arrays
+- Factory-based transformations with DI
+- Transaction management
 
-#### Entity
+You focus on:
+- Defining clear interfaces
+- Writing efficient SQL
+- Implementing business logic
 
-When the return value of a method is an entity class, the result of the SQL execution is hydrated.
+## Quick Start
+
+### Installation
+
+```bash
+composer require ray/media-query
+```
+
+### Basic Setup
 
 ```php
-interface TodoItemInterface
-{
-    #[DbQuery('todo_item')]
-    public function item(string $id): Todo;
+use Ray\Di\AbstractModule;
+use Ray\Di\Injector;
+use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\MediaQuerySqlModule;
+use Ray\AuraSqlModule\AuraSqlModule;
 
-    #[DbQuery('todo_list')]
-    /** @return array<Todo> */
-    public function list(string $id): array;
+// 1. Configure in your module
+class AppModule extends AbstractModule
+{
+    protected function configure(): void
+    {
+        $this->install(
+            new MediaQuerySqlModule(
+                interfaceDir: '/path/to/query/interfaces',
+                sqlDir: '/path/to/sql/files'
+            )
+        );
+
+        $this->install(
+            new AuraSqlModule(
+                'mysql:host=localhost;dbname=app',
+                'username',
+                'password'
+            )
+        );
+    }
 }
+
+// 2. Define repository interface
+interface UserRepository
+{
+    #[DbQuery('user_add')]
+    public function add(string $id, string $name): void;
+
+    #[DbQuery('user_find')]
+    public function find(string $id): ?User;
+}
+
+// 3. Write SQL files
+-- user_add.sql
+INSERT INTO users (id, name) VALUES (:id, :name)
+
+-- user_find.sql  
+SELECT * FROM users WHERE id = :id
+
+// 4. Get instance and use (no implementation needed!)
+$injector = new Injector(new AppModule());
+$userRepo = $injector->getInstance(UserRepository::class);
+
+$userRepo->add('user-123', 'Alice');
+$user = $userRepo->find('user-123');
 ```
 
+## Advanced Features
+
+### Result Mapping & Entity Hydration
+
+Ray.MediaQuery automatically hydrates query results based on your return type declarations:
+
+**Single Entity:**
 ```php
-final class Todo
+interface UserRepository
 {
-    public readonly string $id;
-    public readonly string $title;
+    #[DbQuery('user_find')]
+    public function find(string $id): ?User;  // Returns User or null
+}
+
+class User
+{
+    public function __construct(
+        public readonly string $id,
+        public readonly string $name,
+        public readonly string $email
+    ) {}
 }
 ```
 
-**Entity classes should use constructor property promotion (recommended):**
+**Entity Array:**
+```php
+interface UserRepository
+{
+    #[DbQuery('user_list')]
+    /** @return array<User> */
+    public function findAll(): array;  // Returns User[]
+}
+```
 
-For multi-word database columns (snake_case), mix constructor property promotion with explicit assignment:
+**Raw Array (single row):**
+```php
+interface UserRepository
+{
+    #[DbQuery('user_stats', type: 'row')]
+    public function getStats(string $id): array;  // ['total' => 10, 'active' => 5]
+}
+```
+
+**Raw Array (multiple rows):**
+```php
+interface UserRepository
+{
+    #[DbQuery('user_list')]
+    public function listRaw(): array;  // [['id' => '1', ...], ['id' => '2', ...]]
+}
+```
+
+**Constructor Property Promotion (Recommended):**
+
+Use constructor property promotion for type-safe, immutable entities:
 
 ```php
 final class Invoice
 {
-    public readonly string $userName;
-    public readonly string $emailAddress;
-    
     public function __construct(
-        public readonly string $id,        // Single word - direct mapping
-        public readonly string $title,     // Single word - direct mapping
-        string $user_name,                 // Multi-word - explicit assignment
-        string $email_address,             // Multi-word - explicit assignment
-    ) {
-        $this->userName = $user_name;
-        $this->emailAddress = $email_address;
-    }
+        public readonly string $id,
+        public readonly string $title,
+        public readonly string $userName,      // camelCase property
+        public readonly string $emailAddress,  // camelCase property
+    ) {}
 }
+
+// SQL: SELECT id, title, user_name, email_address FROM invoices
+// Ray.MediaQuery handles snake_case → camelCase conversion automatically
 ```
 
-**PHP 8.4+ readonly class:**
+For PHP 8.4+, use readonly classes:
 
 ```php
 final readonly class Invoice
 {
-    public string $userName;
-    public string $emailAddress;
-    
     public function __construct(
-        public string $id,           // Single word - direct mapping
-        public string $title,        // Single word - direct mapping  
-        string $user_name,           // Multi-word - explicit assignment
-        string $email_address,       // Multi-word - explicit assignment
-    ) {
-        $this->userName = $user_name;
-        $this->emailAddress = $email_address;
-    }
-}
-```
-
-**Usage with database queries:**
-
-```php
-interface UserInterface
-{
-    #[DbQuery('user_list')]
-    /** @return array<Invoice> */
-    public function getUsers(): array;
-}
-
-// SQL file: user_list.sql  
-// SELECT id, title, user_name, email_address FROM invoices
-
-// PDO::FETCH_CLASS works directly - constructor parameters match column names!
-// - id → $id (direct)
-// - title → $title (direct)  
-// - user_name → $user_name parameter → $userName property
-// - email_address → $email_address parameter → $emailAddress property
-```
-
-**Benefits:**
-- Type safety with strict typing
-- Immutability with `readonly` properties  
-- Better IDE support and refactoring
-- No magic method overhead
-- Clear snake_case ↔ camelCase mapping
-
-**Note:** Constructor-less entities (with public properties) are discouraged as they lack type safety and immutability benefits of modern PHP.
-
-```php
-final class Todo
-{
-    public function __construct(
-        public readonly string $id,
-        public readonly string $title
+        public string $id,
+        public string $title,
+        public string $userName,
+        public string $emailAddress,
     ) {}
 }
 ```
 
-#### Entity factory
+### Factory Pattern for Complex Objects
 
-To create an entity with a factory class, specify the factory class in the `factory` attribute.
+Use factories when entities need computed properties or injected services:
 
+**Basic Factory:**
 ```php
-interface TodoItemInterface
+interface OrderRepository
 {
-    #[DbQuery('todo_item', factory: TodoEntityFactory::class)]
-    public function item(string $id): Todo;
-
-    #[DbQuery('todo_list', factory: TodoEntityFactory::class)]
-    /** @return array<Todo> */
-    public function list(string $id): array;
+    #[DbQuery('order_detail', factory: OrderFactory::class)]
+    public function getOrder(string $id): Order;
 }
-```
 
-The `factory` method of the factory class is called with the fetched data. You can also change the entity depending on the data.
-
-```php
-final class TodoEntityFactory
-{
-    public static function factory(string $id, string $name): Todo
-    {
-        return new Todo($id, $name);
-    }
-}
-```
-
-If the factory method is not static, the factory class dependency resolution is performed.
-
-```php
-final class TodoEntityFactory
-{
-    public function __construct(
-        private HelperInterface $helper
-    ){}
-    
-    public function factory(string $id, string $name): Todo
-    {
-        return new Todo($id, $this->helper($name));
-    }
-}
-```
-
-#### Advanced Factory Usage
-
-Factories enable powerful transformations beyond simple database mapping:
-
-**Add computed properties:**
-```php
-final class OrderEntityFactory
+class OrderFactory
 {
     public function factory(string $id, float $amount): Order
     {
         return new Order(
             id: $id,
             amount: $amount,
-            tax: $amount * 0.1,          // Computed tax
-            total: $amount * 1.1,        // Computed total
+            tax: $amount * 0.1,      // Computed
+            total: $amount * 1.1,    // Computed
         );
     }
 }
 ```
 
-**Transform data with injected services:**
+**Factory with Dependency Injection:**
 ```php
-final class UserEntityFactory
+class OrderFactory
 {
     public function __construct(
-        private EmailValidator $emailValidator,  // Injected by DI
+        private TaxCalculator $taxCalc,       // Injected
+        private ShippingService $shipping,    // Injected
     ) {}
-    
-    public function factory(string $id, string $first_name, string $last_name, string $email): User
+
+    public function factory(string $id, float $amount, string $region): Order
     {
-        return new User(
+        return new Order(
             id: $id,
-            firstName: $first_name,
-            lastName: $last_name,
-            fullName: "$first_name $last_name",              // Computed
-            email: $this->emailValidator->validate($email),  // Validated with DI service
+            amount: $amount,
+            tax: $this->taxCalc->calculate($amount, $region),
+            shipping: $this->shipping->calculate($region),
         );
     }
 }
 ```
 
-> **🏗️ Architecture Pattern**: Ray.MediaQuery enables the [**Business Domain Repository Pattern (BDR Pattern)**](./BDR_PATTERN.md) - an approach that transforms simple database queries into rich domain objects through dependency injection and business logic integration.
-
-### Web API
-
-**Web API functionality has been moved to a separate package.** 
-
-For Web API queries, please see the [ray/web-query](https://github.com/ray-di/Ray.WebQuery) package documentation.
-
-## Parameters
-
-### DateTime
-
-You can pass a value object as a parameter.
-For example, you can specify a `DateTimeInterface` object like this.
-
+**Polymorphic Entities:**
 ```php
-interface TaskAddInterface
+class UserFactory
+{
+    public function factory(string $id, string $type, string $email): UserInterface
+    {
+        return match ($type) {
+            'free' => new FreeUser($id, $email, maxStorage: 100),
+            'premium' => new PremiumUser($id, $email, maxStorage: 1000),
+        };
+    }
+}
+```
+
+> **Architecture Pattern**: Factories enable the [**BDR Pattern**](./BDR_PATTERN.md) - combining efficient SQL with rich domain objects through dependency injection.
+
+### Smart Parameter Handling
+
+**DateTime Automatic Conversion:**
+```php
+interface TaskRepository
 {
     #[DbQuery('task_add')]
-    public function __invoke(string $title, DateTimeInterface $cratedAt = null): void;
+    public function add(string $title, DateTimeInterface $createdAt = null): void;
 }
+
+// SQL: INSERT INTO tasks (title, created_at) VALUES (:title, :createdAt)
+// DateTime converted to: '2024-01-15 10:30:00'
+// null injects current time automatically
 ```
 
-The value will be converted to a date formatted string at SQL execution time.
-
-```sql
-INSERT INTO task (title, created_at) VALUES (:title, :createdAt); # 2021-2-14 00:00:00
-```
-
-If no value is passed, the bound current time will be injected.
-This eliminates the need to hard-code `NOW()` inside SQL and pass the current time every time.
-
-### Test clock
-
-When testing, you can also use a single time binding for the `DateTimeInterface`, as shown below.
-
-```php
-$this->bind(DateTimeInterface::class)->to(UnixEpochTime::class);
-```
-
-## VO
-
-If a value object other than `DateTime` is passed, the return value of the `toScalar()` method that implements the `ToScalar` interface or the `__toString()` method will be the argument.
-
-```php
-interface MemoAddInterface
-{
-    #[DbQuery('memo_add')]
-    public function __invoke(string $memo, UserId $userId = null): void;
-}
-```
-
+**Value Objects:**
 ```php
 class UserId implements ToScalarInterface
 {
-    public function __construct(
-        private LoginUser $user;
-    ){}
-    
+    public function __construct(private int $value) {}
+
     public function toScalar(): int
     {
-        return $this->user->id;
+        return $this->value;
     }
 }
+
+interface MemoRepository
+{
+    #[DbQuery('memo_add')]
+    public function add(string $memo, UserId $userId): void;
+}
+
+// UserId automatically converted via toScalar()
 ```
 
-```sql
-INSERT INTO memo (user_id, memo) VALUES (:userId, :memo);
-```
-
-### Parameter Injection
-
-Note that the default value of `null` for the value object argument is never used in SQL. If no value is passed, the scalar value of the value object injected with the parameter type will be used instead of null.
-
+**Parameter Injection:**
 ```php
-public function __invoke(Uuid $uuid = null): void; // UUID is generated and passed.
-````
+interface TodoRepository
+{
+    #[DbQuery('todo_add')]
+    public function add(string $title, Uuid $id = null): void;
+}
 
-## Input Object Flattening
+// null triggers DI: Uuid is generated and injected automatically
+```
 
-When using [Ray.InputQuery](https://github.com/ray-di/Ray.InputQuery), objects with the `#[Input]` attribute are automatically flattened to SQL parameters. This allows for structured input while maintaining flat database queries.
+### Input Object Flattening
+
+Structure your input while keeping SQL simple with `Ray.InputQuery`.
+
+> **Note**: This feature requires the `ray/input-query` package, which is already included as a dependency.
 
 ```php
 use Ray\InputQuery\Attribute\Input;
 
-final class UserInput
+class UserInput
 {
     public function __construct(
         #[Input] public readonly string $givenName,
@@ -389,217 +401,117 @@ final class UserInput
     ) {}
 }
 
-final class TodoCreateInput
+class TodoInput
 {
     public function __construct(
         #[Input] public readonly string $title,
-        #[Input] public readonly UserInput $assignee,  // nested input
+        #[Input] public readonly UserInput $assignee,  // Nested
         #[Input] public readonly ?DateTimeInterface $dueDate
     ) {}
 }
 
-interface TodoInterface
+interface TodoRepository
 {
     #[DbQuery('todo_create')]
-    public function create(TodoCreateInput $input): void;
-}
-```
-
-The nested structure is flattened for SQL binding:
-
-```php
-// Input object:
-TodoCreateInput {
-    title: "Buy milk",
-    assignee: UserInput {
-        givenName: "John",
-        familyName: "Doe",
-        email: "john@example.com"
-    },
-    dueDate: DateTime("2024-01-15")
+    public function create(TodoInput $input): void;
 }
 
-// Flattened parameters for SQL:
-[
-    "title" => "Buy milk",
-    "givenName" => "John",      // directly from UserInput
-    "familyName" => "Doe",      // directly from UserInput  
-    "email" => "john@example.com", // directly from UserInput
-    "dueDate" => "2024-01-15 00:00:00"  // DateTime converted
-]
+// Input flattened automatically:
+// :title, :givenName, :familyName, :email, :dueDate
 ```
 
-This feature provides:
-- **Type-safe input structures** while keeping SQL simple
-- **Resilience to refactoring** - object structure changes don't break SQL bindings
-- **Automatic parameter conversion** - DateTime and other value objects are converted as usual
+### Pagination
 
-Note: Only objects with `#[Input]` attributes on their constructor parameters are flattened. Regular objects are passed through to the existing ParamConverter.
+Enable lazy-loaded pagination with the `#[Pager]` attribute:
 
-## Pagination
-
-The `#[Pager]` annotation allows paging of SELECT queries.
-
+**Basic Pagination:**
 ```php
-use Ray\MediaQuery\PagesInterface;
+use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\Annotation\Pager;
+use Ray\MediaQuery\Pages;
 
-interface TodoList
+interface ProductRepository
 {
-    #[DbQuery('todo_list'), Pager(perPage: 10, template: '/{?page}')]
-    public function __invoke(): PagesInterface;
+    #[DbQuery('product_list'), Pager(perPage: 20, template: '/{?page}')]
+    public function getProducts(): Pages;
+}
+
+$pages = $productRepo->getProducts();
+$count = count($pages);  // Executes COUNT query
+$page = $pages[1];       // Executes SELECT with LIMIT/OFFSET
+
+// Page object properties:
+// $page->data          // Items for this page
+// $page->current       // Current page number
+// $page->total         // Total pages
+// $page->hasNext       // Has next page?
+// $page->hasPrevious   // Has previous page?
+// (string) $page       // Pager HTML
+```
+
+**Dynamic Page Size:**
+```php
+interface ProductRepository
+{
+    #[DbQuery('product_list'), Pager(perPage: 'perPage', template: '/{?page}')]
+    public function getProducts(int $perPage): Pages;
 }
 ```
 
-You can get the number of pages with `count()`, and you can get the page object with array access by page number.
-`Pages` is a SQL lazy execution object.
-
-The number of items per page is specified by `perPage`, but for dynamic values, specify a string with the name of the argument representing the number of pages as follows
-
+**With Entity Hydration:**
 ```php
-    #[DbQuery('todo_list'), Pager(perPage: 'pageNum', template: '/{?page}')]
-    public function __invoke($pageNum): Pages;
+interface ProductRepository
+{
+    #[DbQuery('product_list'), Pager(perPage: 20)]
+    /** @return Pages<Product> */
+    public function getProducts(): Pages;
+}
+
+// Each page's data is hydrated to Product entities
 ```
 
-```php
-$pages = ($todoList)();
-$cnt = count($page); // When count() is called, the count SQL is generated and queried.
-$page = $pages[2]; // A page query is executed when an array access is made.
+### Direct SQL Execution
 
-// $page->data // sliced data
-// $page->current;
-// $page->total
-// $page->hasNext
-// $page->hasPrevious
-// $page->maxPerPage;
-// (string) $page // pager html
-```
-
-Use `@return` to specify hydration to the entity class.
+For advanced use cases, inject `SqlQueryInterface` directly:
 
 ```php
-    #[DbQuery('todo_list'), Pager(perPage: 'pageNum', template: '/{?page}')]
-    /** @return array<Todo> */
-    public function __invoke($pageNum): Pages;
-```
+use Ray\MediaQuery\SqlQueryInterface;
 
-# SqlQuery
-
-`SqlQuery` executes SQL by specifying the ID of the SQL file.
-It is used when detailed implementations with an implementation class.
-
-```php
-class TodoItem implements TodoItemInterface
+class CustomRepository
 {
     public function __construct(
         private SqlQueryInterface $sqlQuery
-    ){}
+    ) {}
 
-    public function __invoke(string $id) : array
+    public function complexQuery(array $params): array
     {
-        return $this->sqlQuery->getRow('todo_item', ['id' => $id]);
+        return $this->sqlQuery->getRowList('complex_query', $params);
     }
 }
 ```
 
-## Get* Method
+**Available Methods:**
+- `getRow($queryId, $params)` - Single row
+- `getRowList($queryId, $params)` - Multiple rows
+- `exec($queryId, $params)` - Execute without result
+- `getStatement()` - Get PDO statement
+- `getPages()` - Get paginated results
 
-To get the SELECT result, use `get*` method depending on the result you want to get.
+## Philosophy: Boundaries That Dissolve
 
-```php
-$sqlQuery->getRow($queryId, $params); // Result is a single row
-$sqlQuery->getRowList($queryId, $params); // result is multiple rows
-$statement = $sqlQuery->getStatement(); // Retrieve the PDO Statement
-$pages = $sqlQuery->getPages(); // Get the pager
-```
+Ray.MediaQuery doesn't fight the impedance mismatch - it dissolves it. SQL and Objects don't need to pretend the other doesn't exist. They can work together, each doing what they do best.
 
-Ray.MediaQuery contains the [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule).
-If you need more lower layer operations, you can use Aura.Sql's [Query Builder](https://github.com/ray-di/Ray.AuraSqlModule#query-builder) or [Aura.Sql](https://github.com/auraphp/Aura.Sql) which extends PDO.
-[doctrine/dbal](https://github.com/ray-di/Ray.DbalModule) is also available.
+This is more than a technical solution. It's a recognition that different paradigms can coexist harmoniously when we stop trying to force one to be the other.
 
-## Profiler
+## Real-World Benefits
 
-Media accesses are logged by a logger. By default, a memory logger is bound to be used for testing.
+- **Performance**: Write optimized SQL without ORM overhead
+- **Maintainability**: Clear separation of concerns
+- **Testability**: Test SQL and PHP logic independently
+- **Flexibility**: Refactor interfaces without touching SQL
+- **Transparency**: Every query is visible and optimizable
 
-```php
-public function testAdd(): void
-{
-    $this->sqlQuery->exec('todo_add', $todoRun);
-    $this->assertStringContainsString('query: todo_add({"id": "1", "title": "run"})', (string) $this->log);
-}
-```
+## Learn More
 
-Implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) and run
-You can also implement your own [MediaQueryLoggerInterface](src/MediaQueryLoggerInterface.php) to benchmark each media query and log it with the injected PSR logger.
-
-### SQL Template Configuration
-
-You can customize the SQL logging format using the `MediaQuerySqlTemplateModule`. This module allows you to define a template for how SQL queries are formatted in logs.
-
-```php
-use Ray\MediaQuery\MediaQuerySqlTemplateModule;
-
-protected function configure(): void
-{
-    // Default template: "-- {{ id }}.sql\n{{ sql }}"
-    $this->install(new MediaQuerySqlTemplateModule());
-    
-    // Custom template with application name
-    $this->install(new MediaQuerySqlTemplateModule("-- MyApp: {{ id }}.sql\n{{ sql }}"));
-}
-```
-
-Available template variables:
-- `{{ id }}`: The identifier for the SQL query
-- `{{ sql }}`: The SQL query string itself
-
-Example output with custom template:
-```sql
--- MyApp: user_list.sql
-SELECT id, name, email FROM users WHERE status = :status
-```
-### PerformSql Interface
-
-For advanced SQL execution control, you can inject the `PerformSqlInterface` which provides direct access to the SQL execution layer.
-
-Example)
- * Injecting the ID of a logged-in user and leaving it as a comment statement in SQL.
- * Leave bound values in comments or logs during development
-
-## Attributes
-
-```php
-use Ray\MediaQuery\Annotation\DbQuery;
-
-#[DbQuery('user_add')]
-public function add(string $id, string $title): void;
-```
-
-## Testing Ray.MediaQuery
-
-Here's how to install Ray.MediaQuery from the source and run the unit tests and demos.
-
-```
-$ git clone https://github.com/ray-di/Ray.MediaQuery.git
-$ cd Ray.MediaQuery
-$ composer tests
-$ php demo/run.php
-```
-
-## PHP 8.4 Support and Aura.Sql
-
-This library supports PHP 8.1 to 8.4.
-Aura.Sql has different major versions for different PHP versions:
-
-- Aura.Sql v5.x: Recommended for PHP 8.1 - 8.3.
-- Aura.Sql v6.x: Recommended for PHP 8.4 and newer.
-
-Our `composer.json` specifies `aura/sql: "^5 || ^6"` to allow flexibility.
-
-**Important for PHP 8.4 users:**
-
-If you are using PHP 8.4, it is highly recommended to ensure Aura.Sql v6.x is installed.
-Due to how Composer resolves dependencies with `--prefer-lowest`, Aura.Sql v5.x (specifically older patch versions like 5.0.0 whose `composer.json` might not have an upper PHP bound like `<8.4`) might be installed on PHP 8.4 if you explicitly use `--prefer-lowest` or if other constraints lead to it. While our CI tests for PHP 8.4 with `lowest` dependencies are configured to force Aura.Sql v6, your local environment or specific project setup might differ.
-
-To ensure Aura.Sql v6 is used on PHP 8.4, you can:
-1.  Run `composer require aura/sql:"^6.0"` in your project.
-2.  If `aura/sql` is already in your `composer.json`, ensure its constraint points to `^6.0` or a similar range that selects v6.
+- [BDR Pattern Guide](./BDR_PATTERN.md)
+- [Demo Application](./demo/)
