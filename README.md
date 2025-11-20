@@ -105,8 +105,14 @@ composer require ray/media-query
 ### Basic Setup
 
 ```php
+use Ray\Di\AbstractModule;
+use Ray\Di\Injector;
+use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\MediaQuerySqlModule;
+use Ray\AuraSqlModule\AuraSqlModule;
+
 // 1. Configure in your module
-class AppModule extends AbstractModule 
+class AppModule extends AbstractModule
 {
     protected function configure(): void
     {
@@ -116,7 +122,7 @@ class AppModule extends AbstractModule
                 sqlDir: '/path/to/sql/files'
             )
         );
-        
+
         $this->install(
             new AuraSqlModule(
                 'mysql:host=localhost;dbname=app',
@@ -132,7 +138,7 @@ interface UserRepository
 {
     #[DbQuery('user_add')]
     public function add(string $id, string $name): void;
-    
+
     #[DbQuery('user_find')]
     public function find(string $id): ?User;
 }
@@ -349,7 +355,9 @@ interface TodoRepository
 
 ### Input Object Flattening
 
-Structure your input while keeping SQL simple with `Ray.InputQuery`:
+Structure your input while keeping SQL simple with `Ray.InputQuery`.
+
+> **Note**: This feature requires the `ray/input-query` package, which is already included as a dependency.
 
 ```php
 use Ray\InputQuery\Attribute\Input;
@@ -388,12 +396,14 @@ Enable lazy-loaded pagination with the `#[Pager]` attribute:
 
 **Basic Pagination:**
 ```php
-use Ray\MediaQuery\PagesInterface;
+use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\Annotation\Pager;
+use Ray\MediaQuery\Pages;
 
 interface ProductRepository
 {
     #[DbQuery('product_list'), Pager(perPage: 20, template: '/{?page}')]
-    public function getProducts(): PagesInterface;
+    public function getProducts(): Pages;
 }
 
 $pages = $productRepo->getProducts();
@@ -414,7 +424,7 @@ $page = $pages[1];       // Executes SELECT with LIMIT/OFFSET
 interface ProductRepository
 {
     #[DbQuery('product_list'), Pager(perPage: 'perPage', template: '/{?page}')]
-    public function getProducts(int $perPage): PagesInterface;
+    public function getProducts(int $perPage): Pages;
 }
 ```
 
@@ -423,8 +433,8 @@ interface ProductRepository
 interface ProductRepository
 {
     #[DbQuery('product_list'), Pager(perPage: 20)]
-    /** @return PagesInterface<Product> */
-    public function getProducts(): PagesInterface;
+    /** @return Pages<Product> */
+    public function getProducts(): Pages;
 }
 
 // Each page's data is hydrated to Product entities
@@ -473,6 +483,5 @@ This is more than a technical solution. It's a recognition that different paradi
 
 ## Learn More
 
-- [Full Documentation](https://ray-di.github.io/Ray.MediaQuery/)
 - [BDR Pattern Guide](./BDR_PATTERN.md)
 - [Demo Application](./demo/)
