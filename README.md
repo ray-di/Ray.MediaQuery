@@ -28,13 +28,13 @@ SELECT * FROM users WHERE id = :id
 
 ## Why Ray.MediaQuery?
 
-### ✨ **Zero Implementation Code**
+### Zero Implementation Code
 Define interfaces, get working repositories. No boilerplate, no mapping configuration.
 
-### 🎯 **SQL Excellence Without Compromise**
+### SQL Excellence Without Compromise
 Use the full power of your database - window functions, CTEs, custom functions. If it runs in your database, it works with Ray.MediaQuery.
 
-### 🔄 **Rich Domain Objects via Dependency Injection**
+### Rich Domain Objects via Dependency Injection
 Transform database rows into rich domain objects with business logic, not just data containers:
 
 ```php
@@ -57,10 +57,10 @@ class Order {
 }
 ```
 
-### 🧪 **Test Each Layer Independently**
+### Test Each Layer Independently
 SQL queries, factories, and domain objects can all be tested in isolation. When each layer works, the combination works.
 
-### 🤖 **AI-Era Transparency**
+### AI-Era Transparency
 Unlike ORM magic, everything is explicit and readable - perfect for AI assistants to understand and help with your codebase.
 
 ## Core Concept: Interface-Driven Design
@@ -154,7 +154,7 @@ $user = $userRepo->find('user-123');
 
 ## Advanced Features
 
-### 🔄 Result Mapping & Entity Hydration
+### Result Mapping & Entity Hydration
 
 Ray.MediaQuery automatically hydrates query results based on your return type declarations:
 
@@ -237,7 +237,7 @@ final readonly class Invoice
 }
 ```
 
-### 🏭 Factory Pattern for Complex Objects
+### Factory Pattern for Complex Objects
 
 Use factories when entities need computed properties or injected services:
 
@@ -298,9 +298,9 @@ class UserFactory
 }
 ```
 
-> **🏗️ Architecture Pattern**: Factories enable the [**BDR Pattern**](./BDR_PATTERN.md) - combining efficient SQL with rich domain objects through dependency injection.
+> **Architecture Pattern**: Factories enable the [**BDR Pattern**](./BDR_PATTERN.md) - combining efficient SQL with rich domain objects through dependency injection.
 
-### 📥 Smart Parameter Handling
+### Smart Parameter Handling
 
 **DateTime Automatic Conversion:**
 ```php
@@ -347,7 +347,7 @@ interface TodoRepository
 // null triggers DI: Uuid is generated and injected automatically
 ```
 
-### 📦 Input Object Flattening
+### Input Object Flattening
 
 Structure your input while keeping SQL simple with `Ray.InputQuery`:
 
@@ -382,7 +382,7 @@ interface TodoRepository
 // :title, :givenName, :familyName, :email, :dueDate
 ```
 
-### 📄 Pagination
+### Pagination
 
 Enable lazy-loaded pagination with the `#[Pager]` attribute:
 
@@ -430,7 +430,7 @@ interface ProductRepository
 // Each page's data is hydrated to Product entities
 ```
 
-### 🔍 Direct SQL Execution
+### Direct SQL Execution
 
 For advanced use cases, inject `SqlQueryInterface` directly:
 
@@ -473,6 +473,6 @@ This is more than a technical solution. It's a recognition that different paradi
 
 ## Learn More
 
-- [📚 Full Documentation](https://ray-di.github.io/Ray.MediaQuery/)
-- [🏗️ BDR Pattern Guide](./BDR_PATTERN.md)
-- [💻 Demo Application](./demo/)
+- [Full Documentation](https://ray-di.github.io/Ray.MediaQuery/)
+- [BDR Pattern Guide](./BDR_PATTERN.md)
+- [Demo Application](./demo/)
