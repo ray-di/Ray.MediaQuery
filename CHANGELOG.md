@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-11-20
+
+Stable release. Major update to PHP 8 attributes.
+
+### Added
+- `MediaQuerySqlModule` - Simplified module configuration for SQL-only usage
+
+### Breaking Changes
+- Annotation support removed - use PHP 8 attributes instead (`#[DbQuery]`, `#[Pager]`)
+- Web API functionality moved to separate `ray/web-query` package
+- See [1.0.0-rc1] and [Migration Guide](./MIGRATION.md) for details
+
+### Changed
+- Updated to PHP 8 attribute-based dependencies (ray/aop ^2.19, ray/di ^2.19)
+- Improved documentation
+
 ## [1.0.0-rc2] - 2025-10-03
 
 ### Changed
@@ -148,6 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Please refer to the git history for changes in earlier versions.
 
+[1.0.0]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0-rc2...1.0.0
 [1.0.0-rc2]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0-rc1...1.0.0-rc2
 [1.0.0-rc1]: https://github.com/ray-di/Ray.MediaQuery/compare/0.17.0...1.0.0-rc1
 [0.17.0]: https://github.com/ray-di/Ray.MediaQuery/compare/0.16.0...0.17.0
