@@ -1,6 +1,6 @@
 # Ray.MediaQuery
 
-## PHPインターフェースベースSQLフレームワーク
+## PHPインターフェースベースのSQLフレームワーク
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 [![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml)
@@ -29,15 +29,15 @@ Web APIクエリーの場合は、別パッケージをインストールして�
 composer require ray/web-query
 ```
 
-> **注意:** このパッケージはPHP 8.1+が必要で、PHP 8 Attributesを使用します。レガシーアノテーション（`@DbQuery`）は非推奨です。Rectorを使用してattributes（`#[DbQuery]`）に移行してください。
+> **注意:** このパッケージはPHP 8.2+が必要で、PHP 8 Attributesを使用します。古いバージョンからの移行については、[MIGRATION.md](./MIGRATION.md)を参照してください。
 
 ## はじめに
 
 データベースアクセス用のインターフェイスを定義します。
 
-### DB
+### クエリーインターフェース
 
-`DbQuery`属性でSQLのIDを指定します。
+`#[DbQuery]`属性でSQLのIDを指定します。
 
 ```php
 interface TodoAddInterface

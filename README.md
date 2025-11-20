@@ -25,15 +25,15 @@ For Web API queries, install the separate package:
 
     $ composer require ray/web-query
 
-> **Note:** For migration from older versions, see [MIGRATION.md](./MIGRATION.md).
+> **Note:** This package requires PHP 8.2+ and uses PHP 8 Attributes. For migration from older versions, see [MIGRATION.md](./MIGRATION.md).
 
 ## Getting Started
 
 Define the interface for media access.
 
-### DB
+### Query Interface
 
-Specify the SQL ID with the attribute `DbQuery`.
+Specify the SQL ID with the `#[DbQuery]` attribute.
 
 ```php
 interface TodoAddInterface
