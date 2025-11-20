@@ -4,7 +4,9 @@
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 [![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml)
 
-## The PHP SQL framework that lets SQL be SQL and Objects be Objects
+## Interface-Driven SQL for PHP
+
+**Ray.MediaQuery lets SQL be SQL and Objects be Objects.**
 
 Traditional ORMs try to hide SQL behind object abstractions. Ray.MediaQuery takes a different approach:
 
