@@ -1,12 +1,10 @@
 # Ray.MediaQuery
 
-**The PHP SQL framework that lets SQL be SQL and Objects be Objects.**
-
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
 [![Continuous Integration](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/ray-di/Ray.MediaQuery/actions/workflows/continuous-integration.yml)
 
-## Stop Fighting the Object-Relational Impedance Mismatch
+## The PHP SQL framework that lets SQL be SQL and Objects be Objects
 
 Traditional ORMs try to hide SQL behind object abstractions. Ray.MediaQuery takes a different approach:
 
