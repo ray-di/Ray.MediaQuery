@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ray.MediaQuery is a PHP 8.1+ database access mapping framework that provides database query abstraction through attributes/annotations. It uses dependency injection (Ray.Di) and AOP (Aspect-Oriented Programming) to automatically generate implementations from interface definitions.
+Ray.MediaQuery is a PHP 8.2+ database access mapping framework that provides database query abstraction through attributes/annotations. It uses dependency injection (Ray.Di) and AOP (Aspect-Oriented Programming) to automatically generate implementations from interface definitions.
 
 ## Development Commands
 
@@ -61,7 +61,7 @@ The framework implements the Repository pattern through interface-based query de
 ### Testing Architecture
 
 **Test Organization:**
-- `/tests/` - Main test suite (PHP 8.1+)
+- `/tests/` - Main test suite (PHP 8.2+)
 - `/tests/Fake/` - Test doubles, mock objects, and fake implementations
 - `/tests/sql/` - SQL files for testing
 
@@ -72,8 +72,8 @@ The framework implements the Repository pattern through interface-based query de
 ## Important Development Notes
 
 ### PHP Version Compatibility
-- Supports PHP 8.1 to 8.4
-- Aura.Sql version compatibility: v5.x for PHP 8.1-8.3, v6.x for PHP 8.4+
+- Supports PHP 8.2 to 8.4
+- Aura.Sql version compatibility: v5.x for PHP 8.2-8.3, v6.x for PHP 8.4+
 - CI tests multiple PHP versions and dependency constraints
 
 ### Code Generation
