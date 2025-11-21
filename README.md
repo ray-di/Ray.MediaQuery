@@ -23,7 +23,7 @@ interface UserRepository
 SELECT * FROM users WHERE id = :id
 
 // 3. That's it. No implementation needed.
-// Ray.MediaQuery generates everything else.
+// find($id) → binds to user_by_id.sql → executes → returns User object
 ```
 
 ## Why Ray.MediaQuery?
