@@ -100,6 +100,19 @@ BDRパターンは重要なことを達成します：**SQL基盤による真の
 
 オブジェクトの自律性とSQL効率のバランスは従来困難とされていました。BDRパターンはこのバランスを実現します。ドメインオブジェクトは独自の振る舞いとデータを持つ自己完結型でありながら、その作成はSQLクエリによって効率的に支えられています。
 
+### 読み取り専用でイミュータブルなドメインオブジェクト
+
+**重要なことに、BDRパターンのドメインオブジェクトは読み取り専用（Read-Only）でイミュータブル（不変）です。** これらはデータベースのある時点のスナップショットを表現します。これらのオブジェクトは：
+
+- **`save()`メソッドを持たない** - 自身を永続化しない
+- **セッターを持たない** - 生成後に状態を変更できない
+- **クエリ結果である** - アーキテクチャの「読み取り」側を表現
+
+このイミュータビリティは意図的なものであり、重要な利点をもたらします：
+- **デフォルトでスレッドセーフ** - 並行操作間で安全に共有可能
+- **予測可能な振る舞い** - 状態が予期せず変わることがない
+- **明確な意図** - クエリ（データ読み取り）とコマンド（データ変更）の分離
+
 ```php
 // ドメインオブジェクトでのDIの力を活用
 final readonly class UserDomainObject
@@ -111,7 +124,7 @@ final readonly class UserDomainObject
         // ファクトリーから注入されたサービス
         private PermissionService $permissionService,
     ) {}
-    
+
     // 注入されたサービスによる動的なビジネスルール
     public function canEdit(Document $document): bool
     {
@@ -120,10 +133,13 @@ final readonly class UserDomainObject
         // 本番環境：RealPermissionService（複雑な権限チェック）
         return $this->permissionService->canEdit($this, $document);
     }
+
+    // 注意：save()、update()、セッターメソッドは存在しない
+    // このオブジェクトは読み取り専用のスナップショット
 }
 ```
 
-BDRパターンでは、オブジェクトは単なるデータコンテナではなく、ビジネスロジックを含むドメインオブジェクトです。
+BDRパターンでは、オブジェクトは単なるデータコンテナではなく、ビジネスロジックを含むドメインオブジェクトです。これらはビジネスドメインに関する質問に答えますが、データベース自体を変更することはありません。
 
 ## 実装ガイド
 
@@ -591,6 +607,107 @@ SQL（宣言的、集合ベース）とOOP（命令的、オブジェクトベ�
 **SQLとOOPが調和して動作します。**
 
 BDRパターンでは、それぞれが自身の領域で優秀さを発揮しながら、共により大きなものを構築します。
+
+## FAQ & アーキテクチャのヒント
+
+### Q: 変更されたオブジェクトをどうやってDBに書き戻す（保存する）のですか？
+
+**A: 書き戻しません。** BDRパターンのオブジェクトは読み取り専用であり、データのクエリのために存在します。データを変更する必要がある場合：
+
+1. **アプリケーション層でビジネス判断を行う**
+2. **コマンドを発行する** - 明確で明示的な書き込み操作
+3. **シンプルな書き込みクエリを実行** - UPDATE、INSERT、DELETE文
+
+これは**CQRS（Command Query Responsibility Segregation：コマンド・クエリ責任分離）**の原則に従います：
+
+```php
+// クエリ側（BDRパターン）
+$order = $this->orderRepo->getOrder($id);
+if ($order->canProcess()) {
+    // コマンド側（シンプルな書き込み）
+    $this->orderCommandRepo->markAsProcessed($id, new DateTime());
+}
+
+// orderCommandRepoはシンプルなSQLを使用：
+// UPDATE orders SET status = 'processed', processed_at = :timestamp WHERE id = :id
+```
+
+この分離は意図的です：
+- **クエリ**は複雑で、JOINや集約を含むことができる
+- **コマンド**はシンプルで、状態変更に集中すべき
+- **ドメインロジック**はクエリオブジェクトに存在し、データベース書き込みには存在しない
+
+### Q: これはCQRSパターンですか？
+
+**A: はい、特にクエリ（読み取り）側です。** BDRパターンはCQRSのクエリ側の強力な実装です。
+
+CQRSは読み取りと書き込みの責務を分離します：
+- **クエリ側（BDRパターン）**：ビジネスロジックを含む豊富なドメインオブジェクトによる複雑な読み取り
+- **コマンド側**：状態を変更するシンプルで焦点を絞った書き込み
+
+BDRパターンは複雑な部分（クエリ）を以下を組み合わせて処理します：
+- データ取得のためのSQLの力
+- 変換と充実化のためのファクトリー
+- ビジネスロジックのためのドメインオブジェクト
+
+一方、コマンド側はシンプルに保たれます：
+- 直接的なUPDATE/INSERT/DELETE文
+- イベントソーシング（必要な場合）
+- 書き込み前のシンプルな検証
+
+この分離により、両側がよりシンプルで保守しやすくなります。
+
+### Q: ファクトリーで外部APIを呼ぶと、リスト取得時に遅くなりませんか？
+
+**A: その通りです、適切な戦略なしでは。** これは本質的にN+1問題の変形です。以下は緩和のための戦略です：
+
+**1. バッチリクエスト**
+```php
+final class ProductDomainFactory
+{
+    private array $priceCache = [];
+
+    public function factory(string $id, string $name): ProductDomainObject
+    {
+        // 価格はファクトリー呼び出し前にバッチで取得済み
+        $price = $this->priceCache[$id] ?? $this->priceService->getPrice($id);
+        return new ProductDomainObject($id, $name, $price);
+    }
+
+    public function warmPriceCache(array $productIds): void
+    {
+        // すべての価格を1回のAPI呼び出しで取得
+        $this->priceCache = $this->priceService->getPrices($productIds);
+    }
+}
+```
+
+**2. 遅延ロード**
+```php
+final readonly class ProductDomainObject
+{
+    private ?float $currentPrice = null;
+
+    public function getCurrentPrice(): float
+    {
+        // 実際に必要な時にのみ取得
+        return $this->currentPrice ??= $this->priceService->getPrice($this->id);
+    }
+}
+```
+
+**3. 戦略的データロード**
+```php
+// リスト表示：高コストなデータをロードしない
+#[DbQuery('product_list_simple', factory: ProductListFactory::class)]
+public function getProductList(): array;
+
+// 詳細表示：外部データを含むすべてをロード
+#[DbQuery('product_detail', factory: ProductDetailFactory::class)]
+public function getProduct(string $id): ProductDomainObject;
+```
+
+重要なのは、いつどのようにデータをロードするかについて**意図的であること**です。ファクトリーパターンは、この戦略を完全にコントロールする力を与えます。
 
 ## 参考文献
 

@@ -102,6 +102,19 @@ The BDR Pattern achieves something important: **true object autonomy with SQL as
 
 Balancing object autonomy and SQL efficiency was traditionally considered difficult. The BDR Pattern achieves this balance. Domain objects are self-contained with their own behavior and data, while their creation is efficiently powered by SQL queries.
 
+### Read-Only, Immutable Domain Objects
+
+**Critically, domain objects in the BDR Pattern are read-only and immutable.** They represent a snapshot of the database at a specific point in time. These objects:
+
+- **Have no `save()` methods** - They don't persist themselves
+- **Have no setters** - State cannot be modified after creation
+- **Are query results** - They represent the "read" side of your architecture
+
+This immutability is intentional and brings important benefits:
+- **Thread-safe by default** - Safe to share across concurrent operations
+- **Predictable behavior** - State never changes unexpectedly
+- **Clear intent** - Separation between queries (reading data) and commands (changing data)
+
 ```php
 // Leveraging the power of DI in domain objects
 final readonly class UserDomainObject
@@ -113,7 +126,7 @@ final readonly class UserDomainObject
         // Service injected from factory
         private PermissionService $permissionService,
     ) {}
-    
+
     // Dynamic business rules through injected service
     public function canEdit(Document $document): bool
     {
@@ -122,10 +135,13 @@ final readonly class UserDomainObject
         // Production: RealPermissionService (complex permission checks)
         return $this->permissionService->canEdit($this, $document);
     }
+
+    // Note: No save(), update(), or setter methods
+    // This object is a read-only snapshot
 }
 ```
 
-In the BDR Pattern, objects are not mere data containers but domain objects containing business logic.
+In the BDR Pattern, objects are not mere data containers but domain objects containing business logic. They answer questions about the business domain but don't change the database themselves.
 
 ## Implementation Guide
 
@@ -543,6 +559,107 @@ The results achieved are:
 **SQL and OOP work in harmony.**
 
 In the BDR Pattern, each excels in its own domain while building something greater together.
+
+## FAQ & Architecture Hints
+
+### Q: How do I save modified objects back to the database?
+
+**A: You don't.** Objects in the BDR Pattern are read-only and exist for querying data. When you need to modify data:
+
+1. **Make business decisions** in your application layer
+2. **Issue a Command** - a clear, explicit write operation
+3. **Execute simple write queries** - UPDATE, INSERT, DELETE statements
+
+This follows the **CQRS (Command Query Responsibility Segregation)** principle:
+
+```php
+// Query side (BDR Pattern)
+$order = $this->orderRepo->getOrder($id);
+if ($order->canProcess()) {
+    // Command side (simple write)
+    $this->orderCommandRepo->markAsProcessed($id, new DateTime());
+}
+
+// orderCommandRepo might use simple SQL:
+// UPDATE orders SET status = 'processed', processed_at = :timestamp WHERE id = :id
+```
+
+The separation is intentional:
+- **Queries** can be complex, with JOINs and aggregations
+- **Commands** should be simple and focused on changing state
+- **Domain logic** lives in the query objects, not in the database writes
+
+### Q: Is this the CQRS pattern?
+
+**A: Yes, specifically the Query (read) side.** The BDR Pattern is a powerful implementation of CQRS's query side.
+
+CQRS separates read and write responsibilities:
+- **Query side (BDR Pattern)**: Complex reads with rich domain objects containing business logic
+- **Command side**: Simple, focused writes that change state
+
+The BDR Pattern handles the complex part (queries) by combining:
+- SQL's power for data retrieval
+- Factories for transformation and enrichment
+- Domain objects for business logic
+
+Meanwhile, the command side remains straightforward:
+- Direct UPDATE/INSERT/DELETE statements
+- Event sourcing (if needed)
+- Simple validation before writes
+
+This separation makes both sides simpler and more maintainable.
+
+### Q: Won't calling external APIs in factories slow down list retrievals?
+
+**A: Yes, without proper strategy.** This is essentially an N+1 problem variant. Here are strategies to mitigate:
+
+**1. Batch Requests**
+```php
+final class ProductDomainFactory
+{
+    private array $priceCache = [];
+
+    public function factory(string $id, string $name): ProductDomainObject
+    {
+        // Prices fetched in batch before factory calls
+        $price = $this->priceCache[$id] ?? $this->priceService->getPrice($id);
+        return new ProductDomainObject($id, $name, $price);
+    }
+
+    public function warmPriceCache(array $productIds): void
+    {
+        // Fetch all prices in one API call
+        $this->priceCache = $this->priceService->getPrices($productIds);
+    }
+}
+```
+
+**2. Lazy Loading**
+```php
+final readonly class ProductDomainObject
+{
+    private ?float $currentPrice = null;
+
+    public function getCurrentPrice(): float
+    {
+        // Only fetch when actually needed
+        return $this->currentPrice ??= $this->priceService->getPrice($this->id);
+    }
+}
+```
+
+**3. Strategic Data Loading**
+```php
+// List view: Don't load expensive data
+#[DbQuery('product_list_simple', factory: ProductListFactory::class)]
+public function getProductList(): array;
+
+// Detail view: Load everything including external data
+#[DbQuery('product_detail', factory: ProductDetailFactory::class)]
+public function getProduct(string $id): ProductDomainObject;
+```
+
+The key is **being intentional** about when and how you load data. The factory pattern gives you complete control over this strategy.
 
 ## References
 
