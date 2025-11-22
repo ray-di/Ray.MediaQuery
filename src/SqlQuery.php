@@ -36,6 +36,7 @@ use const JSON_THROW_ON_ERROR;
 final class SqlQuery implements SqlQueryInterface
 {
     private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
+    private const LINE_COMMENT = '/--[^\r\n]*/';
 
     private PDOStatement|null $pdoStatement = null;
 
@@ -123,8 +124,10 @@ final class SqlQuery implements SqlQueryInterface
 
         $this->pdoStatement = $pdoStatement;
         $lastQuery = $pdoStatement->queryString;
-        $query = trim((string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery));
-        $isSelect = stripos($query, 'select') === 0 || stripos($query, 'with') === 0;
+        // Remove comments only for query type detection, not for execution
+        $queryForDetection = (string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery);
+        $queryForDetection = trim((string) preg_replace(self::LINE_COMMENT, '', $queryForDetection));
+        $isSelect = stripos($queryForDetection, 'select') === 0 || stripos($queryForDetection, 'with') === 0;
         $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
         /** @var array<string, mixed> $values */
         $this->logger->log($sqlId, $values);
