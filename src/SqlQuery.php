@@ -36,7 +36,7 @@ use const JSON_THROW_ON_ERROR;
 final class SqlQuery implements SqlQueryInterface
 {
     private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
-    private const LINE_COMMENT = '/--[^\r\n]*/';
+    private const LINE_COMMENT = '/^\s*--[^\r\n]*/m';
 
     private PDOStatement|null $pdoStatement = null;
 
@@ -124,9 +124,7 @@ final class SqlQuery implements SqlQueryInterface
 
         $this->pdoStatement = $pdoStatement;
         $lastQuery = $pdoStatement->queryString;
-        // Remove comments only for query type detection, not for execution
-        $queryForDetection = (string) preg_replace(self::C_STYLE_COMMENT, '', $lastQuery);
-        $queryForDetection = trim((string) preg_replace(self::LINE_COMMENT, '', $queryForDetection));
+        $queryForDetection = $this->removeCommentsForDetection($lastQuery);
         $isSelect = stripos($queryForDetection, 'select') === 0 || stripos($queryForDetection, 'with') === 0;
         $result = $isSelect ? $this->fetchAll($pdoStatement, $fetch) : [];
         /** @var array<string, mixed> $values */
@@ -144,6 +142,23 @@ final class SqlQuery implements SqlQueryInterface
 
         /** @psalm-suppress PossiblyNullArgument */
         return $fetch->fetchAll($pdoStatement, $this->injector);
+    }
+
+    /**
+     * Remove comments from SQL query for query type detection
+     *
+     * This strips both C-style (/* *\/) and line comments (--) to prevent
+     * misidentification of query type. The original query sent to the database
+     * remains unchanged to preserve performance hints and annotations.
+     */
+    private function removeCommentsForDetection(string $sql): string
+    {
+        // Remove C-style comments
+        $sql = (string) preg_replace(self::C_STYLE_COMMENT, '', $sql);
+        // Remove line comments (-- at start of line, optionally after whitespace)
+        $sql = (string) preg_replace(self::LINE_COMMENT, '', $sql);
+
+        return trim($sql);
     }
 
     /** @return non-empty-array<string> */

@@ -66,4 +66,13 @@ class SqlCommentTest extends TestCase
         $result = $this->sqlQuery->getRow('todo_item', ['id' => '1']);
         $this->assertSame(['id' => '1', 'title' => $updatedTitle], $result);
     }
+
+    public function testDashesInStringLiteral(): void
+    {
+        // Test that -- inside string literals is not stripped
+        // This query should work correctly despite having -- in the WHERE clause
+        $result = $this->sqlQuery->getRow('todo_with_dashes_in_string', ['id' => '1']);
+        // Since 'test--value' won't match 'test', we expect null
+        $this->assertNull($result);
+    }
 }
