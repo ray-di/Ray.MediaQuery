@@ -11,19 +11,28 @@
 Traditional ORMs try to hide SQL behind object abstractions. Ray.MediaQuery takes a different approach:
 
 ```php
-// 1. Define your interface
-interface UserRepository
+// 1. Define your interface (and Entity)
+interface UserQueryInterface
 {
-    #[DbQuery('user_by_id')]
-    public function find(string $id): User;
+    #[DbQuery('user_item')]
+    public function item(string $id): ?User;
+}
+
+class User
+{
+    public function __construct(
+        public readonly string $id,
+        public readonly string $name
+    ) {}
 }
 
 // 2. Write your SQL
--- user_by_id.sql
-SELECT * FROM users WHERE id = :id
+-- user_item.sql
+SELECT id, name FROM users WHERE id = :id
 
-// 3. That's it. No implementation needed.
-// find($id) → binds to user_by_id.sql → executes → returns User object
+// 3. Use it (no implementation needed!)
+$userQuery = $injector->getInstance(UserQueryInterface::class);
+$user = $userQuery->item('user-123');
 ```
 
 ## Why Ray.MediaQuery?
