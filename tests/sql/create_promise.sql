@@ -1,6 +1,5 @@
-CREATE TABLE IF NOT EXISTS promise
+CREATE TABLE IF NOT EXISTS todo
 (
-    id    TEXT,
-    title TEXT,
-    time  TEXT
+    id    INTEGER,
+    title TEXT
 )
