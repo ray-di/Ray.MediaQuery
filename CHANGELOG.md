@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-11-23
+
+### Fixed
+- Fixed line comment handling in query type detection. SQL files with line comments (`--`) containing query keywords (e.g., `-- SELECT for testing`) no longer cause incorrect query type detection. ([#76](https://github.com/ray-di/Ray.MediaQuery/pull/76))
+- Added missing trailing newlines to SQL test files to follow POSIX text file standard
+
 ## [1.0.0] - 2025-11-20
 
 Stable release. Major update to PHP 8 attributes.
@@ -46,7 +52,7 @@ Stable release. Major update to PHP 8 attributes.
 ### Added
 - Suggest `ray/web-query` package for Web API functionality in composer.json
 
-### Changed  
+### Changed
 - Update ray/input-query dependency to ^1.0
 - Package description changed from "Media access mapping Framework" to "Database access mapping Framework"
 
@@ -61,7 +67,7 @@ Stable release. Major update to PHP 8 attributes.
 - Update `@DbQuery` → `#[DbQuery]`, `@Pager` → `#[Pager]`
 - Remove `doctrine/annotations` dependency after migration
 
-**For migrating from CamelCaseTrait:**  
+**For migrating from CamelCaseTrait:**
 - Replace with constructor property promotion and `StringCase` utility
 - Use `StringCase::camel()` and `StringCase::snake()` for conversions
 
@@ -73,7 +79,7 @@ Stable release. Major update to PHP 8 attributes.
 
 ### Added
 - Support for Input object flattening in ParamConverter with #[Input] attribute
-- Enhanced parameter conversion with conflict detection for Input objects  
+- Enhanced parameter conversion with conflict detection for Input objects
 - Comprehensive test coverage for Input object processing
 
 ### Changed
@@ -164,6 +170,7 @@ Stable release. Major update to PHP 8 attributes.
 
 Please refer to the git history for changes in earlier versions.
 
+[1.0.1]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0-rc2...1.0.0
 [1.0.0-rc2]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0-rc1...1.0.0-rc2
 [1.0.0-rc1]: https://github.com/ray-di/Ray.MediaQuery/compare/0.17.0...1.0.0-rc1
