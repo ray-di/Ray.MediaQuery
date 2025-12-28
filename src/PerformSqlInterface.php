@@ -18,6 +18,8 @@ interface PerformSqlInterface
      * @param array<string, mixed> $values The values to bind to the SQL statement.
      *
      * @return PDOStatement The result of the performed SQL statement.
+     *
+     * @psalm-taint-escape sql
      */
     public function perform(ExtendedPdoInterface $pdo, string $sqlId, string $sql, array $values): PDOStatement;
 }

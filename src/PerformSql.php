@@ -10,6 +10,7 @@ use PDOStatement;
 
 final class PerformSql implements PerformSqlInterface
 {
+    /** @psalm-taint-escape sql */
     #[Override]
     public function perform(ExtendedPdoInterface $pdo, string $sqlId, string $sql, array $values): PDOStatement
     {

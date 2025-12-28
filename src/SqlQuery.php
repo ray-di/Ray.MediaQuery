@@ -54,6 +54,8 @@ final class SqlQuery implements SqlQueryInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @psalm-taint-escape sql
      */
     #[Override]
     public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void
@@ -63,6 +65,8 @@ final class SqlQuery implements SqlQueryInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @psalm-taint-escape sql
      */
     #[Override]
     public function getRow(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array|object|null
@@ -80,6 +84,8 @@ final class SqlQuery implements SqlQueryInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @psalm-taint-escape sql
      */
     #[Override]
     public function getRowList(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array
@@ -92,6 +98,8 @@ final class SqlQuery implements SqlQueryInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @psalm-taint-escape sql
      */
     #[Override]
     public function getCount(string $sqlId, array $values): int
@@ -193,6 +201,8 @@ final class SqlQuery implements SqlQueryInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @psalm-taint-escape sql
      */
     #[Override]
     public function getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', string|null $entity = null): PagesInterface
