@@ -16,6 +16,7 @@ use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionType;
 
+use function array_key_last;
 use function assert;
 use function class_exists;
 use function is_a;
@@ -63,8 +64,9 @@ final class ReturnEntity implements ReturnEntityInterface
 
         if ($type instanceof Generic) {
             $types = $type->getTypes();
+            $lastKey = array_key_last($types);
 
-            return $types[0] ?? null;
+            return $lastKey !== null ? $types[$lastKey] : null;
         }
 
         return null;
