@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-01-25
+
+### Changed
+- Upgrade `phpdocumentor/reflection-docblock` from ^5.3 to ^6.0
+- Upgrade `phpdocumentor/type-resolver` from ^1.6.1 to ^2.0
+- Inject `DocBlockFactoryInterface` via constructor in `ReturnEntity`
+
+### Fixed
+- Fix `extractValueType` to correctly return value type for multi-parameter generics (`array<K, V>`)
+
 ## [1.0.1] - 2025-11-23
 
 ### Fixed
@@ -170,6 +180,7 @@ Stable release. Major update to PHP 8 attributes.
 
 Please refer to the git history for changes in earlier versions.
 
+[1.0.3]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.1...1.0.3
 [1.0.1]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0-rc2...1.0.0
 [1.0.0-rc2]: https://github.com/ray-di/Ray.MediaQuery/compare/1.0.0-rc1...1.0.0-rc2
