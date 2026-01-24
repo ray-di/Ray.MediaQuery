@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use Override;
+use phpDocumentor\Reflection\DocBlockFactory;
+use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use Ray\Di\AbstractModule;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Qualifier\FactoryMethod;
@@ -38,6 +40,7 @@ final class MediaQueryDbModule extends AbstractModule
             [DbQueryInterceptor::class],
         );
         $this->bind()->annotatedWith(SqlDir::class)->toInstance($this->configs->sqlDir);
+        $this->bind(DocBlockFactoryInterface::class)->toInstance(DocBlockFactory::createInstance());
         $this->bind(ReturnEntityInterface::class)->to(ReturnEntity::class);
         $this->bind(FetchFactoryInterface::class)->to(FetchFactory::class);
         $this->bind()->annotatedWith(FactoryMethod::class)->toInstance('factory');
