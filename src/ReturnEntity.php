@@ -6,9 +6,10 @@ namespace Ray\MediaQuery;
 
 use Override;
 use phpDocumentor\Reflection\DocBlock\Tags\Return_;
-use phpDocumentor\Reflection\DocBlockFactory;
+use phpDocumentor\Reflection\DocBlockFactoryInterface;
+use phpDocumentor\Reflection\PseudoTypes\Generic;
+use phpDocumentor\Reflection\Type;
 use phpDocumentor\Reflection\Types\Array_;
-use phpDocumentor\Reflection\Types\Collection;
 use phpDocumentor\Reflection\Types\ContextFactory;
 use phpDocumentor\Reflection\Types\Object_;
 use ReflectionMethod;
@@ -22,6 +23,11 @@ use function substr;
 
 final class ReturnEntity implements ReturnEntityInterface
 {
+    public function __construct(
+        private DocBlockFactoryInterface $docBlockFactory,
+    ) {
+    }
+
     /** @inheritDoc  */
     #[Override]
     public function __invoke(ReflectionMethod $method): string|null
@@ -49,17 +55,31 @@ final class ReturnEntity implements ReturnEntityInterface
         return (string) $reflectionType;
     }
 
+    private function extractValueType(Type|null $type): Type|null
+    {
+        if ($type instanceof Array_) {
+            return $type->getValueType();
+        }
+
+        if ($type instanceof Generic) {
+            $types = $type->getTypes();
+
+            return $types[0] ?? null;
+        }
+
+        return null;
+    }
+
     /** @return ?class-string  */
     private function docblock(ReflectionMethod $method): string|null
     {
-        $factory = DocBlockFactory::createInstance();
         $context = (new ContextFactory())->createFromReflector($method);
         $docComment = $method->getDocComment();
         if ($docComment === false) {
             return null;
         }
 
-        $docblock = $factory->create($docComment, $context);
+        $docblock = $this->docBlockFactory->create($docComment, $context);
         $returns = $docblock->getTagsByName('return');
         if (! isset($returns[0])) {
             return null;
@@ -68,11 +88,8 @@ final class ReturnEntity implements ReturnEntityInterface
         $return = $returns[0];
         assert($return instanceof Return_);
         $type = $return->getType();
-        if (! $type instanceof Array_ && ! $type instanceof Collection) {
-            return null;
-        }
 
-        $valueType = $type->getValueType();
+        $valueType = $this->extractValueType($type);
         if (! $valueType instanceof Object_) {
             return null;
         }
