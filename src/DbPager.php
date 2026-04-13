@@ -23,6 +23,8 @@ final class DbPager
     /** @param array<string, mixed> $values */
     public function __invoke(string $queryId, array $values, Pager $pager, string|null $entity): PagesInterface
     {
+        // Clone the Pager attribute to avoid mutating the caller's instance in dynamicPager().
+        $pager = clone $pager;
         if (is_string($pager->perPage)) {
             $values = $this->dynamicPager($pager, $values);
         }
