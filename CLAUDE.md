@@ -27,6 +27,11 @@ Ray.MediaQuery is a PHP 8.2+ database access mapping framework that provides dat
 ### Demo
 - `php demo/run.php` - Run the working demo application
 
+### Release Workflow
+- CHANGELOG updates for a release do **not** need a PR — commit directly to `1.x` (this is an explicit exception to the "never commit to main branches" rule for this chore only)
+- Steps: (1) commit the CHANGELOG entry directly to `1.x`, (2) `git tag -a <version>` on that commit, (3) `git push upstream <version>`, (4) `gh release create <version>` with notes built from the CHANGELOG entry
+- Stable tags use plain `X.Y.Z` format (no `v` prefix), matching existing `1.0.0` / `1.0.1` / ... / `1.0.3` tags
+
 ## Architecture Overview
 
 ### Core Concept
