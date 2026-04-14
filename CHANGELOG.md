@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.4] - 2026-04-14
+## 1.0.4 - 2026-04-14
 
 ### Fixed
 - Fix `DbPager` mutating the `#[Pager]` attribute instance it receives. `DbPager::__invoke()` now clones the Pager at entry so `dynamicPager()` no longer writes back to the caller's instance ([#80](https://github.com/ray-di/Ray.MediaQuery/issues/80), [#81](https://github.com/ray-di/Ray.MediaQuery/pull/81))
