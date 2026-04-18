@@ -6,6 +6,19 @@ namespace Ray\MediaQuery;
 
 use Ray\MediaQuery\Result\AffectedRows;
 
+/**
+ * SQL query executor.
+ *
+ * Methods in this interface execute the SQL identified by $sqlId every time
+ * they are called — the prefix signals the query kind, not a pure accessor:
+ *
+ *  - `get*`  — SELECT queries; execute and return the result set or a
+ *              derivation of it ({@see self::getRow()}, {@see self::getRowList()},
+ *              {@see self::getCount()}, {@see self::getPages()}).
+ *  - `exec*` — DML queries (INSERT / UPDATE / DELETE); execute and either
+ *              return nothing ({@see self::exec()}) or return the affected
+ *              row count and last insert id ({@see self::execAffected()}).
+ */
 interface SqlQueryInterface
 {
     /**
@@ -31,8 +44,8 @@ interface SqlQueryInterface
     public function getRowList(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array;
 
     /**
-     * Execute a statement without reading a result. Use {@see self::getAffectedRows()}
-     * when the DML row count or last insert id is needed.
+     * Execute a DML statement without reading a result. Use {@see self::execAffected()}
+     * when the affected row count or last insert id is needed.
      *
      * @param array<string, mixed> $values
      *
@@ -49,7 +62,7 @@ interface SqlQueryInterface
      *
      * @psalm-taint-escape sql
      */
-    public function getAffectedRows(string $sqlId, array $values = []): AffectedRows;
+    public function execAffected(string $sqlId, array $values = []): AffectedRows;
 
     /**
      * Return the total row count for a SELECT. Used as the pagination denominator.

@@ -171,26 +171,26 @@ class SqlQueryTest extends TestCase
         $this->sqlQuery->getRowList('error_list', []);
     }
 
-    public function testGetAffectedRowsForDelete(): void
+    public function testExecAffectedForDelete(): void
     {
-        $result = $this->sqlQuery->getAffectedRows('todo_delete', ['id' => '1']);
+        $result = $this->sqlQuery->execAffected('todo_delete', ['id' => '1']);
         $this->assertInstanceOf(AffectedRows::class, $result);
         $this->assertSame(1, $result->count);
         $this->assertTrue($result->isAffected());
         $this->assertNull($result->lastInsertId);
     }
 
-    public function testGetAffectedRowsForDeleteMissing(): void
+    public function testExecAffectedForDeleteMissing(): void
     {
-        $result = $this->sqlQuery->getAffectedRows('todo_delete', ['id' => '__missing__']);
+        $result = $this->sqlQuery->execAffected('todo_delete', ['id' => '__missing__']);
         $this->assertSame(0, $result->count);
         $this->assertFalse($result->isAffected());
         $this->assertNull($result->lastInsertId);
     }
 
-    public function testGetAffectedRowsForInsertReturnsLastInsertId(): void
+    public function testExecAffectedForInsertReturnsLastInsertId(): void
     {
-        $result = $this->sqlQuery->getAffectedRows('counter_add', ['label' => 'first']);
+        $result = $this->sqlQuery->execAffected('counter_add', ['label' => 'first']);
         $this->assertSame(1, $result->count);
         $this->assertSame('1', $result->lastInsertId);
     }

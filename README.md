@@ -529,7 +529,7 @@ class CustomRepository
 - `getRow($queryId, $params)` - Single row
 - `getRowList($queryId, $params)` - Multiple rows
 - `exec($queryId, $params)` - Execute without result
-- `getAffectedRows($queryId, $params)` - Execute DML and return `AffectedRows` (count + lastInsertId)
+- `execAffected($queryId, $params)` - Execute DML and return `AffectedRows` (count + lastInsertId)
 - `getCount($queryId, $params)` - Total row count (for pagination)
 - `getStatement()` - Get PDO statement
 - `getPages()` - Get paginated results

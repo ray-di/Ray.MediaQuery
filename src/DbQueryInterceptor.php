@@ -49,7 +49,7 @@ final class DbQueryInterceptor implements MethodInterceptor
         $returnType = $invocation->getMethod()->getReturnType();
         assert($returnType === null || $returnType instanceof ReflectionNamedType || $returnType instanceof ReflectionUnionType);
         if ($returnType instanceof ReflectionNamedType && $returnType->getName() === AffectedRows::class) {
-            return $this->sqlQuery->getAffectedRows($dbQuery->id, $values);
+            return $this->sqlQuery->execAffected($dbQuery->id, $values);
         }
 
         $fetch = $this->factory->factory($dbQuery, $entity, $returnType);

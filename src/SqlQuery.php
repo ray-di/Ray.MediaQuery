@@ -103,7 +103,7 @@ final class SqlQuery implements SqlQueryInterface
      * @psalm-taint-escape sql
      */
     #[Override]
-    public function getAffectedRows(string $sqlId, array $values = []): AffectedRows
+    public function execAffected(string $sqlId, array $values = []): AffectedRows
     {
         $this->perform($sqlId, $values, null);
         assert($this->pdoStatement instanceof PDOStatement);

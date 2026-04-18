@@ -45,7 +45,7 @@ final class FakeSqlQuery implements SqlQueryInterface
      *
      * @param array<string, mixed> $values
      */
-    public function getAffectedRows(string $sqlId, array $values = []): AffectedRows
+    public function execAffected(string $sqlId, array $values = []): AffectedRows
     {
         return new AffectedRows(0);
     }
