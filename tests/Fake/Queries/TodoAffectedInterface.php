@@ -17,4 +17,7 @@ interface TodoAffectedInterface
 
     #[DbQuery('counter_add')]
     public function addCounter(string $label): AffectedRows;
+
+    #[DbQuery('multi_statement_affected')]
+    public function multiStatement(): AffectedRows;
 }

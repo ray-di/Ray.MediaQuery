@@ -76,4 +76,16 @@ class DbQueryAffectedRowsTest extends TestCase
         $this->assertSame(1, $second->count);
         $this->assertSame('2', $second->lastInsertId);
     }
+
+    public function testMultiStatementReflectsLastStatementOnly(): void
+    {
+        $repo = $this->injector->getInstance(TodoAffectedInterface::class);
+        // multi_statement_affected.sql runs:
+        //   1) UPDATE todo ... WHERE id = '__missing__'  (0 rows)
+        //   2) INSERT INTO counter (label) VALUES ('multi') (1 row, autoincrement id)
+        // AffectedRows must reflect the last (INSERT), not the first (UPDATE).
+        $result = $repo->multiStatement();
+        $this->assertSame(1, $result->count);
+        $this->assertNotNull($result->lastInsertId);
+    }
 }
