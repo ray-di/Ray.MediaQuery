@@ -273,6 +273,8 @@ $result->isAffected();  // bool — true when count > 0
 
 `lastInsertId` is normalised to `null` for non-`INSERT` statements and for inserts that do not produce an auto-increment value. Existing `void` return types keep working unchanged.
 
+When a SQL file contains multiple statements (separated by `;`), `AffectedRows` reflects the **last executed statement only**.
+
 **Constructor Property Promotion (Recommended):**
 
 Use constructor property promotion for type-safe, immutable entities:
