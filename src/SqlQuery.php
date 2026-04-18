@@ -36,7 +36,7 @@ use const JSON_THROW_ON_ERROR;
 
 final class SqlQuery implements SqlQueryInterface
 {
-    private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
+    private const C_STYLE_COMMENT = '/\/\*.*?\*\//su';
     private const LINE_COMMENT = '/^\s*--[^\r\n]*/m';
 
     private PDOStatement|null $pdoStatement = null;
