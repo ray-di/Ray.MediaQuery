@@ -19,6 +19,7 @@ use Ray\InputQuery\ToArray;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\LogicException;
 use Ray\MediaQuery\Exception\PdoPerformException;
+use Ray\MediaQuery\Result\AffectedRows;
 
 use function count;
 use function file_get_contents;
@@ -37,6 +38,7 @@ class SqlQueryTest extends TestCase
         $pdo = new ExtendedPdo('sqlite::memory:', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true]);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
+        $pdo->query((string) file_get_contents($sqlDir . '/create_counter.sql'));
         $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), $this->insertData);
         $this->log = new MediaQueryLogger();
         $this->sqlQuery = new SqlQuery(
@@ -167,5 +169,29 @@ class SqlQueryTest extends TestCase
     {
         $this->expectException(PdoPerformException::class);
         $this->sqlQuery->getRowList('error_list', []);
+    }
+
+    public function testGetAffectedRowsForDelete(): void
+    {
+        $result = $this->sqlQuery->getAffectedRows('todo_delete', ['id' => '1']);
+        $this->assertInstanceOf(AffectedRows::class, $result);
+        $this->assertSame(1, $result->count);
+        $this->assertTrue($result->isAffected());
+        $this->assertNull($result->lastInsertId);
+    }
+
+    public function testGetAffectedRowsForDeleteMissing(): void
+    {
+        $result = $this->sqlQuery->getAffectedRows('todo_delete', ['id' => '__missing__']);
+        $this->assertSame(0, $result->count);
+        $this->assertFalse($result->isAffected());
+        $this->assertNull($result->lastInsertId);
+    }
+
+    public function testGetAffectedRowsForInsertReturnsLastInsertId(): void
+    {
+        $result = $this->sqlQuery->getAffectedRows('counter_add', ['label' => 'first']);
+        $this->assertSame(1, $result->count);
+        $this->assertSame('1', $result->lastInsertId);
     }
 }

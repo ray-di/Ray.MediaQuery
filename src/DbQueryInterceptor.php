@@ -11,6 +11,7 @@ use Ray\Di\Di\Set;
 use Ray\Di\ProviderInterface;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
+use Ray\MediaQuery\Result\AffectedRows;
 use ReflectionNamedType;
 use ReflectionUnionType;
 
@@ -47,6 +48,10 @@ final class DbQueryInterceptor implements MethodInterceptor
 
         $returnType = $invocation->getMethod()->getReturnType();
         assert($returnType === null || $returnType instanceof ReflectionNamedType || $returnType instanceof ReflectionUnionType);
+        if ($returnType instanceof ReflectionNamedType && $returnType->getName() === AffectedRows::class) {
+            return $this->sqlQuery->getAffectedRows($dbQuery->id, $values);
+        }
+
         $fetch = $this->factory->factory($dbQuery, $entity, $returnType);
         $isRow = $dbQuery->type === 'row' || $returnType instanceof ReflectionUnionType || ($returnType instanceof ReflectionNamedType && $returnType->getName() !== 'array');
 

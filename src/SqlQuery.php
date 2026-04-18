@@ -15,6 +15,7 @@ use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
+use Ray\MediaQuery\Result\AffectedRows;
 
 use function array_pop;
 use function assert;
@@ -94,6 +95,28 @@ final class SqlQuery implements SqlQueryInterface
         $list =  $this->perform($sqlId, $values, $fetch);
 
         return $list;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @psalm-taint-escape sql
+     */
+    #[Override]
+    public function getAffectedRows(string $sqlId, array $values = []): AffectedRows
+    {
+        $this->perform($sqlId, $values, null);
+        assert($this->pdoStatement instanceof PDOStatement);
+        $count = $this->pdoStatement->rowCount();
+
+        $query = $this->removeCommentsForDetection($this->pdoStatement->queryString);
+        $lastInsertId = null;
+        if (stripos($query, 'insert') === 0) {
+            $id = $this->pdo->lastInsertId();
+            $lastInsertId = $id === false || $id === '' || $id === '0' ? null : $id;
+        }
+
+        return new AffectedRows($count, $lastInsertId);
     }
 
     /**

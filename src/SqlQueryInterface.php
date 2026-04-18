@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Ray\MediaQuery\Result\AffectedRows;
+
 interface SqlQueryInterface
 {
     /**
@@ -30,6 +32,13 @@ interface SqlQueryInterface
      * @psalm-taint-escape sql
      */
     public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void;
+
+    /**
+     * @param array<string, mixed> $values
+     *
+     * @psalm-taint-escape sql
+     */
+    public function getAffectedRows(string $sqlId, array $values = []): AffectedRows;
 
     /**
      * @param array<string, mixed> $values

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
+use Ray\MediaQuery\Result\AffectedRows;
+
 final class FakeSqlQuery implements SqlQueryInterface
 {
     /** @var list<int> */
@@ -36,6 +38,16 @@ final class FakeSqlQuery implements SqlQueryInterface
      */
     public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void
     {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param array<string, mixed> $values
+     */
+    public function getAffectedRows(string $sqlId, array $values = []): AffectedRows
+    {
+        return new AffectedRows(0);
     }
 
     /**
