@@ -275,6 +275,34 @@ $result->isAffected();  // bool — true when count > 0
 
 When a SQL file contains multiple statements (separated by `;`), `AffectedRows` reflects the **last executed statement only**.
 
+**Collection Return Type (auto-wrap):**
+
+Declare any Traversable class as the return type and Ray.MediaQuery will instantiate it with the row list:
+
+```php
+interface UserRepository
+{
+    #[DbQuery('user_list')]
+    public function list(): UserCollection;  // raw associative arrays
+
+    #[DbQuery('user_list', factory: UserFactory::class)]
+    public function hydrated(): UserCollection;  // User instances
+
+    #[DbQuery('user_list')]
+    /** @return UserCollection<User> */
+    public function byDocblock(): UserCollection;  // User instances via docblock hint
+}
+
+final class UserCollection implements IteratorAggregate, Countable
+{
+    public function __construct(public readonly array $items) {}
+    public function getIterator(): ArrayIterator { return new ArrayIterator($this->items); }
+    public function count(): int { return count($this->items); }
+}
+```
+
+A class qualifies for auto-wrap when it implements `Traversable`, is instantiable, and has at least one constructor parameter. This covers PHP's built-in `ArrayObject`, Laravel `Illuminate\Support\Collection`, Doctrine `ArrayCollection`, and any user-defined collection. The items passed to the constructor are entity-hydrated when `factory:` or a `@return Collection<Entity>` docblock resolves to an entity class; otherwise raw associative arrays are passed.
+
 **Constructor Property Promotion (Recommended):**
 
 Use constructor property promotion for type-safe, immutable entities:

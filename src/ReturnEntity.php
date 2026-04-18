@@ -40,7 +40,7 @@ final class ReturnEntity implements ReturnEntityInterface
 
         $returnTypeClass = $this->getReturnTypeName($returnType);
 
-        if (class_exists($returnTypeClass) && ! is_a($returnTypeClass, PagesInterface::class, true)) {
+        if (class_exists($returnTypeClass) && ! is_a($returnTypeClass, PagesInterface::class, true) && ! CollectionTypeResolver::isCollection($returnTypeClass)) {
             return $returnTypeClass;
         }
 
