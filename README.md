@@ -249,6 +249,30 @@ interface UserRepository
 }
 ```
 
+**DML Result (`AffectedRows`):**
+
+Declare an `AffectedRows` return type on `INSERT` / `UPDATE` / `DELETE` methods to receive the row count and (for `INSERT`) the last insert id:
+
+```php
+use Ray\MediaQuery\Result\AffectedRows;
+
+interface TodoRepository
+{
+    #[DbQuery('todo_add')]
+    public function add(string $title): AffectedRows;
+
+    #[DbQuery('todo_delete')]
+    public function delete(string $id): AffectedRows;
+}
+
+$result = $todoRepo->add('Write docs');
+$result->count;         // int — number of affected rows
+$result->lastInsertId;  // ?string — auto-increment id after INSERT, null otherwise
+$result->isAffected();  // bool — true when count > 0
+```
+
+`lastInsertId` is normalised to `null` for non-`INSERT` statements and for inserts that do not produce an auto-increment value. Existing `void` return types keep working unchanged.
+
 **Constructor Property Promotion (Recommended):**
 
 Use constructor property promotion for type-safe, immutable entities:
@@ -503,6 +527,8 @@ class CustomRepository
 - `getRow($queryId, $params)` - Single row
 - `getRowList($queryId, $params)` - Multiple rows
 - `exec($queryId, $params)` - Execute without result
+- `getAffectedRows($queryId, $params)` - Execute DML and return `AffectedRows` (count + lastInsertId)
+- `getCount($queryId, $params)` - Total row count (for pagination)
 - `getStatement()` - Get PDO statement
 - `getPages()` - Get paginated results
 
