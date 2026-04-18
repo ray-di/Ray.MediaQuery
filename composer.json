@@ -26,7 +26,7 @@
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.8",
-        "phpunit/phpunit": "^10.5.46"
+        "phpunit/phpunit": "^11.5"
     },
     "autoload": {
         "psr-4": {
@@ -86,6 +86,12 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "bamarni/composer-bin-plugin": true
+        },
+        "audit": {
+            "ignore": {
+                "PKSA-5jz8-6tcw-pbk4": "PHPUnit dev-only dependency; PHP 8.2 support precludes PHPUnit 12",
+                "PKSA-z3gr-8qht-p93v": "PHPUnit dev-only dependency; PHP 8.2 support precludes PHPUnit 12"
+            }
         }
     },
     "suggest": {
