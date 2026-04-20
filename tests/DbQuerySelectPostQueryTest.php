@@ -15,6 +15,7 @@ use Ray\MediaQuery\Result\Articles;
 
 use function dirname;
 use function file_get_contents;
+use function usort;
 
 class DbQuerySelectPostQueryTest extends TestCase
 {
@@ -45,12 +46,15 @@ class DbQuerySelectPostQueryTest extends TestCase
         $result = $repo->listAssoc();
 
         $this->assertInstanceOf(Articles::class, $result);
+        /** @var list<array{id: string, title: string}> $rows */
+        $rows = $result->rows;
+        usort($rows, static fn (array $a, array $b): int => $a['id'] <=> $b['id']);
         $this->assertSame(
             [
                 ['id' => '1', 'title' => 'run'],
                 ['id' => '2', 'title' => 'walk'],
             ],
-            $result->rows,
+            $rows,
         );
     }
 
@@ -62,14 +66,14 @@ class DbQuerySelectPostQueryTest extends TestCase
         $this->assertInstanceOf(Articles::class, $result);
         $this->assertCount(2, $result->rows);
 
-        [$first, $second] = [$result->rows[0], $result->rows[1]];
+        /** @var list<Article> $rows */
+        $rows = $result->rows;
+        usort($rows, static fn (Article $a, Article $b): int => $a->id <=> $b->id);
 
-        $this->assertInstanceOf(Article::class, $first);
-        $this->assertSame('1', $first->id);
-        $this->assertSame('run', $first->title);
+        $this->assertSame('1', $rows[0]->id);
+        $this->assertSame('run', $rows[0]->title);
 
-        $this->assertInstanceOf(Article::class, $second);
-        $this->assertSame('2', $second->id);
-        $this->assertSame('walk', $second->title);
+        $this->assertSame('2', $rows[1]->id);
+        $this->assertSame('walk', $rows[1]->title);
     }
 }

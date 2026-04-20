@@ -62,11 +62,12 @@ interface SqlQueryInterface
      * executing the SQL. Each result class owns its own construction logic, so
      * the caller's return-type declaration is what selects behaviour (count only,
      * count + last insert id, a typed collection wrapper, etc.). For SELECT
-     * statements the rows are pre-hydrated and exposed on the context's `$rows`
-     * property — entity instances when `$fetch` is provided, associative arrays
-     * otherwise. For DML statements no fetch happens and `$rows` is `[]`. When
-     * the SQL file contains multiple statements, the result reflects the last
-     * executed statement only.
+     * statements the rows are fetched and exposed on the context's `$rows`
+     * property — shape is determined by the supplied `$fetch` strategy (entity
+     * instances for an entity-bound fetch, associative arrays for `FetchAssoc`),
+     * or associative arrays when `$fetch` is null. For DML statements no fetch
+     * happens and `$rows` is `[]`. When the SQL file contains multiple
+     * statements, the result reflects the last executed statement only.
      *
      * @param array<string, mixed> $values
      * @param class-string<T>      $postQueryClass
