@@ -107,12 +107,12 @@ final class SqlQuery implements SqlQueryInterface
      * @psalm-taint-escape sql
      */
     #[Override]
-    public function execPostQuery(string $sqlId, array $values, string $postQueryClass): PostQueryInterface
+    public function execPostQuery(string $sqlId, array $values, string $postQueryClass, FetchInterface|null $fetch = null): PostQueryInterface
     {
-        $this->perform($sqlId, $values, null);
+        $rows = $this->perform($sqlId, $values, $fetch);
         assert($this->pdoStatement instanceof PDOStatement);
 
-        $context = new PostQueryContext($this->pdoStatement, $this->pdo, $this->lastValues);
+        $context = new PostQueryContext($this->pdoStatement, $this->pdo, $this->lastValues, $rows);
 
         return $postQueryClass::fromContext($context);
     }

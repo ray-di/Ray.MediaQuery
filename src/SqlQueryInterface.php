@@ -15,10 +15,11 @@ use Ray\MediaQuery\Result\PostQueryInterface;
  *  - `get*`  — SELECT queries; execute and return the result set or a
  *              derivation of it ({@see self::getRow()}, {@see self::getRowList()},
  *              {@see self::getCount()}, {@see self::getPages()}).
- *  - `exec*` — DML queries (INSERT / UPDATE / DELETE); execute and either
- *              return nothing ({@see self::exec()}) or return a typed result
- *              built from the post-execution PDO state
- *              ({@see self::execPostQuery()}).
+ *  - `exec*` — execute and build a typed result. {@see self::exec()} runs a
+ *              DML statement without reading a result.
+ *              {@see self::execPostQuery()} dispatches through the user-defined
+ *              {@see PostQueryInterface} factory for either SELECT (hydrated
+ *              rows available on the context) or DML (post-execution PDO state).
  */
 interface SqlQueryInterface
 {
@@ -55,13 +56,17 @@ interface SqlQueryInterface
     public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void;
 
     /**
-     * Execute a DML statement and build a result through the given PostQuery class.
+     * Execute a SQL statement and build a result through the given PostQuery class.
      *
      * The framework calls `{$postQueryClass}::fromContext($context)` after
      * executing the SQL. Each result class owns its own construction logic, so
      * the caller's return-type declaration is what selects behaviour (count only,
-     * count + last insert id, etc.). When the SQL file contains multiple
-     * statements, the result reflects the last executed statement only.
+     * count + last insert id, a typed collection wrapper, etc.). For SELECT
+     * statements the rows are pre-hydrated and exposed on the context's `$rows`
+     * property — entity instances when `$fetch` is provided, associative arrays
+     * otherwise. For DML statements no fetch happens and `$rows` is `[]`. When
+     * the SQL file contains multiple statements, the result reflects the last
+     * executed statement only.
      *
      * @param array<string, mixed> $values
      * @param class-string<T>      $postQueryClass
@@ -71,7 +76,7 @@ interface SqlQueryInterface
      * @template T of PostQueryInterface
      * @psalm-taint-escape sql
      */
-    public function execPostQuery(string $sqlId, array $values, string $postQueryClass): PostQueryInterface;
+    public function execPostQuery(string $sqlId, array $values, string $postQueryClass, FetchInterface|null $fetch = null): PostQueryInterface;
 
     /**
      * Return the total row count for a SELECT. Used as the pagination denominator.
