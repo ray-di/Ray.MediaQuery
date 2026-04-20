@@ -57,7 +57,7 @@ interface SqlQueryInterface
     /**
      * Execute a DML statement and build a result through the given PostQuery class.
      *
-     * The framework calls `{$postQueryClass}::postQuery($statement, $pdo)` after
+     * The framework calls `{$postQueryClass}::fromContext($context)` after
      * executing the SQL. Each result class owns its own construction logic, so
      * the caller's return-type declaration is what selects behaviour (count only,
      * count + last insert id, etc.). When the SQL file contains multiple

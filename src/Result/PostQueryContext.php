@@ -8,7 +8,7 @@ use Aura\Sql\ExtendedPdoInterface;
 use PDOStatement;
 
 /**
- * Context passed to {@see PostQueryInterface::postQuery()} after DML execution.
+ * Context passed to {@see PostQueryInterface::fromContext()} after DML execution.
  *
  * Carries the executed statement, the connection, and the parameter values as
  * resolved by `ParamConverter` / `ParamInjector` — i.e. with injected defaults

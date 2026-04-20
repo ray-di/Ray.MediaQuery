@@ -36,7 +36,7 @@ final class InsertedRow implements PostQueryInterface
     }
 
     #[Override]
-    public static function postQuery(PostQueryContext $context): static
+    public static function fromContext(PostQueryContext $context): static
     {
         $id = $context->pdo->lastInsertId();
         $lastInsertId = $id === false || $id === '' || $id === '0' ? null : $id;

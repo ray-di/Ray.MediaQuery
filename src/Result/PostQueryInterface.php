@@ -9,12 +9,12 @@ namespace Ray\MediaQuery\Result;
  *
  * Any class implementing this interface can be declared as the return type of
  * a `#[DbQuery]` method. The DbQueryInterceptor detects the interface via
- * `is_subclass_of` and calls the static {@see self::postQuery()} factory with
+ * `is_subclass_of` and calls the static {@see self::fromContext()} factory with
  * a {@see PostQueryContext} holding the executed statement, its connection,
  * and the resolved parameter values. Each result class owns the logic that
  * turns that context into its own shape.
  */
 interface PostQueryInterface
 {
-    public static function postQuery(PostQueryContext $context): static;
+    public static function fromContext(PostQueryContext $context): static;
 }

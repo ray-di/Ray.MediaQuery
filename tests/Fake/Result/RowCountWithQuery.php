@@ -15,7 +15,7 @@ final class RowCountWithQuery implements PostQueryInterface
     }
 
     #[Override]
-    public static function postQuery(PostQueryContext $context): static
+    public static function fromContext(PostQueryContext $context): static
     {
         return new static($context->statement->rowCount(), $context->statement->queryString);
     }

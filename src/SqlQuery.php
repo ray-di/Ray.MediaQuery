@@ -114,7 +114,7 @@ final class SqlQuery implements SqlQueryInterface
 
         $context = new PostQueryContext($this->pdoStatement, $this->pdo, $this->lastValues);
 
-        return $postQueryClass::postQuery($context);
+        return $postQueryClass::fromContext($context);
     }
 
     /**
