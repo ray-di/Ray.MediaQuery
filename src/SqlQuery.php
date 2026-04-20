@@ -15,6 +15,8 @@ use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
+use Ray\MediaQuery\Result\PostQueryContext;
+use Ray\MediaQuery\Result\PostQueryInterface;
 
 use function array_pop;
 use function assert;
@@ -35,10 +37,13 @@ use const JSON_THROW_ON_ERROR;
 
 final class SqlQuery implements SqlQueryInterface
 {
-    private const C_STYLE_COMMENT = '/\/\*(.*?)\*\//u';
+    private const C_STYLE_COMMENT = '/\/\*.*?\*\//su';
     private const LINE_COMMENT = '/^\s*--[^\r\n]*/m';
 
     private PDOStatement|null $pdoStatement = null;
+
+    /** @var array<string, mixed> */
+    private array $lastValues = [];
 
     public function __construct(
         private ExtendedPdoInterface $pdo,
@@ -102,6 +107,22 @@ final class SqlQuery implements SqlQueryInterface
      * @psalm-taint-escape sql
      */
     #[Override]
+    public function execPostQuery(string $sqlId, array $values, string $postQueryClass): PostQueryInterface
+    {
+        $this->perform($sqlId, $values, null);
+        assert($this->pdoStatement instanceof PDOStatement);
+
+        $context = new PostQueryContext($this->pdoStatement, $this->pdo, $this->lastValues);
+
+        return $postQueryClass::fromContext($context);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @psalm-taint-escape sql
+     */
+    #[Override]
     public function getCount(string $sqlId, array $values): int
     {
         return (new ExtendedPdoAdapter($this->pdo, $this->getSql($sqlId), $values))->getNbResults();
@@ -131,6 +152,8 @@ final class SqlQuery implements SqlQueryInterface
         }
 
         $this->pdoStatement = $pdoStatement;
+        /** @var array<string, mixed> $values */
+        $this->lastValues = $values;
         $lastQuery = $pdoStatement->queryString;
         $queryForDetection = $this->removeCommentsForDetection($lastQuery);
         $isSelect = stripos($queryForDetection, 'select') === 0 || stripos($queryForDetection, 'with') === 0;

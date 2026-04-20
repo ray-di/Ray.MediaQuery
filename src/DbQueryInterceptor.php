@@ -11,10 +11,13 @@ use Ray\Di\Di\Set;
 use Ray\Di\ProviderInterface;
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
+use Ray\MediaQuery\Result\PostQueryInterface;
 use ReflectionNamedType;
 use ReflectionUnionType;
 
 use function assert;
+use function class_exists;
+use function is_subclass_of;
 
 final class DbQueryInterceptor implements MethodInterceptor
 {
@@ -47,6 +50,13 @@ final class DbQueryInterceptor implements MethodInterceptor
 
         $returnType = $invocation->getMethod()->getReturnType();
         assert($returnType === null || $returnType instanceof ReflectionNamedType || $returnType instanceof ReflectionUnionType);
+        if ($returnType instanceof ReflectionNamedType) {
+            $typeName = $returnType->getName();
+            if (class_exists($typeName) && is_subclass_of($typeName, PostQueryInterface::class)) {
+                return $this->sqlQuery->execPostQuery($dbQuery->id, $values, $typeName);
+            }
+        }
+
         $fetch = $this->factory->factory($dbQuery, $entity, $returnType);
         $isRow = $dbQuery->type === 'row' || $returnType instanceof ReflectionUnionType || ($returnType instanceof ReflectionNamedType && $returnType->getName() !== 'array');
 

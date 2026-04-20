@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS counter
+(
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    label TEXT
+)

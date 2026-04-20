@@ -19,6 +19,8 @@ use Ray\InputQuery\ToArray;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\LogicException;
 use Ray\MediaQuery\Exception\PdoPerformException;
+use Ray\MediaQuery\Result\AffectedRows;
+use Ray\MediaQuery\Result\InsertedRow;
 
 use function count;
 use function file_get_contents;
@@ -37,6 +39,7 @@ class SqlQueryTest extends TestCase
         $pdo = new ExtendedPdo('sqlite::memory:', '', '', [PDO::ATTR_STRINGIFY_FETCHES => true]);
         $pdo->query((string) file_get_contents($sqlDir . '/create_todo.sql'));
         $pdo->query((string) file_get_contents($sqlDir . '/create_promise.sql'));
+        $pdo->query((string) file_get_contents($sqlDir . '/create_counter.sql'));
         $pdo->perform((string) file_get_contents($sqlDir . '/todo_add.sql'), $this->insertData);
         $this->log = new MediaQueryLogger();
         $this->sqlQuery = new SqlQuery(
@@ -167,5 +170,29 @@ class SqlQueryTest extends TestCase
     {
         $this->expectException(PdoPerformException::class);
         $this->sqlQuery->getRowList('error_list', []);
+    }
+
+    public function testExecPostQueryForDelete(): void
+    {
+        $result = $this->sqlQuery->execPostQuery('todo_delete', ['id' => '1'], AffectedRows::class);
+        $this->assertInstanceOf(AffectedRows::class, $result);
+        $this->assertSame(1, $result->count);
+        $this->assertTrue($result->isAffected());
+    }
+
+    public function testExecPostQueryForDeleteMissing(): void
+    {
+        $result = $this->sqlQuery->execPostQuery('todo_delete', ['id' => '__missing__'], AffectedRows::class);
+        $this->assertInstanceOf(AffectedRows::class, $result);
+        $this->assertSame(0, $result->count);
+        $this->assertFalse($result->isAffected());
+    }
+
+    public function testExecPostQueryForInsertReturnsResolvedValuesAndId(): void
+    {
+        $result = $this->sqlQuery->execPostQuery('counter_add', ['label' => 'first'], InsertedRow::class);
+        $this->assertInstanceOf(InsertedRow::class, $result);
+        $this->assertSame(['label' => 'first'], $result->values);
+        $this->assertSame('1', $result->id);
     }
 }
