@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use Ray\MediaQuery\Result\AffectedRows;
+use Ray\MediaQuery\Result\PostQueryInterface;
 
 /**
  * SQL query executor.
@@ -16,8 +16,9 @@ use Ray\MediaQuery\Result\AffectedRows;
  *              derivation of it ({@see self::getRow()}, {@see self::getRowList()},
  *              {@see self::getCount()}, {@see self::getPages()}).
  *  - `exec*` — DML queries (INSERT / UPDATE / DELETE); execute and either
- *              return nothing ({@see self::exec()}) or return the affected
- *              row count and last insert id ({@see self::execAffected()}).
+ *              return nothing ({@see self::exec()}) or return a typed result
+ *              built from the post-execution PDO state
+ *              ({@see self::execPostQuery()}).
  */
 interface SqlQueryInterface
 {
@@ -44,8 +45,8 @@ interface SqlQueryInterface
     public function getRowList(string $sqlId, array $values = [], FetchInterface|null $fetch = null): array;
 
     /**
-     * Execute a DML statement without reading a result. Use {@see self::execAffected()}
-     * when the affected row count or last insert id is needed.
+     * Execute a DML statement without reading a result. Use {@see self::execPostQuery()}
+     * when a typed result (row count, last insert id, etc.) is needed.
      *
      * @param array<string, mixed> $values
      *
@@ -54,15 +55,23 @@ interface SqlQueryInterface
     public function exec(string $sqlId, array $values = [], FetchInterface|null $fetch = null): void;
 
     /**
-     * Execute a DML statement and return the affected row count and, for INSERT,
-     * the last insert id. When the SQL file contains multiple statements, the
-     * result reflects the last executed statement only.
+     * Execute a DML statement and build a result through the given PostQuery class.
+     *
+     * The framework calls `{$postQueryClass}::postQuery($statement, $pdo)` after
+     * executing the SQL. Each result class owns its own construction logic, so
+     * the caller's return-type declaration is what selects behaviour (count only,
+     * count + last insert id, etc.). When the SQL file contains multiple
+     * statements, the result reflects the last executed statement only.
      *
      * @param array<string, mixed> $values
+     * @param class-string<T>      $postQueryClass
      *
+     * @return T
+     *
+     * @template T of PostQueryInterface
      * @psalm-taint-escape sql
      */
-    public function execAffected(string $sqlId, array $values = []): AffectedRows;
+    public function execPostQuery(string $sqlId, array $values, string $postQueryClass): PostQueryInterface;
 
     /**
      * Return the total row count for a SELECT. Used as the pagination denominator.

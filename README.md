@@ -249,31 +249,67 @@ interface UserRepository
 }
 ```
 
-**DML Result (`AffectedRows`):**
+**DML Result types — `AffectedRows` / `InsertedRow`:**
 
-Declare an `AffectedRows` return type on `INSERT` / `UPDATE` / `DELETE` methods to receive the row count and (for `INSERT`) the last insert id:
+Declare a result type that implements `PostQueryInterface` to receive post-execution information. The framework ships two:
+
+- `AffectedRows` — row count for `UPDATE` / `DELETE`.
+- `InsertedRow` — the resolved parameter values plus the auto-increment id for `INSERT`.
 
 ```php
 use Ray\MediaQuery\Result\AffectedRows;
+use Ray\MediaQuery\Result\InsertedRow;
 
 interface TodoRepository
 {
     #[DbQuery('todo_add')]
-    public function add(string $title): AffectedRows;
+    public function add(string $title): InsertedRow;
+
+    #[DbQuery('todo_update')]
+    public function update(string $id, string $title): AffectedRows;
 
     #[DbQuery('todo_delete')]
     public function delete(string $id): AffectedRows;
 }
 
-$result = $todoRepo->add('Write docs');
-$result->count;         // int — number of affected rows
-$result->lastInsertId;  // ?string — auto-increment id after INSERT, null otherwise
-$result->isAffected();  // bool — true when count > 0
+$inserted = $todoRepo->add('Write docs');
+$inserted->values;  // array<string, mixed> — parameters as bound to the driver (UUIDs, timestamps, DateTime→string, ToScalar reductions all resolved)
+$inserted->id;      // ?string — auto-increment id, null if the driver reports none
+
+$deleted = $todoRepo->delete('1');
+$deleted->count;       // int — rows deleted
+$deleted->isAffected();  // bool — true when count > 0
 ```
 
-`lastInsertId` is normalised to `null` for non-`INSERT` statements and for inserts that do not produce an auto-increment value. Existing `void` return types keep working unchanged.
+`InsertedRow::$values` is the result of Ray.MediaQuery's parameter resolution — injected defaults (UUIDs, timestamps), `DateTime` converted to SQL strings, and `ToScalarInterface` value objects reduced to scalars. Those are the values that actually went to the database and are not otherwise observable by the caller.
 
-When a SQL file contains multiple statements (separated by `;`), `AffectedRows` reflects the **last executed statement only**.
+The return type **is** the intent declaration — the framework does not sniff the SQL. Pick `InsertedRow` when you need the id or the resolved values, `AffectedRows` otherwise. Existing `void` return types keep working unchanged.
+
+When a SQL file contains multiple statements (separated by `;`), the result reflects the **last executed statement only**.
+
+**Custom result types:**
+
+Any class implementing `Ray\MediaQuery\Result\PostQueryInterface` can be declared as a return type. The interface defines a single static factory that builds the result from a `PostQueryContext` carrying the executed statement, the connection, and the resolved parameter values:
+
+```php
+use Ray\MediaQuery\Result\PostQueryContext;
+use Ray\MediaQuery\Result\PostQueryInterface;
+
+final class RowCountWithQuery implements PostQueryInterface
+{
+    public function __construct(
+        public readonly int $count,
+        public readonly string $queryString,
+    ) {}
+
+    public static function postQuery(PostQueryContext $context): static
+    {
+        return new static($context->statement->rowCount(), $context->statement->queryString);
+    }
+}
+```
+
+Declare it on any `#[DbQuery]` method and the interceptor dispatches to the class's own factory.
 
 **Constructor Property Promotion (Recommended):**
 
@@ -529,7 +565,7 @@ class CustomRepository
 - `getRow($queryId, $params)` - Single row
 - `getRowList($queryId, $params)` - Multiple rows
 - `exec($queryId, $params)` - Execute without result
-- `execAffected($queryId, $params)` - Execute DML and return `AffectedRows` (count + lastInsertId)
+- `execPostQuery($queryId, $params, $postQueryClass)` - Execute DML and build a typed result via a `PostQueryInterface` class (e.g. `AffectedRows`, `InsertedRow`, or a custom class)
 - `getCount($queryId, $params)` - Total row count (for pagination)
 - `getStatement()` - Get PDO statement
 - `getPages()` - Get paginated results

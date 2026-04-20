@@ -6,6 +6,7 @@ namespace Ray\MediaQuery\Queries;
 
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Result\AffectedRows;
+use Ray\MediaQuery\Result\InsertedRow;
 
 interface TodoAffectedInterface
 {
@@ -16,8 +17,8 @@ interface TodoAffectedInterface
     public function update(string $id, string $title): AffectedRows;
 
     #[DbQuery('counter_add')]
-    public function addCounter(string $label): AffectedRows;
+    public function addCounter(string $label): InsertedRow;
 
     #[DbQuery('multi_statement_affected')]
-    public function multiStatement(): AffectedRows;
+    public function multiStatement(): InsertedRow;
 }

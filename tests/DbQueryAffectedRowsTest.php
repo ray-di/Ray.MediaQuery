@@ -11,6 +11,7 @@ use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\Di\Injector;
 use Ray\MediaQuery\Queries\TodoAffectedInterface;
 use Ray\MediaQuery\Result\AffectedRows;
+use Ray\MediaQuery\Result\InsertedRow;
 
 use function dirname;
 use function file_get_contents;
@@ -45,7 +46,6 @@ class DbQueryAffectedRowsTest extends TestCase
         $this->assertInstanceOf(AffectedRows::class, $result);
         $this->assertSame(1, $result->count);
         $this->assertTrue($result->isAffected());
-        $this->assertNull($result->lastInsertId);
     }
 
     public function testDeleteMissing(): void
@@ -54,27 +54,27 @@ class DbQueryAffectedRowsTest extends TestCase
         $result = $repo->delete('__missing__');
         $this->assertSame(0, $result->count);
         $this->assertFalse($result->isAffected());
-        $this->assertNull($result->lastInsertId);
     }
 
     public function testUpdate(): void
     {
         $repo = $this->injector->getInstance(TodoAffectedInterface::class);
         $result = $repo->update('1', 'walk');
+        $this->assertInstanceOf(AffectedRows::class, $result);
         $this->assertSame(1, $result->count);
-        $this->assertNull($result->lastInsertId);
     }
 
-    public function testInsertReturnsLastInsertId(): void
+    public function testInsertReturnsResolvedValuesAndId(): void
     {
         $repo = $this->injector->getInstance(TodoAffectedInterface::class);
         $first = $repo->addCounter('alpha');
-        $this->assertSame(1, $first->count);
-        $this->assertSame('1', $first->lastInsertId);
+        $this->assertInstanceOf(InsertedRow::class, $first);
+        $this->assertSame(['label' => 'alpha'], $first->values);
+        $this->assertSame('1', $first->id);
 
         $second = $repo->addCounter('beta');
-        $this->assertSame(1, $second->count);
-        $this->assertSame('2', $second->lastInsertId);
+        $this->assertSame(['label' => 'beta'], $second->values);
+        $this->assertSame('2', $second->id);
     }
 
     public function testMultiStatementReflectsLastStatementOnly(): void
@@ -83,9 +83,9 @@ class DbQueryAffectedRowsTest extends TestCase
         // multi_statement_affected.sql runs:
         //   1) UPDATE todo ... WHERE id = '__missing__'  (0 rows)
         //   2) INSERT INTO counter (label) VALUES ('multi') (1 row, autoincrement id)
-        // AffectedRows must reflect the last (INSERT), not the first (UPDATE).
+        // InsertedRow must reflect the last (INSERT), not the first (UPDATE).
         $result = $repo->multiStatement();
-        $this->assertSame(1, $result->count);
-        $this->assertNotNull($result->lastInsertId);
+        $this->assertInstanceOf(InsertedRow::class, $result);
+        $this->assertNotNull($result->id);
     }
 }

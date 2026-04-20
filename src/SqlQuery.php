@@ -15,7 +15,8 @@ use Ray\Di\InjectorInterface;
 use Ray\MediaQuery\Annotation\Qualifier\SqlDir;
 use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\PdoPerformException;
-use Ray\MediaQuery\Result\AffectedRows;
+use Ray\MediaQuery\Result\PostQueryContext;
+use Ray\MediaQuery\Result\PostQueryInterface;
 
 use function array_pop;
 use function assert;
@@ -40,6 +41,9 @@ final class SqlQuery implements SqlQueryInterface
     private const LINE_COMMENT = '/^\s*--[^\r\n]*/m';
 
     private PDOStatement|null $pdoStatement = null;
+
+    /** @var array<string, mixed> */
+    private array $lastValues = [];
 
     public function __construct(
         private ExtendedPdoInterface $pdo,
@@ -103,20 +107,14 @@ final class SqlQuery implements SqlQueryInterface
      * @psalm-taint-escape sql
      */
     #[Override]
-    public function execAffected(string $sqlId, array $values = []): AffectedRows
+    public function execPostQuery(string $sqlId, array $values, string $postQueryClass): PostQueryInterface
     {
         $this->perform($sqlId, $values, null);
         assert($this->pdoStatement instanceof PDOStatement);
-        $count = $this->pdoStatement->rowCount();
 
-        $query = $this->removeCommentsForDetection($this->pdoStatement->queryString);
-        $lastInsertId = null;
-        if (stripos($query, 'insert') === 0) {
-            $id = $this->pdo->lastInsertId();
-            $lastInsertId = $id === false || $id === '' || $id === '0' ? null : $id;
-        }
+        $context = new PostQueryContext($this->pdoStatement, $this->pdo, $this->lastValues);
 
-        return new AffectedRows($count, $lastInsertId);
+        return $postQueryClass::postQuery($context);
     }
 
     /**
@@ -154,6 +152,8 @@ final class SqlQuery implements SqlQueryInterface
         }
 
         $this->pdoStatement = $pdoStatement;
+        /** @var array<string, mixed> $values */
+        $this->lastValues = $values;
         $lastQuery = $pdoStatement->queryString;
         $queryForDetection = $this->removeCommentsForDetection($lastQuery);
         $isSelect = stripos($queryForDetection, 'select') === 0 || stripos($queryForDetection, 'with') === 0;

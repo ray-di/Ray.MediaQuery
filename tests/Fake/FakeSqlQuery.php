@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery;
 
-use Ray\MediaQuery\Result\AffectedRows;
+use LogicException;
+use Ray\MediaQuery\Result\PostQueryInterface;
 
 final class FakeSqlQuery implements SqlQueryInterface
 {
@@ -45,9 +46,9 @@ final class FakeSqlQuery implements SqlQueryInterface
      *
      * @param array<string, mixed> $values
      */
-    public function execAffected(string $sqlId, array $values = []): AffectedRows
+    public function execPostQuery(string $sqlId, array $values, string $postQueryClass): PostQueryInterface
     {
-        return new AffectedRows(0);
+        throw new LogicException('FakeSqlQuery does not support execPostQuery');
     }
 
     /**

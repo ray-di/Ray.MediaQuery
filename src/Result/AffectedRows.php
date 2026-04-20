@@ -4,23 +4,28 @@ declare(strict_types=1);
 
 namespace Ray\MediaQuery\Result;
 
+use Override;
+
 /**
- * Result of a DML execution returned by SqlQueryInterface::execAffected()
- * and DbQuery methods that declare an AffectedRows return type.
+ * Row-count result for UPDATE / DELETE statements.
+ *
+ * Declare `AffectedRows` as the return type of a `#[DbQuery]` method to receive
+ * the number of rows affected by the statement. Use {@see InsertedRow} instead
+ * when the caller needs the auto-increment id and the resolved values after an
+ * INSERT.
  */
-final class AffectedRows
+final class AffectedRows implements PostQueryInterface
 {
-    /**
-     * @param int         $count        Number of rows affected by the last executed statement.
-     * @param string|null $lastInsertId Auto-increment id assigned by an INSERT. Null for
-     *                                  non-INSERT statements, and also when the driver
-     *                                  reports no id (e.g. tables without AUTO_INCREMENT,
-     *                                  or values '0' / '' which are normalised to null).
-     */
+    /** @param int $count Number of rows affected by the last executed statement. */
     public function __construct(
         public readonly int $count,
-        public readonly string|null $lastInsertId = null,
     ) {
+    }
+
+    #[Override]
+    public static function postQuery(PostQueryContext $context): static
+    {
+        return new static($context->statement->rowCount());
     }
 
     public function isAffected(): bool

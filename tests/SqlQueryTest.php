@@ -20,6 +20,7 @@ use Ray\MediaQuery\Exception\InvalidSqlException;
 use Ray\MediaQuery\Exception\LogicException;
 use Ray\MediaQuery\Exception\PdoPerformException;
 use Ray\MediaQuery\Result\AffectedRows;
+use Ray\MediaQuery\Result\InsertedRow;
 
 use function count;
 use function file_get_contents;
@@ -171,27 +172,27 @@ class SqlQueryTest extends TestCase
         $this->sqlQuery->getRowList('error_list', []);
     }
 
-    public function testExecAffectedForDelete(): void
+    public function testExecPostQueryForDelete(): void
     {
-        $result = $this->sqlQuery->execAffected('todo_delete', ['id' => '1']);
+        $result = $this->sqlQuery->execPostQuery('todo_delete', ['id' => '1'], AffectedRows::class);
         $this->assertInstanceOf(AffectedRows::class, $result);
         $this->assertSame(1, $result->count);
         $this->assertTrue($result->isAffected());
-        $this->assertNull($result->lastInsertId);
     }
 
-    public function testExecAffectedForDeleteMissing(): void
+    public function testExecPostQueryForDeleteMissing(): void
     {
-        $result = $this->sqlQuery->execAffected('todo_delete', ['id' => '__missing__']);
+        $result = $this->sqlQuery->execPostQuery('todo_delete', ['id' => '__missing__'], AffectedRows::class);
+        $this->assertInstanceOf(AffectedRows::class, $result);
         $this->assertSame(0, $result->count);
         $this->assertFalse($result->isAffected());
-        $this->assertNull($result->lastInsertId);
     }
 
-    public function testExecAffectedForInsertReturnsLastInsertId(): void
+    public function testExecPostQueryForInsertReturnsResolvedValuesAndId(): void
     {
-        $result = $this->sqlQuery->execAffected('counter_add', ['label' => 'first']);
-        $this->assertSame(1, $result->count);
-        $this->assertSame('1', $result->lastInsertId);
+        $result = $this->sqlQuery->execPostQuery('counter_add', ['label' => 'first'], InsertedRow::class);
+        $this->assertInstanceOf(InsertedRow::class, $result);
+        $this->assertSame(['label' => 'first'], $result->values);
+        $this->assertSame('1', $result->id);
     }
 }
