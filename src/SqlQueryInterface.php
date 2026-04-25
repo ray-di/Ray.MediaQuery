@@ -71,6 +71,8 @@ interface SqlQueryInterface
      *
      * @param array<string, mixed> $values
      * @param class-string<T>      $postQueryClass
+     * @param FetchInterface|null  $fetch          Strategy used to hydrate SELECT rows. Pass
+     *                                             null for DML or to receive associative arrays.
      *
      * @return T
      *

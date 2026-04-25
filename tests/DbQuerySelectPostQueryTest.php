@@ -9,13 +9,12 @@ use PDO;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\Di\Injector;
-use Ray\MediaQuery\Entity\Article;
 use Ray\MediaQuery\Queries\ArticlesInterface;
 use Ray\MediaQuery\Result\Articles;
 
 use function dirname;
 use function file_get_contents;
-use function usort;
+use function iterator_to_array;
 
 class DbQuerySelectPostQueryTest extends TestCase
 {
@@ -46,15 +45,12 @@ class DbQuerySelectPostQueryTest extends TestCase
         $result = $repo->listAssoc();
 
         $this->assertInstanceOf(Articles::class, $result);
-        /** @var list<array{id: string, title: string}> $rows */
-        $rows = $result->rows;
-        usort($rows, static fn (array $a, array $b): int => $a['id'] <=> $b['id']);
         $this->assertSame(
             [
                 ['id' => '1', 'title' => 'run'],
                 ['id' => '2', 'title' => 'walk'],
             ],
-            $rows,
+            $result->rows,
         );
     }
 
@@ -66,14 +62,54 @@ class DbQuerySelectPostQueryTest extends TestCase
         $this->assertInstanceOf(Articles::class, $result);
         $this->assertCount(2, $result->rows);
 
-        /** @var list<Article> $rows */
         $rows = $result->rows;
-        usort($rows, static fn (Article $a, Article $b): int => $a->id <=> $b->id);
 
+        // The `@return Articles<Article>` declaration carries `Article` through to
+        // `$rows[0]`, so `->id` / `->title` are statically typed without a cast.
         $this->assertSame('1', $rows[0]->id);
         $this->assertSame('run', $rows[0]->title);
-
         $this->assertSame('2', $rows[1]->id);
         $this->assertSame('walk', $rows[1]->title);
+    }
+
+    public function testWrapperExposesCountableAndIteratorAggregate(): void
+    {
+        $repo = $this->injector->getInstance(ArticlesInterface::class);
+        $result = $repo->listHydrated();
+
+        $this->assertCount(2, $result);
+        $this->assertFalse($result->isEmpty());
+
+        // `iterator_to_array(Articles<Article>)` yields `array<int, Article>`.
+        $iterated = iterator_to_array($result, false);
+        $this->assertSame($result->rows, $iterated);
+    }
+
+    public function testFactoryAttributeHydratesViaPostQueryPath(): void
+    {
+        $repo = $this->injector->getInstance(ArticlesInterface::class);
+        $result = $repo->listViaFactory();
+
+        $this->assertInstanceOf(Articles::class, $result);
+        $this->assertCount(2, $result->rows);
+
+        $rows = $result->rows;
+
+        // `@return Articles<TodoConstruct>` carries through here too.
+        $this->assertSame('1', $rows[0]->id);
+        $this->assertSame('run', $rows[0]->title);
+        $this->assertSame('2', $rows[1]->id);
+        $this->assertSame('walk', $rows[1]->title);
+    }
+
+    public function testEmptySelectStillReturnsArticlesWrapper(): void
+    {
+        $repo = $this->injector->getInstance(ArticlesInterface::class);
+        $result = $repo->listEmpty();
+
+        $this->assertInstanceOf(Articles::class, $result);
+        $this->assertSame([], $result->rows);
+        $this->assertCount(0, $result);
+        $this->assertTrue($result->isEmpty());
     }
 }
