@@ -9,6 +9,11 @@ use function is_array;
 
 final class PageRows
 {
+    /** @codeCoverageIgnore */
+    private function __construct()
+    {
+    }
+
     /**
      * @param array<array-key, mixed>                  $rows
      * @param callable(array<array-key, mixed>): mixed $rowMapper

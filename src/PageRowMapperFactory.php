@@ -25,6 +25,7 @@ final class PageRowMapperFactory
     /** @return (callable(array<array-key, mixed>): mixed)|null */
     public function create(DbQuery $dbQuery): callable|null
     {
+        // Keep factory dispatch semantics aligned with FetchFactory.
         $maybeFactory = [$dbQuery->factory, $this->factoryMethod];
         if (is_callable($maybeFactory)) {
             return static function (array $row) use ($maybeFactory): mixed {

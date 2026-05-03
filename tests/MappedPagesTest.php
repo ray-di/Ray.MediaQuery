@@ -31,7 +31,7 @@ final class MappedPagesTest extends TestCase
         $this->assertIsArray($data);
         $this->assertIsArray($data[0]);
         $this->assertSame('run', $data[0]['title']);
-        $this->assertSame(2, $data[0]['calls']);
+        $this->assertSame(1, $data[0]['calls']);
         $this->assertSame('already-mapped', $data[1]);
         $this->assertSame([['id' => '1', 'title' => 'run'], 'already-mapped'], $page->data);
     }

@@ -25,7 +25,7 @@ final class MappedPages implements PagesInterface
     #[Override]
     public function offsetExists(mixed $pageIndex): bool
     {
-        return (bool) $this->offsetGet($pageIndex);
+        return $this->pages->offsetExists($pageIndex);
     }
 
     #[Override]

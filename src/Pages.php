@@ -33,21 +33,16 @@ final class Pages implements PagesInterface
         $this->rowMapper = $rowMapper;
     }
 
-    /**
-     * @param callable(array<array-key, mixed>): mixed $rowMapper
-     *
-     * @return self<T>
-     */
-    public function withRowMapper(callable $rowMapper): self
+    /** @param callable(array<array-key, mixed>): mixed $rowMapper */
+    public function setRowMapper(callable $rowMapper): void
     {
         $this->rowMapper = $rowMapper;
-
-        return $this;
     }
 
     #[Override]
     public function offsetExists($pageIndex): bool
     {
+        // AuraSqlPager::offsetExists() is unsupported, so existence follows offsetGet().
         return (bool) $this->offsetGet($pageIndex);
     }
 

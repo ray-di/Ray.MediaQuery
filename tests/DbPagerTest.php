@@ -25,4 +25,14 @@ final class DbPagerTest extends TestCase
         $this->assertSame('perPage', $pager->perPage, 'Pager::$perPage must remain the original key string');
         $this->assertSame([2, 1, 3], $sqlQuery->perPageHistory, 'Each call must forward its own perPage to SqlQuery::getPages()');
     }
+
+    public function testNonPagesResultIsWrappedWhenRowMapperIsGiven(): void
+    {
+        $dbPager = new DbPager(new FakeMediaQueryLogger(), new FakeSqlQuery());
+        $pager = new Pager(perPage: 10, template: '/{?page}');
+
+        $pages = ($dbPager)('todo_list', [], $pager, null, static fn (array $row): array => $row);
+
+        $this->assertInstanceOf(MappedPages::class, $pages);
+    }
 }
