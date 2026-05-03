@@ -20,8 +20,11 @@ final class DbPager
     ) {
     }
 
-    /** @param array<string, mixed> $values */
-    public function __invoke(string $queryId, array $values, Pager $pager, string|null $entity): PagesInterface
+    /**
+     * @param array<string, mixed>                            $values
+     * @param (callable(array<array-key, mixed>): mixed)|null $rowMapper
+     */
+    public function __invoke(string $queryId, array $values, Pager $pager, string|null $entity, callable|null $rowMapper = null): PagesInterface
     {
         // Clone the Pager attribute to avoid mutating the caller's instance in dynamicPager().
         $pager = clone $pager;
@@ -32,10 +35,14 @@ final class DbPager
         assert(is_int($pager->perPage));
         $this->logger->start();
         /** @var ?class-string $entity */
-        $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template, $entity);
+        $result = $this->sqlQuery->getPages($queryId, $values, $pager->perPage, $pager->template, $rowMapper === null ? $entity : null);
         $this->logger->log($queryId, $values);
 
-        return $result;
+        if ($rowMapper === null) {
+            return $result;
+        }
+
+        return $result instanceof Pages ? $result->withRowMapper($rowMapper) : new MappedPages($result, $rowMapper);
     }
 
     /**

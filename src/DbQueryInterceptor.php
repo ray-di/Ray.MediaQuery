@@ -27,6 +27,7 @@ final class DbQueryInterceptor implements MethodInterceptor
         private ParamInjectorInterface $paramInjector,
         private ReturnEntityInterface $returnEntity,
         private FetchFactoryInterface $factory,
+        private PageRowMapperFactory $pageRowMapperFactory,
         #[Set(DbPager::class)]
         private ProviderInterface $dbPagerProvider,
     ) {
@@ -45,7 +46,7 @@ final class DbQueryInterceptor implements MethodInterceptor
         if ($pager instanceof Pager) {
             $dbPager = $this->dbPagerProvider->get();
 
-            return ($dbPager)($dbQuery->id, $values, $pager, $entity);
+            return ($dbPager)($dbQuery->id, $values, $pager, $entity, $this->pageRowMapperFactory->create($dbQuery));
         }
 
         $returnType = $invocation->getMethod()->getReturnType();

@@ -26,6 +26,7 @@ use Ray\MediaQuery\Queries\DynamicPerPageInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidInterface;
 use Ray\MediaQuery\Queries\DynamicPerPageInvalidType;
 use Ray\MediaQuery\Queries\PagerEntityInterface;
+use Ray\MediaQuery\Queries\PagerFactoryInterface;
 use Ray\MediaQuery\Queries\PromiseAddInterface;
 use Ray\MediaQuery\Queries\PromiseItemInterface;
 use Ray\MediaQuery\Queries\PromiseListInterface;
@@ -65,6 +66,7 @@ class DbQueryModuleTest extends TestCase
             DynamicPerPageInvalidInterface::class,
             DynamicPerPageInvalidType::class,
             PagerEntityInterface::class,
+            PagerFactoryInterface::class,
             TodoFactoryInterface::class,
             TodoFactoryUnionInterface::class,
         ]);
@@ -247,6 +249,30 @@ class DbQueryModuleTest extends TestCase
         $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
         $log = (string) $this->logger;
         $this->assertStringContainsString('query: todo_list', $log);
+    }
+
+    public function testSelectPagerStaticFactory(): void
+    {
+        $todoList = $this->injector->getInstance(PagerFactoryInterface::class);
+        $list = $todoList->getStatic();
+        $page = $list[1];
+        assert($page instanceof Page);
+        assert(is_array($page->data));
+
+        $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
+        $this->assertSame('run', $page->data[0]->title);
+    }
+
+    public function testSelectPagerInjectionFactory(): void
+    {
+        $todoList = $this->injector->getInstance(PagerFactoryInterface::class);
+        $list = $todoList->getInjection();
+        $page = $list[1];
+        assert($page instanceof Page);
+        assert(is_array($page->data));
+
+        $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
+        $this->assertSame('RUN', $page->data[0]->title);
     }
 
     /** @return array<array<class-string>> */

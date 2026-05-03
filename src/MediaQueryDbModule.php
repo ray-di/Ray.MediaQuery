@@ -43,6 +43,7 @@ final class MediaQueryDbModule extends AbstractModule
         $this->bind(DocBlockFactoryInterface::class)->toInstance(DocBlockFactory::createInstance());
         $this->bind(ReturnEntityInterface::class)->to(ReturnEntity::class);
         $this->bind(FetchFactoryInterface::class)->to(FetchFactory::class);
+        $this->bind(PageRowMapperFactory::class);
         $this->bind()->annotatedWith(FactoryMethod::class)->toInstance('factory');
         $this->bind(DbPager::class);
     }
