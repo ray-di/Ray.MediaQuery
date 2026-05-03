@@ -7,7 +7,6 @@ namespace Ray\MediaQuery;
 use Override;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 
-use function array_map;
 use function is_array;
 
 final class MappedPages implements PagesInterface
@@ -33,17 +32,14 @@ final class MappedPages implements PagesInterface
     public function offsetGet(mixed $pageIndex): mixed
     {
         $page = $this->pages->offsetGet($pageIndex);
-        if (! $page instanceof Page || ! is_array($page->data)) {
+        $data = $page instanceof Page ? $page->data : null;
+        if (! $page instanceof Page || ! is_array($data)) {
             return $page;
         }
 
         $rowMapper = $this->rowMapper;
-        $page->data = array_map(
-            static function (mixed $row) use ($rowMapper): mixed {
-                return is_array($row) ? $rowMapper($row) : $row;
-            },
-            $page->data,
-        );
+        $page = clone $page;
+        $page->data = PageRows::map($data, $rowMapper);
 
         return $page;
     }

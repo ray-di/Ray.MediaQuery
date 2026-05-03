@@ -13,20 +13,27 @@ final class MappedPagesTest extends TestCase
     public function testMapsPageData(): void
     {
         $page = $this->page([['id' => '1', 'title' => 'run'], 'already-mapped']);
+        $calls = 0;
         $pages = new MappedPages(
             $this->pages($page),
-            static fn (array $row): array => ['title' => $row['title']],
+            static function (array $row) use (&$calls): array {
+                $calls++;
+
+                return ['title' => $row['title'], 'calls' => $calls];
+            },
         );
 
+        $this->assertTrue(isset($pages[1]));
         $mappedPage = $pages[1];
 
-        $this->assertTrue(isset($pages[1]));
         $this->assertInstanceOf(Page::class, $mappedPage);
         $data = $mappedPage->data;
         $this->assertIsArray($data);
         $this->assertIsArray($data[0]);
         $this->assertSame('run', $data[0]['title']);
+        $this->assertSame(2, $data[0]['calls']);
         $this->assertSame('already-mapped', $data[1]);
+        $this->assertSame([['id' => '1', 'title' => 'run'], 'already-mapped'], $page->data);
     }
 
     public function testReturnsNonPageValuesAsIs(): void
@@ -50,6 +57,8 @@ final class MappedPagesTest extends TestCase
         $pages[1] = 'set';
         unset($pages[1]);
 
+        $this->assertSame('set', $delegate->setValue);
+        $this->assertTrue($delegate->unsetCalled);
         $this->assertSame(1, $pages->count());
     }
 
@@ -62,49 +71,8 @@ final class MappedPagesTest extends TestCase
         return $page;
     }
 
-    private function pages(mixed $value): PagesInterface
+    private function pages(mixed $value): MappedPagesFakePages
     {
-        return new class ($value) implements PagesInterface {
-            public mixed $setValue = null;
-            public bool $unsetCalled = false;
-
-            public function __construct(
-                private mixed $value,
-            ) {
-            }
-
-            public function offsetExists(mixed $offset): bool
-            {
-                unset($offset);
-
-                return true;
-            }
-
-            public function offsetGet(mixed $offset): mixed
-            {
-                unset($offset);
-
-                return $this->value;
-            }
-
-            public function offsetSet(mixed $offset, mixed $value): void
-            {
-                unset($offset);
-
-                $this->setValue = $value;
-            }
-
-            public function offsetUnset(mixed $offset): void
-            {
-                unset($offset);
-
-                $this->unsetCalled = true;
-            }
-
-            public function count(): int
-            {
-                return 1;
-            }
-        };
+        return new MappedPagesFakePages($value);
     }
 }

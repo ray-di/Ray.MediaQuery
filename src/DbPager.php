@@ -42,6 +42,7 @@ final class DbPager
             return $result;
         }
 
+        // Keep the wrapper fallback for custom SqlQueryInterface implementations that do not return Pages.
         return $result instanceof Pages ? $result->withRowMapper($rowMapper) : new MappedPages($result, $rowMapper);
     }
 
