@@ -19,6 +19,7 @@ use Ray\MediaQuery\Exception\InvalidPerPageVarNameException;
 use Ray\MediaQuery\Exception\PerPageNotIntTypeException;
 use Ray\MediaQuery\Factory\FakeFactoryHelper;
 use Ray\MediaQuery\Factory\FakeFactoryHelperInterface;
+use Ray\MediaQuery\Factory\TodoInjectionFactory;
 use Ray\MediaQuery\Fake\Queries\TodoEntityNullableInterface;
 use Ray\MediaQuery\Fake\Queries\TodoFactoryInterface;
 use Ray\MediaQuery\Fake\Queries\TodoFactoryUnionInterface;
@@ -38,6 +39,7 @@ use Ray\MediaQuery\Queries\TodoListInterface;
 
 use function array_keys;
 use function assert;
+use function count;
 use function dirname;
 use function file_get_contents;
 use function is_array;
@@ -52,6 +54,8 @@ class DbQueryModuleTest extends TestCase
 
     protected function setUp(): void
     {
+        TodoInjectionFactory::resetInstances();
+
         $mediaQueries = Queries::fromClasses([
             TodoAddInterface::class,
             TodoItemInterface::class,
@@ -267,12 +271,26 @@ class DbQueryModuleTest extends TestCase
     {
         $todoList = $this->injector->getInstance(PagerFactoryInterface::class);
         $list = $todoList->getInjection();
+
+        $this->assertGreaterThan(0, count($list));
+        $this->assertSame(0, TodoInjectionFactory::$instances);
+
         $page = $list[1];
         assert($page instanceof Page);
         assert(is_array($page->data));
 
         $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
         $this->assertSame('RUN', $page->data[0]->title);
+        $factoryInstances = TodoInjectionFactory::$instances;
+        $this->assertGreaterThan(0, $factoryInstances);
+
+        $page = $list[1];
+        assert($page instanceof Page);
+        assert(is_array($page->data));
+
+        $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
+        $this->assertSame('RUN', $page->data[0]->title);
+        $this->assertSame($factoryInstances, TodoInjectionFactory::$instances);
     }
 
     /** @return array<array<class-string>> */

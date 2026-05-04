@@ -39,9 +39,13 @@ final class PageRowMapperFactory
 
         $factoryClass = $dbQuery->factory;
         $factoryMethod = $this->factoryMethod;
-        $factory = $this->injector->getInstance($factoryClass);
+        $injector = $this->injector;
+        /** @var object|null $factory */
+        $factory = null;
 
-        return static function (array $row) use ($factory, $factoryMethod): mixed {
+        return static function (array $row) use ($injector, $factoryClass, $factoryMethod, &$factory): mixed {
+            $factory ??= $injector->getInstance($factoryClass);
+
             /** @psalm-suppress MixedMethodCall */
             return $factory->$factoryMethod(...array_values($row));
         };
