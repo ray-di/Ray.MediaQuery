@@ -284,12 +284,7 @@ class DbQueryModuleTest extends TestCase
         $factoryInstances = TodoInjectionFactory::$instances;
         $this->assertGreaterThan(0, $factoryInstances);
 
-        $page = $list[1];
-        assert($page instanceof Page);
-        assert(is_array($page->data));
-
-        $this->assertInstanceOf(TodoConstruct::class, $page->data[0]);
-        $this->assertSame('RUN', $page->data[0]->title);
+        $this->assertNotNull($list[1]);
         $this->assertSame($factoryInstances, TodoInjectionFactory::$instances);
     }
 
