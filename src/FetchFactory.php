@@ -29,6 +29,7 @@ final class FetchFactory implements FetchFactoryInterface
     {
         unset($returnType);
 
+        // Keep factory dispatch semantics aligned with PageRowMapperFactory.
         $maybeFactory = [$dbQuery->factory, $this->factoryMehtod];
         if (is_callable($maybeFactory)) {
             // PDO::FETCH_FUNC with static factory method

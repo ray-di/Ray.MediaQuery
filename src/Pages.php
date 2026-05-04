@@ -11,28 +11,55 @@ use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\MediaQuery\Exception\LogicException;
 
+use function is_array;
+
 /** @template T of class-string|mixed */
 final class Pages implements PagesInterface
 {
-    /** @param array<string, mixed> $params */
+    /** @var (callable(array<array-key, mixed>): mixed)|null */
+    private $rowMapper;
+
+    /**
+     * @param array<string, mixed>                            $params
+     * @param (callable(array<array-key, mixed>): mixed)|null $rowMapper
+     */
     public function __construct(
         private AuraSqlPagerInterface $delegate,
         private ExtendedPdoInterface $pdo,
         private string $sql,
         private array $params,
+        callable|null $rowMapper = null,
     ) {
+        $this->rowMapper = $rowMapper;
+    }
+
+    /** @param callable(array<array-key, mixed>): mixed $rowMapper */
+    public function setRowMapper(callable $rowMapper): void
+    {
+        $this->rowMapper = $rowMapper;
     }
 
     #[Override]
     public function offsetExists($pageIndex): bool
     {
+        // AuraSqlPager::offsetExists() is unsupported, so existence follows offsetGet().
         return (bool) $this->offsetGet($pageIndex);
     }
 
     #[Override]
     public function offsetGet($pageIndex): Page|null
     {
-        return $this->delegate->offsetGet($pageIndex);
+        $page = $this->delegate->offsetGet($pageIndex);
+        $data = $page instanceof Page ? $page->data : null;
+        if (! $page instanceof Page || $this->rowMapper === null || ! is_array($data)) {
+            return $page;
+        }
+
+        $rowMapper = $this->rowMapper;
+        $page = clone $page;
+        $page->data = PageRows::map($data, $rowMapper);
+
+        return $page;
     }
 
     /**
