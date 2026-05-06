@@ -1,0 +1,524 @@
+# Ray.MediaQuery — AI-Oriented Reference
+
+> Concise reference for AI coding agents. For humans, see `README.md`.
+> PHP 8.2+. Version 1.x. https://github.com/ray-di/Ray.MediaQuery
+
+---
+
+## 1. What it is
+
+Interface-driven SQL mapper for PHP. You declare an interface with `#[DbQuery('sql_id')]` methods; Ray.Di + AOP auto-generates the implementation at runtime. Each method maps to `{sqlDir}/{sql_id}.sql`. The return type drives fetch and result-building behaviour — no configuration.
+
+SQL stays SQL (window functions, CTEs, DB-specific features all work). PHP stays PHP (typed domain objects via hydration or DI-aware factories).
+
+---
+
+## 2. Install & bootstrap
+
+```bash
+composer require ray/media-query
+```
+
+Minimum module wiring:
+
+```php
+use Ray\Di\AbstractModule;
+use Ray\MediaQuery\MediaQuerySqlModule;
+use Ray\AuraSqlModule\AuraSqlModule;
+
+final class AppModule extends AbstractModule
+{
+    protected function configure(): void
+    {
+        $this->install(new MediaQuerySqlModule(
+            interfaceDir: '/path/to/query/interfaces',
+            sqlDir: '/path/to/sql/files',
+        ));
+        $this->install(new AuraSqlModule(
+            'mysql:host=localhost;dbname=app', 'user', 'pass',
+        ));
+    }
+}
+
+$injector = new \Ray\Di\Injector(new AppModule());
+$repo = $injector->getInstance(UserRepository::class);
+```
+
+No generated classes are written by hand. The injector returns a proxy that routes each call through `DbQueryInterceptor`.
+
+---
+
+## 3. The contract
+
+```php
+interface TodoRepository
+{
+    #[DbQuery('todo_add')]
+    public function add(string $id, string $title): void;
+
+    #[DbQuery('todo_find')]
+    public function find(string $id): ?Todo;
+}
+```
+
+Rules:
+
+- `#[DbQuery('x')]` → framework loads `{sqlDir}/x.sql`.
+- Method parameter names map directly to `:named` placeholders in the SQL.
+  - `$id` → `:id`, `$userName` → `:userName`.
+- The method return type, together with `#[DbQuery(type: ...)]`, decides the behaviour (fetch, hydrate, wrap, exec).
+- SQL file can contain multiple `;`-separated statements; the last executed statement provides the result for `PostQueryInterface` return types.
+
+---
+
+## 4. Return-type cheatsheet
+
+Every row of this table is a valid return type on a `#[DbQuery]` method.
+
+| Return type                       | SQL kind   | Behaviour                                                                 |
+|-----------------------------------|-----------|---------------------------------------------------------------------------|
+| `void`                            | DML       | Execute, discard.                                                         |
+| `?Entity` / `Entity\|null`         | SELECT    | Fetch first row, hydrate into `Entity`, or `null` if no rows.             |
+| `array` (no entity annotation)    | SELECT    | Raw `array<array<string,mixed>>` — assoc arrays per row.                  |
+| `array` with `/** @return array<Entity> */` | SELECT | Fetch all rows, hydrate each into `Entity`.                         |
+| `AffectedRows`                    | UPDATE/DELETE | Exposes `->count` (int) and `->isAffected(): bool`.                   |
+| `InsertedRow`                     | INSERT    | Exposes `->values` (resolved params) and `->id` (?string lastInsertId).   |
+| custom `X implements PostQueryInterface` | SELECT or DML | Polymorphic dispatch — framework calls `X::fromContext($context)`. SELECT pre-hydrates rows on `$context->rows`; DML leaves `$context->rows = []`. |
+| `Pages` (with `#[Pager]`)         | SELECT    | Lazy paginator. Index access executes `LIMIT`/`OFFSET`; `count()` does `COUNT`. |
+
+How dispatch is decided:
+
+- If the declared return type is a class implementing `PostQueryInterface`, the interceptor calls `SqlQueryInterface::execPostQuery()`, which executes the SQL (SELECT or DML) and builds the result via the class's static `fromContext()` factory. For SELECT, the rows are pre-hydrated and exposed on `$context->rows`; for DML no fetch happens and `$context->rows` is `[]`.
+- Otherwise, fetching is driven by `#[DbQuery(type: ...)]`, which defaults to `'row_list'` and can be set to `'row'` for single-row reads. `SqlQuery::perform()` inspects the executed statement's SQL — if it starts with `SELECT` or `WITH` (after stripping comments), rows are fetched; otherwise no rows are read.
+- The return type and optional `@return` docblock control hydration (assoc array vs entity class vs `array<Entity>`).
+
+---
+
+## 5. Parameter handling
+
+Method arguments go through `ParamConverter` / `ParamInjector` before reaching the driver. The conversions are automatic:
+
+### 5.1 DateTimeInterface
+
+```php
+#[DbQuery('task_add')]
+public function add(string $title, \DateTimeInterface $createdAt): void;
+```
+Formatted to `'Y-m-d H:i:s'` before binding. No manual conversion.
+
+### 5.2 Omitted arguments → injected values
+
+```php
+#[DbQuery('task_add')]
+public function add(string $title, ?UuidInterface $id = null, ?\DateTimeInterface $at = null): void;
+
+// Call site — omit trailing args to trigger DI:
+$repo->add('Write docs');
+```
+When the caller passes fewer arguments than the method declares, `ParamInjector` resolves each missing parameter by asking Ray.Di for an instance of its type (non-builtin types). Explicitly passing `null` does **not** trigger injection — only omission does.
+
+Ray.MediaQuery itself does not ship DI bindings for `DateTimeInterface`, `UuidInterface`, etc. If you want omitted `?UuidInterface` / `?DateTimeInterface` defaults to auto-populate, install a module that binds those types (for example a UUID provider module, or a clock binding for `DateTimeInterface`). Without such a binding, Ray.Di will fail to resolve the type.
+
+### 5.3 ToScalarInterface value objects
+
+```php
+final class UserId implements \Ray\MediaQuery\ToScalarInterface
+{
+    public function __construct(private int $value) {}
+    public function toScalar(): int { return $this->value; }
+}
+
+#[DbQuery('memo_add')]
+public function add(string $memo, UserId $userId): void;
+```
+The object's `toScalar()` is called at bind time. Plain `__toString()` is also honoured.
+
+### 5.4 Input object flattening (`ray/input-query`, already a dep)
+
+```php
+use Ray\InputQuery\Attribute\Input;
+
+final class UserInput
+{
+    public function __construct(
+        #[Input] public readonly string $givenName,
+        #[Input] public readonly string $familyName,
+    ) {}
+}
+
+#[DbQuery('user_add')]
+public function add(UserInput $input): void;
+// SQL sees :givenName, :familyName — nested public props flattened.
+```
+Nested `#[Input]` objects flatten recursively.
+
+---
+
+## 6. Entity hydration
+
+Default hydration path (no `factory:` parameter):
+
+- **Entity with a constructor** — fetched via `FetchNewInstance` using `PDO::FETCH_FUNC`. The selected columns are passed **positionally** into the constructor, so `SELECT` column order must match the constructor parameter order. Column names and parameter names are not matched; there is no `snake_case` → `camelCase` conversion on this path. (`Ray\MediaQuery\StringCase` exists as a standalone utility but is not wired into hydration.)
+- **Entity with no constructor** — fetched via `FetchClass` using `PDO::FETCH_CLASS`, which assigns each row's column values to public properties of the same name. Match SQL column names to property names directly (e.g. `SELECT user_name` → `public $user_name`).
+
+```php
+// Constructor entity: parameter order must match SELECT order.
+// e.g. SELECT id, user_name, email_address FROM invoice
+final class Invoice
+{
+    public function __construct(
+        public readonly string $id,            // 1st selected column
+        public readonly string $userName,      // 2nd selected column (column name ignored)
+        public readonly string $emailAddress,  // 3rd selected column (column name ignored)
+    ) {}
+}
+```
+
+Entity type is inferred from the method's return type when it's a class (`?Invoice`, `Invoice`), or from the `/** @return array<Invoice> */` docblock generic when the return type is `array` / `Pages` / a `PostQueryInterface` wrapper (e.g. `Articles<Article>`). There is no `entity:` attribute parameter.
+
+```php
+#[DbQuery('invoice_list')]
+/** @return array<Invoice> */
+public function list(): array;
+```
+
+PHP 8.4+: `final readonly class` works identically.
+
+### Factory-based construction (DI-aware)
+
+Use `factory:` when the entity needs injected services or computed fields:
+
+```php
+#[DbQuery('order_detail', factory: OrderFactory::class)]
+public function getOrder(string $id): Order;
+
+final class OrderFactory
+{
+    public function __construct(
+        private TaxCalculator $tax,     // injected by Ray.Di
+        private RuleEngine $rules,
+    ) {}
+
+    public function factory(string $id, float $amount, string $region): Order
+    {
+        return new Order(
+            id: $id,
+            amount: $amount,
+            tax: $this->tax->calculate($amount, $region),
+            rules: $this->rules,
+        );
+    }
+}
+```
+The `factory()` method is called per row via `PDO::FETCH_FUNC`, so column values are passed **positionally** — the `SELECT` column order must match the factory parameter order. Return type can be polymorphic (`match` on a column, etc.).
+
+---
+
+## 7. PostQueryInterface — result-building (SELECT and DML)
+
+`PostQueryInterface` is the dispatch path for building typed results from any executed query. The interceptor detects the interface on the method's return type (`is_subclass_of(..., PostQueryInterface::class)`) and routes to `SqlQueryInterface::execPostQuery()`. It covers both DML (INSERT / UPDATE / DELETE result wrappers like `AffectedRows`, `InsertedRow`) and SELECT (typed collection wrappers around hydrated rows).
+
+```php
+namespace Ray\MediaQuery\Result;
+
+interface PostQueryInterface
+{
+    public static function fromContext(PostQueryContext $context): static;
+}
+
+final class PostQueryContext
+{
+    /**
+     * @param array<string, mixed> $values
+     * @param array<mixed>         $rows   Hydrated rows for SELECT; `[]` for DML.
+     */
+    public function __construct(
+        public readonly \PDOStatement $statement,
+        public readonly \Aura\Sql\ExtendedPdoInterface $pdo,
+        public readonly array $values,  // resolved params, post-ParamConverter / ParamInjector
+        public readonly array $rows = [],
+    ) {}
+}
+```
+
+The interceptor calls `{ReturnType}::fromContext($context)` after executing the SQL. The class owns its own construction logic — read `rowCount()` off the statement, call `lastInsertId()` on the PDO, inspect the resolved `$values`, or wrap the pre-hydrated `$rows` into a typed collection.
+
+`$context->rows` is hydrated when the last executed statement is a SELECT; for DML it stays `[]`. The hydration shape follows the same rules as §6 — entity instances when the return type's docblock generic (`Articles<Article>`) or a `factory:` attribute resolves an entity, associative arrays otherwise.
+
+### 7.1 Built-in: `AffectedRows` (UPDATE / DELETE)
+
+```php
+use Ray\MediaQuery\Result\AffectedRows;
+
+#[DbQuery('todo_delete')]
+public function delete(string $id): AffectedRows;
+
+$r = $repo->delete('1');
+$r->count;          // int
+$r->isAffected();   // bool — count > 0
+```
+
+### 7.2 Built-in: `InsertedRow` (INSERT)
+
+```php
+use Ray\MediaQuery\Result\InsertedRow;
+
+#[DbQuery('todo_add')]
+public function add(string $title, ?UuidInterface $id = null, ?\DateTimeInterface $at = null): InsertedRow;
+
+$r = $repo->add('Write docs');                   // $id and $at omitted → DI resolves them if bindings exist
+$r->values;  // array<string, mixed> — resolved params bound to the driver
+$r->id;      // ?string — lastInsertId(), null when driver reports none
+```
+
+Use `InsertedRow` when the caller needs the auto-increment id **or** the resolved parameter values (UUIDs, timestamps, ToScalar reductions) that the caller's code never saw. Use `AffectedRows` otherwise.
+
+### 7.3 Custom `PostQueryInterface` (DML)
+
+Any `final class X implements PostQueryInterface` can be a return type for a DML method:
+
+```php
+use Ray\MediaQuery\Result\PostQueryContext;
+use Ray\MediaQuery\Result\PostQueryInterface;
+
+final class RowCountWithQuery implements PostQueryInterface
+{
+    public function __construct(
+        public readonly int $count,
+        public readonly string $queryString,
+    ) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        return new static(
+            $context->statement->rowCount(),
+            $context->statement->queryString,
+        );
+    }
+}
+
+#[DbQuery('todo_update')]
+public function update(string $id, string $title): RowCountWithQuery;
+```
+
+Multi-statement SQL: `$context->statement` reflects the **last** executed statement only.
+
+### 7.4 Custom `PostQueryInterface` (SELECT — typed collection wrappers)
+
+A class implementing `PostQueryInterface` can also wrap a SELECT result. The framework pre-hydrates rows on `$context->rows` (entity instances when an entity is resolvable, assoc arrays otherwise); the wrapper composes them and adds domain operations the raw row list can't express.
+
+```php
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
+use Ray\MediaQuery\Result\PostQueryContext;
+use Ray\MediaQuery\Result\PostQueryInterface;
+
+/** @implements IteratorAggregate<int, Article> */
+final class Articles implements PostQueryInterface, IteratorAggregate, Countable
+{
+    /** @param list<Article> $rows */
+    public function __construct(public readonly array $rows) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        /** @var list<Article> $rows */
+        $rows = $context->rows;
+        return new static($rows);
+    }
+
+    public function totalWordCount(): int
+    {
+        return array_sum(array_map(static fn (Article $a): int => $a->wordCount, $this->rows));
+    }
+
+    /** @return ArrayIterator<int, Article> */
+    public function getIterator(): ArrayIterator { return new ArrayIterator($this->rows); }
+    public function count(): int { return count($this->rows); }
+}
+
+interface ArticleRepository
+{
+    /** @return Articles<Article> */
+    #[DbQuery('article_list')]
+    public function list(): Articles;
+}
+```
+
+Shape rules for `$context->rows`:
+
+- `@return Wrapper<Entity>` docblock or `factory:` attribute → entity instances.
+- Neither declared → associative arrays.
+- DML statement → `[]` (no fetch).
+
+`$context->rows === []` therefore means **either** "DML, didn't fetch" **or** "SELECT, no matches" — pick a result class scoped to one or the other rather than handling both shapes in a single wrapper.
+
+### 7.5 DML + SELECT in one method
+
+Because `SqlQuery::perform()` keys SELECT/DML detection off the **last** executed statement, a SQL file can run a DML and then expose the affected row via a trailing SELECT — without driver-specific `RETURNING`:
+
+```sql
+-- create_article.sql (SQLite — replace last_insert_rowid() per driver)
+INSERT INTO articles (title, body) VALUES (:title, :body);
+SELECT * FROM articles WHERE id = last_insert_rowid();
+```
+
+```php
+final class CreatedArticle implements PostQueryInterface
+{
+    public function __construct(public readonly Article $article) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        /** @var list<Article> $rows */
+        $rows = $context->rows;
+        return new static($rows[0]);
+    }
+}
+
+#[DbQuery('create_article')]
+public function create(string $title, string $body): CreatedArticle;
+```
+
+The trailing SELECT means `$context->rows` is populated; the DML side effect already ran. On other drivers, swap `last_insert_rowid()` for `LAST_INSERT_ID()` (MySQL) or fold the SELECT into the INSERT via `INSERT ... RETURNING *` (PostgreSQL / MariaDB / SQLite ≥ 3.35).
+
+---
+
+## 8. Pagination — `#[Pager]` + `Pages`
+
+```php
+use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\Annotation\Pager;
+use Ray\MediaQuery\Pages;
+
+interface ProductRepository
+{
+    #[DbQuery('product_list'), Pager(perPage: 20, template: '/{?page}')]
+    /** @return Pages<Product> */
+    public function list(): Pages;
+}
+
+$pages = $repo->list();
+count($pages);         // → COUNT query
+$page = $pages[1];     // → SELECT with LIMIT/OFFSET, rows hydrated to Product
+$page->data;           // items
+$page->current;        // int
+$page->total;          // int (total pages)
+$page->hasNext;        // bool
+$page->hasPrevious;    // bool
+(string) $page;        // rendered pager HTML
+```
+
+Dynamic per-page size: `Pager(perPage: 'perPage', ...)` binds to the method's `int $perPage` argument.
+
+---
+
+## 9. Direct `SqlQueryInterface`
+
+For call sites that don't want the attribute layer, inject `SqlQueryInterface` and call it directly:
+
+```php
+use Ray\MediaQuery\SqlQueryInterface;
+use Ray\MediaQuery\Result\AffectedRows;
+
+final class CustomRepo
+{
+    public function __construct(private SqlQueryInterface $sql) {}
+
+    public function bulkDelete(array $ids): int
+    {
+        /** @var AffectedRows $r */
+        $r = $this->sql->execPostQuery('bulk_delete', ['ids' => $ids], AffectedRows::class);
+        return $r->count;
+    }
+}
+```
+
+Methods on `SqlQueryInterface`:
+
+| Method | Returns |
+|---|---|
+| `getRow(string $sqlId, array $values = [], ?FetchInterface $fetch = null)` | `array\|object\|null` — first row |
+| `getRowList(string $sqlId, array $values = [], ?FetchInterface $fetch = null)` | `array<array<mixed>>` — all rows |
+| `exec(string $sqlId, array $values = [], ?FetchInterface $fetch = null)` | `void` — DML |
+| `execPostQuery(string $sqlId, array $values, string $postQueryClass, ?FetchInterface $fetch = null)` | instance of `$postQueryClass` (implements `PostQueryInterface`); when `$fetch` is supplied SELECT rows arrive on `$context->rows` already hydrated to that strategy's shape |
+| `getCount(string $sqlId, array $values)` | `int` — COUNT for pagination |
+| `getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', ?string $entity = null)` | `PagesInterface` |
+
+`FetchInterface` is built internally by the interceptor from the `factory:` attribute / return type / `@return` docblock. At this layer you usually pass `null` and accept assoc arrays, or build a `FetchClass` / `FetchFactory` yourself.
+
+`getStatement()` exists on the concrete `Ray\MediaQuery\SqlQuery` class (returning the last executed `PDOStatement`) but is not declared on `SqlQueryInterface`. To reach it you must depend on the concrete type rather than the interface.
+
+---
+
+## 10. Gotchas
+
+- **Placeholder names = parameter names.** `:id` in SQL requires `$id` on the method. Renaming the PHP argument renames the binding.
+- **Hydration is positional for constructor entities.** `FetchNewInstance` uses `PDO::FETCH_FUNC`, so the `SELECT` column order must line up with the constructor parameter order. Column names are ignored on this path — there is no snake_case → camelCase matching. For no-constructor entities, `FetchClass` uses `PDO::FETCH_CLASS`, which matches column names to public property names exactly (no case conversion).
+- **Return type + `type:` drive dispatch.** The interceptor checks the return type first (`PostQueryInterface` → `execPostQuery`, otherwise `getRow`/`getRowList` keyed by `#[DbQuery(type: ...)]`). `SqlQuery::perform()` also sniffs the executed statement for `SELECT` / `WITH` (after stripping comments) to decide whether to fetch rows or just execute.
+- **Multi-statement SQL files** are supported (split on `;`). For `PostQueryInterface` the result reflects the **last** executed statement.
+- **`InsertedRow::$id` is `null`** when the driver reports no auto-increment id — tables without `AUTO_INCREMENT`, or when `lastInsertId()` returns `false` / `''` / `'0'`. Always treat as `?string`.
+- **`InsertedRow::$values` is the resolved params**, not the caller's raw args — DI-provided defaults for omitted args, `DateTimeInterface` already stringified, `ToScalarInterface` already reduced. This is the only way to recover framework-injected values.
+- **Param injection triggers on omitted args, not `null`.** `ParamInjector` only fills in parameters the caller didn't pass; explicitly passing `null` for a typed parameter is treated as a real argument.
+- **Factories replace, not augment.** When `factory: X::class` is set, `X::factory(...)` owns construction entirely via `PDO::FETCH_FUNC`; the default entity hydration is skipped.
+- **Interceptor only fires on interfaces.** If you implement a `DbQuery` interface manually, the attributes do nothing — the framework never sees the call.
+
+---
+
+## 11. Minimal end-to-end example
+
+`sql/todo_add.sql`:
+```sql
+INSERT INTO todo (id, title, created_at) VALUES (:id, :title, :createdAt)
+```
+
+`sql/todo_list.sql`:
+```sql
+SELECT id, title, created_at FROM todo ORDER BY created_at DESC
+```
+
+`src/Todo.php`:
+```php
+final class Todo
+{
+    public function __construct(
+        public readonly string $id,
+        public readonly string $title,
+        public readonly string $createdAt,
+    ) {}
+}
+```
+
+`src/TodoRepository.php`:
+```php
+use Ray\MediaQuery\Annotation\DbQuery;
+use Ray\MediaQuery\Result\InsertedRow;
+use Ramsey\Uuid\UuidInterface;
+
+interface TodoRepository
+{
+    #[DbQuery('todo_add')]
+    public function add(
+        string $title,
+        ?UuidInterface $id = null,        // omit at call site → resolved via DI (requires a UuidInterface binding)
+        ?\DateTimeInterface $createdAt = null,  // omit at call site → resolved via DI (requires a DateTimeInterface binding)
+    ): InsertedRow;
+
+    #[DbQuery('todo_list')]
+    /** @return array<Todo> */
+    public function list(): array;
+}
+```
+
+Note the `SELECT id, title, created_at` column order must match `Todo`'s constructor parameter order (`$id, $title, $createdAt`) — hydration is positional.
+
+Call site:
+```php
+$repo = $injector->getInstance(TodoRepository::class);
+$inserted = $repo->add('Write docs');       // $id and $createdAt omitted → DI resolves both
+$inserted->values['id'];                    // the id value that went to the DB
+$inserted->id;                              // ?string — lastInsertId() from the driver
+$todos = $repo->list();                     // list<Todo>
+```
+
+No implementation class written. No manual SQL binding. No mapping config.
