@@ -54,7 +54,9 @@ final class DbQueryInterceptor implements MethodInterceptor
         if ($returnType instanceof ReflectionNamedType) {
             $typeName = $returnType->getName();
             if (class_exists($typeName) && is_subclass_of($typeName, PostQueryInterface::class)) {
-                return $this->sqlQuery->execPostQuery($dbQuery->id, $values, $typeName);
+                $postQueryFetch = $this->factory->factory($dbQuery, $entity, $returnType);
+
+                return $this->sqlQuery->execPostQuery($dbQuery->id, $values, $typeName, $postQueryFetch);
             }
         }
 

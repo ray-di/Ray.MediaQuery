@@ -12,6 +12,7 @@ use phpDocumentor\Reflection\Type;
 use phpDocumentor\Reflection\Types\Array_;
 use phpDocumentor\Reflection\Types\ContextFactory;
 use phpDocumentor\Reflection\Types\Object_;
+use Ray\MediaQuery\Result\PostQueryInterface;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionType;
@@ -40,7 +41,11 @@ final class ReturnEntity implements ReturnEntityInterface
 
         $returnTypeClass = $this->getReturnTypeName($returnType);
 
-        if (class_exists($returnTypeClass) && ! is_a($returnTypeClass, PagesInterface::class, true)) {
+        if (
+            class_exists($returnTypeClass)
+            && ! is_a($returnTypeClass, PagesInterface::class, true)
+            && ! is_a($returnTypeClass, PostQueryInterface::class, true)
+        ) {
             return $returnTypeClass;
         }
 

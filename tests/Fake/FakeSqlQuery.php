@@ -46,7 +46,7 @@ final class FakeSqlQuery implements SqlQueryInterface
      *
      * @param array<string, mixed> $values
      */
-    public function execPostQuery(string $sqlId, array $values, string $postQueryClass): PostQueryInterface
+    public function execPostQuery(string $sqlId, array $values, string $postQueryClass, FetchInterface|null $fetch = null): PostQueryInterface
     {
         throw new LogicException('FakeSqlQuery does not support execPostQuery');
     }

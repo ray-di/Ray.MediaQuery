@@ -311,6 +311,150 @@ final class RowCountWithQuery implements PostQueryInterface
 
 Declare it on any `#[DbQuery]` method and the interceptor dispatches to the class's own factory.
 
+**SELECT collections — typed row wrappers:**
+
+`PostQueryInterface` also covers SELECT. The framework pre-hydrates the result set into `PostQueryContext::$rows` (entity instances when a `factory:` attribute or `@return Wrapper<Entity>` docblock resolves an entity, associative arrays otherwise). Your wrapper class composes those rows — it never touches raw `PDOStatement` or DI:
+
+```php
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
+use Ray\MediaQuery\Result\PostQueryContext;
+use Ray\MediaQuery\Result\PostQueryInterface;
+
+/** @implements IteratorAggregate<int, Article> */
+final class Articles implements PostQueryInterface, IteratorAggregate, Countable
+{
+    /** @param list<Article> $rows */
+    public function __construct(public readonly array $rows) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        /** @var list<Article> $rows */
+        $rows = $context->rows;
+
+        return new static($rows);
+    }
+
+    /** Domain predicates / aggregations — the reason to wrap. */
+    public function published(): self
+    {
+        return new self(array_values(array_filter(
+            $this->rows,
+            static fn (Article $a): bool => $a->isPublished(),
+        )));
+    }
+
+    public function totalWordCount(): int
+    {
+        return array_sum(array_map(
+            static fn (Article $a): int => $a->wordCount,
+            $this->rows,
+        ));
+    }
+
+    /** @return ArrayIterator<int, Article> */
+    public function getIterator(): ArrayIterator { return new ArrayIterator($this->rows); }
+    public function count(): int { return count($this->rows); }
+}
+
+interface ArticleRepository
+{
+    /** @return Articles<Article> */
+    #[DbQuery('article_list')]
+    public function list(): Articles;
+}
+```
+
+Callers get `$articles->published()->totalWordCount()` — domain logic about the result set lives on the type, not scattered across services. `IteratorAggregate` / `Countable` give the wrapper standard "feels like an array" ergonomics. To compose a richer base, wrap a Laravel / Illuminate / Doctrine `Collection` via a property the same way.
+
+`$rows` shape is determined by what the framework hands the wrapper:
+
+- `@return Articles<Article>` docblock or `factory:` attribute → entity instances.
+- Neither declared → associative arrays.
+- DML statement → `[]` (no fetch happens).
+
+`$rows === []` therefore means either "DML, didn't fetch" or "SELECT, no matches" — pick a result class scoped to one or the other rather than trying to handle both shapes.
+
+**Generic base for reuse across repositories:**
+
+Lift the entity out as a type variable when several repositories want the same shape with different entities. Psalm and PHPStan propagate the parameter through `foreach`, `$rows[N]`, and `iterator_to_array(...)`:
+
+```php
+/**
+ * @template T
+ * @implements IteratorAggregate<int, T>
+ */
+abstract class TypedRows implements PostQueryInterface, IteratorAggregate, Countable
+{
+    /** @param list<T> $rows */
+    public function __construct(public readonly array $rows) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        /** @var list<T> $rows */
+        $rows = $context->rows;
+
+        return new static($rows);
+    }
+
+    /** @return ArrayIterator<int, T> */
+    public function getIterator(): ArrayIterator { return new ArrayIterator($this->rows); }
+    public function count(): int { return count($this->rows); }
+    public function isEmpty(): bool { return $this->rows === []; }
+}
+
+/** @extends TypedRows<Article> */
+final class Articles extends TypedRows
+{
+    public function published(): self { /* domain operations on Article rows */ }
+    public function totalWordCount(): int { /* ... */ }
+}
+
+/** @extends TypedRows<User> */
+final class Users extends TypedRows {}
+```
+
+`@extends TypedRows<Article>` carries `Article` through to every site that inspects the rows — `$articles->rows[0]->title`, `foreach ($articles as $a) { $a->wordCount; }`, and any derived method on the base. The framework still hands `$context->rows` as `array<mixed>`; the narrow happens at the `@var list<T>` line in `fromContext()`, and from that point on the static analyser honours the parameter. Runtime is identical to the single-type wrapper above — PHP has no native generics, so this is a static-analysis claim, not a runtime check.
+
+**Multi-statement SQL — DML + SELECT in one method:**
+
+`PostQueryInterface` dispatches based on the *last* executed statement, so a single SQL file can run a DML and then expose its result via a trailing SELECT:
+
+```sql
+-- create_article.sql (SQLite — adjust the second statement per driver)
+INSERT INTO articles (title, body) VALUES (:title, :body);
+SELECT * FROM articles WHERE id = last_insert_rowid();
+```
+
+The `last_insert_rowid()` call is SQLite-specific. On other drivers, use the equivalent — e.g. `LAST_INSERT_ID()` on MySQL, or fold the SELECT into the INSERT via `INSERT ... RETURNING *` on PostgreSQL / MariaDB / SQLite ≥ 3.35.
+
+```php
+final class CreatedArticle implements PostQueryInterface
+{
+    public function __construct(public readonly Article $article) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        /** @var list<Article> $rows */
+        $rows = $context->rows;
+
+        return new static($rows[0]);
+    }
+}
+
+interface ArticleRepository
+{
+    /** @return CreatedArticle */
+    #[DbQuery('create_article')]
+    public function create(string $title, string $body): CreatedArticle;
+}
+```
+
+The framework runs both statements in order. The last statement is a SELECT, so `$context->rows` carries its hydrated result — letting a single repository method express "execute and return a typed view of the affected row" without driver-specific `RETURNING`. The same shape rules apply: declare `@return CreatedArticle` (or a generic wrapper) and the trailing SELECT is hydrated to entities; omit it and `$context->rows` arrives as associative arrays.
+
+`$context->rows === []` therefore means "the last statement was DML" or "the last statement was a SELECT that matched nothing" — the distinction is determined by the SQL file you wrote, so each result class is naturally scoped to one of those.
+
 **Constructor Property Promotion (Recommended):**
 
 Use constructor property promotion for type-safe, immutable entities:
@@ -565,7 +709,7 @@ class CustomRepository
 - `getRow($queryId, $params)` - Single row
 - `getRowList($queryId, $params)` - Multiple rows
 - `exec($queryId, $params)` - Execute without result
-- `execPostQuery($queryId, $params, $postQueryClass)` - Execute DML and build a typed result via a `PostQueryInterface` class (e.g. `AffectedRows`, `InsertedRow`, or a custom class)
+- `execPostQuery($queryId, $params, $postQueryClass, FetchInterface|null $fetch = null)` - Execute a SQL statement (SELECT or DML) and build a typed result via a `PostQueryInterface` class (e.g. `AffectedRows`, `InsertedRow`, a typed collection wrapper, or any custom class). When `$fetch` is supplied, SELECT rows arrive on the context already hydrated to that strategy's shape.
 - `getCount($queryId, $params)` - Total row count (for pagination)
 - `getStatement()` - Get PDO statement
 - `getPages()` - Get paginated results
