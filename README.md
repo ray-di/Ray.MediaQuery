@@ -732,3 +732,4 @@ This is more than a technical solution. It's a recognition that different paradi
 
 - [BDR Pattern Guide](./BDR_PATTERN.md)
 - [Demo Application](./demo/)
+- [llms-full.txt](https://ray-di.github.io/Ray.MediaQuery/llms-full.txt) — condensed reference for AI agents
