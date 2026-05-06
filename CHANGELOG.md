@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.1.0 - 2026-05-06
+
+### Added
+- `PostQueryInterface` for typed result building (DML results and SELECT collection wrappers) ([#85](https://github.com/ray-di/Ray.MediaQuery/pull/85), [#89](https://github.com/ray-di/Ray.MediaQuery/pull/89))
+- `AffectedRows` / `InsertedRow` result types and `execAffected()` for DML ([#85](https://github.com/ray-di/Ray.MediaQuery/pull/85))
+- AI-oriented reference at [`docs/llms-full.txt`](https://ray-di.github.io/Ray.MediaQuery/llms-full.txt) ([#90](https://github.com/ray-di/Ray.MediaQuery/pull/90))
+
+### Fixed
+- Pager hydration honors the `factory` on `#[DbQuery]` ([#91](https://github.com/ray-di/Ray.MediaQuery/pull/91))
+
 ## 1.0.4 - 2026-04-14
 
 ### Fixed
