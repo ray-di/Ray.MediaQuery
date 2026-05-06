@@ -422,10 +422,12 @@ final class Users extends TypedRows {}
 `PostQueryInterface` dispatches based on the *last* executed statement, so a single SQL file can run a DML and then expose its result via a trailing SELECT:
 
 ```sql
--- create_article.sql
+-- create_article.sql (SQLite — adjust the second statement per driver)
 INSERT INTO articles (title, body) VALUES (:title, :body);
 SELECT * FROM articles WHERE id = last_insert_rowid();
 ```
+
+The `last_insert_rowid()` call is SQLite-specific. On other drivers, use the equivalent — e.g. `LAST_INSERT_ID()` on MySQL, or fold the SELECT into the INSERT via `INSERT ... RETURNING *` on PostgreSQL / MariaDB / SQLite ≥ 3.35.
 
 ```php
 final class CreatedArticle implements PostQueryInterface
@@ -707,7 +709,7 @@ class CustomRepository
 - `getRow($queryId, $params)` - Single row
 - `getRowList($queryId, $params)` - Multiple rows
 - `exec($queryId, $params)` - Execute without result
-- `execPostQuery($queryId, $params, $postQueryClass, $fetch = null)` - Execute a SQL statement (SELECT or DML) and build a typed result via a `PostQueryInterface` class (e.g. `AffectedRows`, `InsertedRow`, a typed collection wrapper, or any custom class)
+- `execPostQuery($queryId, $params, $postQueryClass, FetchInterface|null $fetch = null)` - Execute a SQL statement (SELECT or DML) and build a typed result via a `PostQueryInterface` class (e.g. `AffectedRows`, `InsertedRow`, a typed collection wrapper, or any custom class). When `$fetch` is supplied, SELECT rows arrive on the context already hydrated to that strategy's shape.
 - `getCount($queryId, $params)` - Total row count (for pagination)
 - `getStatement()` - Get PDO statement
 - `getPages()` - Get paginated results
