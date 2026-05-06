@@ -83,12 +83,12 @@ Every row of this table is a valid return type on a `#[DbQuery]` method.
 | `array` with `/** @return array<Entity> */` | SELECT | Fetch all rows, hydrate each into `Entity`.                         |
 | `AffectedRows`                    | UPDATE/DELETE | Exposes `->count` (int) and `->isAffected(): bool`.                   |
 | `InsertedRow`                     | INSERT    | Exposes `->values` (resolved params) and `->id` (?string lastInsertId).   |
-| custom `X implements PostQueryInterface` | DML  | Polymorphic dispatch — framework calls `X::fromContext($context)`.        |
+| custom `X implements PostQueryInterface` | SELECT or DML | Polymorphic dispatch — framework calls `X::fromContext($context)`. SELECT pre-hydrates rows on `$context->rows`; DML leaves `$context->rows = []`. |
 | `Pages` (with `#[Pager]`)         | SELECT    | Lazy paginator. Index access executes `LIMIT`/`OFFSET`; `count()` does `COUNT`. |
 
 How dispatch is decided:
 
-- If the declared return type is a class implementing `PostQueryInterface`, the interceptor calls `SqlQueryInterface::execPostQuery()`, which executes the DML and builds the result via the class's static `fromContext()` factory.
+- If the declared return type is a class implementing `PostQueryInterface`, the interceptor calls `SqlQueryInterface::execPostQuery()`, which executes the SQL (SELECT or DML) and builds the result via the class's static `fromContext()` factory. For SELECT, the rows are pre-hydrated and exposed on `$context->rows`; for DML no fetch happens and `$context->rows` is `[]`.
 - Otherwise, fetching is driven by `#[DbQuery(type: ...)]`, which defaults to `'row_list'` and can be set to `'row'` for single-row reads. `SqlQuery::perform()` inspects the executed statement's SQL — if it starts with `SELECT` or `WITH` (after stripping comments), rows are fetched; otherwise no rows are read.
 - The return type and optional `@return` docblock control hydration (assoc array vs entity class vs `array<Entity>`).
 
@@ -174,7 +174,7 @@ final class Invoice
 }
 ```
 
-Entity type is inferred from the method's return type when it's a class (`?Invoice`, `Invoice`), or from the `/** @return array<Invoice> */` docblock generic when the return type is `array` / `Pages`. There is no `entity:` attribute parameter.
+Entity type is inferred from the method's return type when it's a class (`?Invoice`, `Invoice`), or from the `/** @return array<Invoice> */` docblock generic when the return type is `array` / `Pages` / a `PostQueryInterface` wrapper (e.g. `Articles<Article>`). There is no `entity:` attribute parameter.
 
 ```php
 #[DbQuery('invoice_list')]
@@ -214,9 +214,9 @@ The `factory()` method is called per row via `PDO::FETCH_FUNC`, so column values
 
 ---
 
-## 7. PostQueryInterface — DML result-building
+## 7. PostQueryInterface — result-building (SELECT and DML)
 
-`PostQueryInterface` is the dispatch path for building typed results from DML (INSERT / UPDATE / DELETE) execution. The interceptor detects the interface on the method's return type (`is_subclass_of(..., PostQueryInterface::class)`) and routes to `SqlQueryInterface::execPostQuery()`.
+`PostQueryInterface` is the dispatch path for building typed results from any executed query. The interceptor detects the interface on the method's return type (`is_subclass_of(..., PostQueryInterface::class)`) and routes to `SqlQueryInterface::execPostQuery()`. It covers both DML (INSERT / UPDATE / DELETE result wrappers like `AffectedRows`, `InsertedRow`) and SELECT (typed collection wrappers around hydrated rows).
 
 ```php
 namespace Ray\MediaQuery\Result;
@@ -228,18 +228,22 @@ interface PostQueryInterface
 
 final class PostQueryContext
 {
-    /** @param array<string, mixed> $values */
+    /**
+     * @param array<string, mixed> $values
+     * @param array<mixed>         $rows   Hydrated rows for SELECT; `[]` for DML.
+     */
     public function __construct(
         public readonly \PDOStatement $statement,
         public readonly \Aura\Sql\ExtendedPdoInterface $pdo,
         public readonly array $values,  // resolved params, post-ParamConverter / ParamInjector
+        public readonly array $rows = [],
     ) {}
 }
 ```
 
-The interceptor calls `{ReturnType}::fromContext($context)` after executing the SQL. The class owns its own construction logic — read `rowCount()` off the statement, call `lastInsertId()` on the PDO, or inspect the resolved `$values`.
+The interceptor calls `{ReturnType}::fromContext($context)` after executing the SQL. The class owns its own construction logic — read `rowCount()` off the statement, call `lastInsertId()` on the PDO, inspect the resolved `$values`, or wrap the pre-hydrated `$rows` into a typed collection.
 
-This path is for DML only in v1.x; SELECT paths go through the regular fetch/hydrate pipeline described in §4 and §6.
+`$context->rows` is hydrated when the last executed statement is a SELECT; for DML it stays `[]`. The hydration shape follows the same rules as §6 — entity instances when the return type's docblock generic (`Articles<Article>`) or a `factory:` attribute resolves an entity, associative arrays otherwise.
 
 ### 7.1 Built-in: `AffectedRows` (UPDATE / DELETE)
 
@@ -269,7 +273,7 @@ $r->id;      // ?string — lastInsertId(), null when driver reports none
 
 Use `InsertedRow` when the caller needs the auto-increment id **or** the resolved parameter values (UUIDs, timestamps, ToScalar reductions) that the caller's code never saw. Use `AffectedRows` otherwise.
 
-### 7.3 Custom `PostQueryInterface`
+### 7.3 Custom `PostQueryInterface` (DML)
 
 Any `final class X implements PostQueryInterface` can be a return type for a DML method:
 
@@ -298,6 +302,85 @@ public function update(string $id, string $title): RowCountWithQuery;
 ```
 
 Multi-statement SQL: `$context->statement` reflects the **last** executed statement only.
+
+### 7.4 Custom `PostQueryInterface` (SELECT — typed collection wrappers)
+
+A class implementing `PostQueryInterface` can also wrap a SELECT result. The framework pre-hydrates rows on `$context->rows` (entity instances when an entity is resolvable, assoc arrays otherwise); the wrapper composes them and adds domain operations the raw row list can't express.
+
+```php
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
+use Ray\MediaQuery\Result\PostQueryContext;
+use Ray\MediaQuery\Result\PostQueryInterface;
+
+/** @implements IteratorAggregate<int, Article> */
+final class Articles implements PostQueryInterface, IteratorAggregate, Countable
+{
+    /** @param list<Article> $rows */
+    public function __construct(public readonly array $rows) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        /** @var list<Article> $rows */
+        $rows = $context->rows;
+        return new static($rows);
+    }
+
+    public function totalWordCount(): int
+    {
+        return array_sum(array_map(static fn (Article $a): int => $a->wordCount, $this->rows));
+    }
+
+    /** @return ArrayIterator<int, Article> */
+    public function getIterator(): ArrayIterator { return new ArrayIterator($this->rows); }
+    public function count(): int { return count($this->rows); }
+}
+
+interface ArticleRepository
+{
+    /** @return Articles<Article> */
+    #[DbQuery('article_list')]
+    public function list(): Articles;
+}
+```
+
+Shape rules for `$context->rows`:
+
+- `@return Wrapper<Entity>` docblock or `factory:` attribute → entity instances.
+- Neither declared → associative arrays.
+- DML statement → `[]` (no fetch).
+
+`$context->rows === []` therefore means **either** "DML, didn't fetch" **or** "SELECT, no matches" — pick a result class scoped to one or the other rather than handling both shapes in a single wrapper.
+
+### 7.5 DML + SELECT in one method
+
+Because `SqlQuery::perform()` keys SELECT/DML detection off the **last** executed statement, a SQL file can run a DML and then expose the affected row via a trailing SELECT — without driver-specific `RETURNING`:
+
+```sql
+-- create_article.sql (SQLite — replace last_insert_rowid() per driver)
+INSERT INTO articles (title, body) VALUES (:title, :body);
+SELECT * FROM articles WHERE id = last_insert_rowid();
+```
+
+```php
+final class CreatedArticle implements PostQueryInterface
+{
+    public function __construct(public readonly Article $article) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        /** @var list<Article> $rows */
+        $rows = $context->rows;
+        return new static($rows[0]);
+    }
+}
+
+#[DbQuery('create_article')]
+public function create(string $title, string $body): CreatedArticle;
+```
+
+The trailing SELECT means `$context->rows` is populated; the DML side effect already ran. On other drivers, swap `last_insert_rowid()` for `LAST_INSERT_ID()` (MySQL) or fold the SELECT into the INSERT via `INSERT ... RETURNING *` (PostgreSQL / MariaDB / SQLite ≥ 3.35).
 
 ---
 
@@ -358,7 +441,7 @@ Methods on `SqlQueryInterface`:
 | `getRow(string $sqlId, array $values = [], ?FetchInterface $fetch = null)` | `array\|object\|null` — first row |
 | `getRowList(string $sqlId, array $values = [], ?FetchInterface $fetch = null)` | `array<array<mixed>>` — all rows |
 | `exec(string $sqlId, array $values = [], ?FetchInterface $fetch = null)` | `void` — DML |
-| `execPostQuery(string $sqlId, array $values, string $postQueryClass)` | instance of `$postQueryClass` (implements `PostQueryInterface`) |
+| `execPostQuery(string $sqlId, array $values, string $postQueryClass, ?FetchInterface $fetch = null)` | instance of `$postQueryClass` (implements `PostQueryInterface`); when `$fetch` is supplied SELECT rows arrive on `$context->rows` already hydrated to that strategy's shape |
 | `getCount(string $sqlId, array $values)` | `int` — COUNT for pagination |
 | `getPages(string $sqlId, array $values, int $perPage, string $queryTemplate = '/{?page}', ?string $entity = null)` | `PagesInterface` |
 
