@@ -417,6 +417,42 @@ final class Users extends TypedRows {}
 
 `@extends TypedRows<Article>` carries `Article` through to every site that inspects the rows — `$articles->rows[0]->title`, `foreach ($articles as $a) { $a->wordCount; }`, and any derived method on the base. The framework still hands `$context->rows` as `array<mixed>`; the narrow happens at the `@var list<T>` line in `fromContext()`, and from that point on the static analyser honours the parameter. Runtime is identical to the single-type wrapper above — PHP has no native generics, so this is a static-analysis claim, not a runtime check.
 
+**Multi-statement SQL — DML + SELECT in one method:**
+
+`PostQueryInterface` dispatches based on the *last* executed statement, so a single SQL file can run a DML and then expose its result via a trailing SELECT:
+
+```sql
+-- create_article.sql
+INSERT INTO articles (title, body) VALUES (:title, :body);
+SELECT * FROM articles WHERE id = last_insert_rowid();
+```
+
+```php
+final class CreatedArticle implements PostQueryInterface
+{
+    public function __construct(public readonly Article $article) {}
+
+    public static function fromContext(PostQueryContext $context): static
+    {
+        /** @var list<Article> $rows */
+        $rows = $context->rows;
+
+        return new static($rows[0]);
+    }
+}
+
+interface ArticleRepository
+{
+    /** @return CreatedArticle */
+    #[DbQuery('create_article')]
+    public function create(string $title, string $body): CreatedArticle;
+}
+```
+
+The framework runs both statements in order. The last statement is a SELECT, so `$context->rows` carries its hydrated result — letting a single repository method express "execute and return a typed view of the affected row" without driver-specific `RETURNING`. The same shape rules apply: declare `@return CreatedArticle` (or a generic wrapper) and the trailing SELECT is hydrated to entities; omit it and `$context->rows` arrives as associative arrays.
+
+`$context->rows === []` therefore means "the last statement was DML" or "the last statement was a SELECT that matched nothing" — the distinction is determined by the SQL file you wrote, so each result class is naturally scoped to one of those.
+
 **Constructor Property Promotion (Recommended):**
 
 Use constructor property promotion for type-safe, immutable entities:
