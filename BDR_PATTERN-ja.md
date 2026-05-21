@@ -709,6 +709,10 @@ public function getProduct(string $id): ProductDomainObject;
 
 重要なのは、いつどのようにデータをロードするかについて**意図的であること**です。ファクトリーパターンは、この戦略を完全にコントロールする力を与えます。
 
+## 関連レシピ
+
+- [BDR + BEAR.Async: 並列 SQL レシピ](./BEAR_ASYNC_RECIPE-ja.md) — 各リポジトリ呼び出しを `ResourceObject` で包むと、`#[Embed]` がアプリケーション境界でそれらを並列実行する。
+
 ## 参考文献
 
 - [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood (2006)

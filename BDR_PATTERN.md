@@ -661,6 +661,10 @@ public function getProduct(string $id): ProductDomainObject;
 
 The key is **being intentional** about when and how you load data. The factory pattern gives you complete control over this strategy.
 
+## Related Recipes
+
+- [BDR + BEAR.Async: Parallel SQL Recipe](./BEAR_ASYNC_RECIPE.md) — wrap each Repository call in a `ResourceObject` and let `#[Embed]` parallelise them at the application boundary.
+
 ## References
 
 - [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/) - Jeff Atwood (2006)
