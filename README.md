@@ -731,5 +731,6 @@ This is more than a technical solution. It's a recognition that different paradi
 ## Learn More
 
 - [BDR Pattern Guide](./BDR_PATTERN.md)
+- [BDR + BEAR.Async — Parallel SQL Recipe](./BEAR_ASYNC_RECIPE.md)
 - [Demo Application](./demo/)
 - [llms-full.txt](https://ray-di.github.io/Ray.MediaQuery/llms-full.txt) — condensed reference for AI agents
