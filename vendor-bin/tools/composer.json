@@ -8,9 +8,7 @@
         "squizlabs/php_codesniffer": "^4.0",
         "vimeo/psalm": "7.0.0-beta19",
         "rector/rector": "^2.0.16",
-        "maglnet/composer-require-checker": "4.17.0",
-        "symfony/string": "^7.4",
-        "sebastian/diff": "^6.0"
+        "maglnet/composer-require-checker": "^4.17"
     },
     "config": {
         "allow-plugins": {

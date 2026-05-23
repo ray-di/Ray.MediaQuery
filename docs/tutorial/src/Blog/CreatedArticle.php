@@ -18,9 +18,9 @@ final class CreatedArticle implements PostQueryInterface
     #[Override]
     public static function fromContext(PostQueryContext $context): static
     {
-        $article = $context->rows[0] ?? null;
-        assert($article instanceof Article);
+        /** @var list<Article> $rows */
+        $rows = $context->rows;
 
-        return new static($article);
+        return new static($rows[0]);
     }
 }

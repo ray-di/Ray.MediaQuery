@@ -5,5 +5,4 @@ baseurl: /Ray.MediaQuery
 markdown: kramdown
 highlighter: rouge
 exclude:
-  - tutorial/REVIEW.md
   - tutorial/src
