@@ -38,7 +38,8 @@
             "Ray\\MediaQuery\\": [
                 "tests/",
                 "tests/Fake"
-            ]
+            ],
+            "Tutorial\\Blog\\": "docs/tutorial/src/Blog/"
         }
     },
     "scripts": {

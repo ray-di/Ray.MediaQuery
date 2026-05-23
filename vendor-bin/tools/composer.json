@@ -1,13 +1,16 @@
 {
+    "license": "MIT",
     "require-dev": {
         "phpstan/phpstan": "^2.1.17",
         "doctrine/coding-standard": "^14.0",
         "phpmd/phpmd": "^2.15.0",
         "phpmetrics/phpmetrics": "3.0.0-rc.8@RC",
         "squizlabs/php_codesniffer": "^4.0",
-        "vimeo/psalm": "^6.11",
+        "vimeo/psalm": "7.0.0-beta19",
         "rector/rector": "^2.0.16",
-        "maglnet/composer-require-checker": "^4.16"
+        "maglnet/composer-require-checker": "4.17.0",
+        "symfony/string": "^7.4",
+        "sebastian/diff": "^6.0"
     },
     "config": {
         "allow-plugins": {
