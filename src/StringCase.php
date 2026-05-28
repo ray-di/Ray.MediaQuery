@@ -10,6 +10,7 @@ use function str_replace;
 use function strtolower;
 use function ucwords;
 
+/** snake_case / camelCase conversion utility. Not used internally. */
 final class StringCase
 {
     /**
