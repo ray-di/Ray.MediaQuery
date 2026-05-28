@@ -106,7 +106,7 @@ docs/tutorial/src/
 | [第2章](#第2章-単一行の取得) | 単一行の取得 | `#[DbQuery(type: 'row')]` |
 | [第3章](#第3章-insert-と-affectedrows) | INSERT と AffectedRows | INSERT / `AffectedRows` |
 | [第4章](#第4章-エンティティへの自動マッピング) | エンティティへの自動マッピング | Constructor Promotion / readonly |
-| [第5章](#第5章-snake_case--camelcase) | snake_case ↔ camelCase | `StringCase` 自動変換 |
+| [第5章](#第5章-constructor-hydration-と-select-カラム順) | Constructor hydration と SELECT カラム順 | `FetchNewInstance` / hydration 経路 |
 | [第6章](#第6章-datetime-と-toscalar) | DateTime と ToScalar | `DateTimeInterface` / `ToScalarInterface` |
 | [第7章](#第7章-ファクトリで派生値を作る) | ファクトリで派生値を作る | `factory:` (静的ファクトリ) |
 | [第8章](#第8章-ファクトリへ依存注入) | ファクトリへ依存注入 | `factory:` (DI ファクトリ) |
@@ -115,6 +115,7 @@ docs/tutorial/src/
 | [第11章](#第11章-ページネーション) | ページネーション | `#[Pager]` / `Pages<Article>` / `factory:` hydration (1.1) |
 | [第12章](#第12章-自作-postqueryinterface) | 自作 PostQueryInterface | SELECT 対応 `PostQueryInterface::fromContext()` (1.1) |
 | [第13章](#第13章-テスト戦略) | テスト戦略 | Fake バインディング |
+| [補章](#補章-multi-statement-dml--select) | Multi-statement DML + SELECT | `PostQueryInterface` で INSERT + SELECT を1メソッド (1.1) |
 | [結論](#結論-repository-pattern-との違い) | Repository Pattern との違い | Query-first / CQRS Read Model |
 
 ---
@@ -133,7 +134,7 @@ docs/tutorial/src/
 php -m | grep '^pdo_sqlite$'
 git clone https://github.com/ray-di/Ray.MediaQuery.git
 cd Ray.MediaQuery
-composer install --no-dev
+composer install
 ```
 
 `pdo_sqlite` が表示されれば OK。
@@ -167,7 +168,7 @@ mkdir -p docs/tutorial/src/Blog docs/tutorial/src/sql
 composer dump-autoload
 ```
 
-> このチュートリアルの完成版 `run.php` は、写経中でもすぐ動かせるように `$loader->addPsr4()` でも `Tutorial\Blog\` を登録している。実プロジェクトや PHPUnit から使う場合は、ここで示したように `composer.json` に登録するのが基本。
+> このチュートリアルの完成版 `run.php` は、写経中でもすぐ動かせるように `$loader->addPsr4()` でも `Tutorial\Blog\` を登録している。そのため `run.php` を単体実行するだけなら `composer.json` の変更なしでも動く。実プロジェクト、IDE、PHPUnit から同じクラスを扱う場合は、ここで示したように `composer.json` に登録するのが基本。
 
 ### Step 4. スキーマ
 
@@ -304,10 +305,10 @@ $pdo->perform(
     ['Hello', 'first body', 'Alice', 'published', '2026-04-01 09:00:00'],
 );
 
-/** @var ArticleQueryInterface $repo */
-$repo = $injector->getInstance(ArticleQueryInterface::class);
+/** @var ArticleQueryInterface $articleQuery */
+$articleQuery = $injector->getInstance(ArticleQueryInterface::class);
 
-var_dump($repo->list());
+var_dump($articleQuery->list());
 ```
 
 ### 実行
@@ -323,7 +324,7 @@ array(1) {
   [0]=>
   array(7) {
     ["id"]=>
-    string(1) "1"
+    int(1)
     ["title"]=>
     string(5) "Hello"
     ["body"]=>
@@ -340,13 +341,15 @@ array(1) {
 }
 ```
 
+> 環境によって `id` が `string(1) "1"` で返ることもある (古い `PDO::ATTR_STRINGIFY_FETCHES` 設定や、`AuraSqlModule` の DSN オプション次第)。PHP 8.1+ かつ標準設定なら `int(1)` で返る。
+
 ### 解説
 
 `ArticleQueryInterface` には実装クラスがない。にもかかわらず `$injector->getInstance(ArticleQueryInterface::class)` でインスタンスが取れる。これは Ray.Aop が `#[DbQuery]` 付きメソッドをインターセプトし、`article_list.sql` を読み込んで実行する「自動生成された実装」を返しているため。
 
 - `#[DbQuery('article_list')]` の `'article_list'` は `sql/article_list.sql` のファイル名 (拡張子なし) と一致する。
 - 戻り値型 `array` は「複数行の連想配列リスト」を意味する。型名で挙動が変わるのが Ray.MediaQuery のコア。
-- カラム名は SQLite が返すままの snake_case (`author_name`, `published_at`)。第5章で camelCase 変換を扱う。
+- カラム名は SQLite が返すままの snake_case (`author_name`, `published_at`)。第4章で Entity に hydrate する形に変え、第5章で hydration の経路を詳しく見る。
 
 ---
 
@@ -386,7 +389,7 @@ public function item(int $id): ?array;
 ### Step 3. `run.php` に追記
 
 ```php
-$row = $repo->item(1);
+$row = $articleQuery->item(1);
 var_dump($row);
 ```
 
@@ -395,7 +398,7 @@ var_dump($row);
 ```
 array(7) {
   ["id"]=>
-  string(1) "1"
+  int(1)
   ["title"]=>
   string(5) "Hello"
   ...
@@ -447,7 +450,7 @@ public function add(
 ### Step 3. `run.php` に追記
 
 ```php
-$affected = $repo->add(
+$affected = $articleQuery->add(
     title: 'Second',
     body: 'about SQL and Objects',
     authorName: 'Bob',
@@ -456,7 +459,7 @@ $affected = $repo->add(
     createdAt: '2026-04-02 10:00:00',
 );
 printf("insert affected=%d\n", $affected->count);
-var_dump($repo->list());
+var_dump($articleQuery->list());
 ```
 
 ### 期待出力
@@ -501,7 +504,7 @@ final class Article
         public readonly int $id,
         public readonly string $title,
         public readonly string $body,
-        public readonly string $authorName,    // ← snake_case の author_name にマッピング (次章で詳しく)
+        public readonly string $authorName,    // ← SELECT の 4 番目に渡る (次章で詳しく)
         public readonly string $status,
         public readonly ?string $publishedAt,
         public readonly string $createdAt,
@@ -510,7 +513,9 @@ final class Article
 }
 ```
 
-### Step 2. インターフェースの戻り値型を変える
+### Step 2. インターフェースの戻り値型を**書き換える**
+
+第1章の `list(): array` と第2章の `item(int $id): ?array` を、戻り値型だけ書き換える。シグネチャはそのまま。
 
 ```php
 /** @return array<Article> */
@@ -521,15 +526,17 @@ public function list(): array;
 public function item(int $id): ?Article;
 ```
 
-### Step 3. `run.php` で使う
+### Step 3. `run.php` を書き換える
+
+第1章で `var_dump($articleQuery->list())` していた箇所と、第2章で `var_dump($row)` していた箇所を、Entity を使う形に置き換える。
 
 ```php
-$articles = $repo->list();
+$articles = $articleQuery->list();
 foreach ($articles as $a) {
     printf("[%d] %s by %s\n", $a->id, $a->title, $a->authorName);
 }
 
-$first = $repo->item(1);
+$first = $articleQuery->item(1);
 echo $first?->title, "\n";
 ```
 
@@ -543,33 +550,93 @@ Hello
 
 ### 解説
 
-- 戻り値型 `?Article` (単一) や docblock `@return array<Article>` (複数) を見て、フレームワークが `PDO::FETCH_CLASS` を使ってオブジェクトに hydrate する。
+- 戻り値型 `?Article` (単一) や docblock `@return array<Article>` (複数) を見て、フレームワークが `Article` を組み立てる。
+- 今回の `Article` は constructor を持つので、`FetchNewInstance` が選ばれて `PDO::FETCH_FUNC` で組み立てられる。**SELECT カラム順が constructor 引数順にそのまま渡される**。詳細は次章。
 - Constructor Promotion のおかげで getter / setter は不要。`readonly` で意図せぬ変更を防ぐ。
 - PHP 8.4 以降なら `final readonly class Article { ... }` と書けばさらに簡潔。
 
 ---
 
-## 第5章: snake_case ↔ camelCase
+## 第5章: Constructor hydration と SELECT カラム順
 
 ### ゴール
 
-- DB カラム `author_name` が PHP プロパティ `$authorName` に自動マッピングされることを確認する。
+- 第4章で動いた hydration の中身を知る。**何が契約になっているのか** を理解する。
+- 「constructor あり」「constructor なし」で hydration 経路が変わることを知る。
+- snake_case カラムを camelCase プロパティで受けたい場合は SQL alias が必要なことを知る。
 
-### この章でやること
+### この章のポイント
 
-実は第4章の時点で既に動いている。改めて確認するだけ。
+`Article` のように constructor を持つ Entity を返したとき、Ray.MediaQuery は `PDO::FETCH_FUNC` を使い、SELECT 結果の各カラム値を **左から順に** constructor の引数に渡す (`FetchNewInstance`)。
+
+```sql
+-- article_list.sql
+SELECT id, title, body, author_name, status, published_at, created_at
+FROM article
+```
 
 ```php
-echo $first->authorName;  // "Alice"
-echo $first->publishedAt; // null or '2026-04-01 09:00:00'
+final class Article
+{
+    public function __construct(
+        public readonly int $id,           // ← SELECT の 1 番目
+        public readonly string $title,     // ← 2 番目
+        public readonly string $body,      // ← 3 番目
+        public readonly string $authorName,// ← 4 番目 (DB は author_name だが順序で渡るので名前は不問)
+        public readonly string $status,
+        public readonly ?string $publishedAt,
+        public readonly string $createdAt,
+    ) {}
+}
 ```
+
+**カラム名と引数名が偶然一致するから動いているのではない。** SQL の `SELECT id, title, body, author_name, ...` の順序と `__construct(int $id, string $title, string $body, string $authorName, ...)` の順序が一致しているから動いている。仮に SQL を `SELECT title, id, ...` のように入れ替えると、`$id` に title 文字列が、`$title` に id 整数が渡って TypeError になる。
+
+### 試してみる: わざと壊す
+
+`sql/article_list.sql` の `SELECT` 順を意図的に入れ替えると壊れることを 1 度だけ体験するとよい (体験したら戻す)。
+
+```sql
+-- 壊れる例
+SELECT title, id, body, author_name, status, published_at, created_at
+FROM article;
+```
+
+```
+TypeError: Tutorial\Blog\Article::__construct(): Argument #1 ($id) must be of type int, string given
+```
+
+### constructor を持たない Entity の場合
+
+constructor を持たない Entity を返したときは `FetchClass` 経路 (`PDO::FETCH_CLASS`) になる。この経路は PDO が **カラム名と同名のプロパティ** に値を代入する。フレームワーク側で snake_case → camelCase に変換する処理は入っていない。
+
+```php
+// constructor を持たない Entity の例
+final class ArticleBag
+{
+    public string $id;
+    public string $title;
+    public string $author_name;     // ← カラム名と同名
+    public ?string $published_at;   // ← カラム名と同名
+    // ...
+}
+```
+
+PHP 側のプロパティを camelCase にしたい場合は、SQL 側で alias を付ける:
+
+```sql
+SELECT id, title, author_name AS authorName, published_at AS publishedAt
+FROM article
+```
+
+ただし、現代的な PHP では readonly + constructor promotion で immutable な Entity を書きたいことが多く、結果的に `FetchNewInstance` (順序ベース) を選ぶことになる。**だから「SELECT カラム順 = constructor 引数順」が事実上の運用契約** になる。
 
 ### 解説
 
-- Ray.MediaQuery 内部の `StringCase::camel()` がカラム名を camelCase に変換し、`PDO::FETCH_CLASS` のプロパティ代入に渡している。
-- 実装は `src/StringCase.php`。
-- DB の命名規則 (snake_case が一般的) と PHP の命名規則 (camelCase が一般的) を**両方とも自然に保てる**のがこの機能の価値。
-- `factory:` 属性を使うとき (第7章) は引数名がそのままバインドされる (camelCase 引数名 ← snake_case カラム名 の対応は SQL のカラム順による)。
+- どちらの hydration 経路を使うかは `FetchFactory::factory()` が戻り値型と Entity の constructor 有無を見て自動選択する。実装は `src/FetchFactory.php`。
+- 経路は 5 つ (hydration 3 種 + factory 2 種): `FetchAssoc` (Entity なし) / `FetchClass` (Entity あり, constructor なし) / `FetchNewInstance` (Entity あり, constructor あり) / `FetchStaticFactory` / `FetchInjectionFactory` (どちらも `factory:` 属性あり、第7-8章)。
+- `factory:` 属性を使うときも `PDO::FETCH_FUNC` ベース = **SELECT カラム順がそのまま factory メソッドの引数順** に渡る (第7章で詳しく)。
+- 順序ベースの契約に怯える必要はない。SQL を変更したら戻り値型 (Entity) もセットで見直す習慣をつければ、IDE と PHPStan / Psalm が型ミスを早く拾う。
 
 ---
 
@@ -608,9 +675,11 @@ final class ArticleId implements ToScalarInterface
 }
 ```
 
-### Step 2. インターフェースを進化させる
+### Step 2. インターフェースを**書き換える**
 
 この章では `DateTimeInterface` の自動変換に集中するため、`add()` の戻り値をいったん `void` にする。第10章で `InsertedRow` に戻し、同じ INSERT から id と変換後の値を取り出す。
+
+`item()` も `int $id` → `ArticleId $id` に書き換える。
 
 ```php
 use DateTimeInterface;
@@ -629,12 +698,17 @@ public function add(
 ): void;
 ```
 
-### Step 3. `run.php` で使う
+### Step 3. `run.php` を**書き換える**
+
+ここで第3章 / 第4章で書いた `run.php` の呼び出しを、新しいシグネチャに合わせて書き換える。
+
+- 第3章で書いた `$affected = $articleQuery->add(...); printf("insert affected=%d\n", $affected->count);` は、`add(): void` に変わったので、**`$affected->count` を見る行は削除**する (もしくは `$articleQuery->add(...)` だけにする)。
+- 第4章で書いた `$articleQuery->item(1)` は、`item(ArticleId $id)` に変わったので、`$articleQuery->item(new ArticleId(1))` に置き換える。
 
 ```php
 use DateTimeImmutable;
 
-$repo->add(
+$articleQuery->add(
     title: 'Third',
     body: 'about DateTime',
     authorName: 'Carol',
@@ -643,7 +717,7 @@ $repo->add(
     createdAt: new DateTimeImmutable('2026-04-03 11:00:00'),
 );
 
-$article = $repo->item(new ArticleId(3));
+$article = $articleQuery->item(new ArticleId(3));
 var_dump($article->publishedAt);
 ```
 
@@ -657,7 +731,10 @@ string(19) "2026-04-03 11:00:00"
 
 - **DateTime → 文字列**: `ParamConverter` が `DateTimeInterface` を検出し、`'Y-m-d H:i:s'` 形式の文字列に変換してから PDO に渡す。
 - **ToScalarInterface**: `ArticleId::toScalar()` の返り値 (int) がそのまま `:id` にバインドされる。「コードの中では型安全な値オブジェクトとして扱い、SQL 境界で自動的にスカラーに変換」というパターン。
-- **`null` 既定値**: `?DateTimeInterface = null` のように既定値が `null` の場合、引数を省略すると Ray.Di から `DateTimeInterface` 実装が注入される (`ParamInjector`)。このチュートリアルでは第10章で `InsertedRow::$values` を使って、注入後・変換後の値を観測する。
+- **`null` 既定値の罠**: `?DateTimeInterface = null` のように既定値が `null` の場合、引数を**省略**すると Ray.Di から `DateTimeInterface` 実装 (現在時刻) が注入される (`ParamInjector`)。
+  - **「省略 = DB に NULL が入る」ではない**。`?DateTimeInterface = null` は「**NULL 許容な型 + Ray.Di 用のデフォルト**」という意味で、省略時は ParamInjector が現在時刻に解決する。draft 記事のつもりで `publishedAt` を省略すると、ちゃんと `published_at` 列に値が入ってしまう。
+  - 本当に NULL を保存したい場合は、`publishedAt: null` を**明示的に**渡すか、別の SQL / メソッドに分ける。
+  - このチュートリアルでは第10章で `InsertedRow::$values` を使って、注入後・変換後の値を観測する。
 
 > SQLite には `DATETIME` 型がないので、再取得すると string になる。MySQL や PostgreSQL では DB 側の型に応じた挙動になる。
 
@@ -756,7 +833,7 @@ public function stats(ArticleId $id): ArticleStats;
 (第7章までは Comment が無いので commentCount=0 になる。次章で comment を入れる。)
 
 ```php
-$stats = $repo->stats(new ArticleId(1));
+$stats = $articleQuery->stats(new ArticleId(1));
 var_dump($stats);
 ```
 
@@ -848,15 +925,49 @@ final class ArticleStatsFactory
 $this->bind(MarkdownExcerpter::class);
 ```
 
-### Step 4. `run.php` でコメントを足す
+### Step 4. Comment 関連のファイルを足す
 
-Comment 用の SQL と interface も用意する。
+stats を意味あるものにするためにコメントが要る。ここで Comment Entity と CommentQueryInterface を作って、`add()` / `listFor()` の2メソッドで運用する。`listFor()` は第1章の `list()` と同じ `array<Comment>` 型を返すので、Entity hydration の復習にもなる。
+
+`Blog/Comment.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Tutorial\Blog;
+
+final class Comment
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly int $articleId,
+        public readonly string $body,
+        public readonly string $postedAt,
+    ) {
+    }
+}
+```
 
 `sql/comment_add.sql`:
 
 ```sql
 INSERT INTO comment (article_id, body, posted_at)
 VALUES (:articleId, :body, :postedAt);
+```
+
+`sql/comment_list.sql`:
+
+```sql
+SELECT
+    id,
+    article_id,
+    body,
+    posted_at
+FROM comment
+WHERE article_id = :articleId
+ORDER BY id;
 ```
 
 `Blog/CommentQueryInterface.php`:
@@ -880,10 +991,16 @@ interface CommentQueryInterface
         string $body,
         ?DateTimeInterface $postedAt = null,
     ): InsertedRow;
+
+    /** @return array<Comment> */
+    #[DbQuery('comment_list')]
+    public function listFor(int $articleId): array;
 }
 ```
 
-`run.php` の `Queries::fromClasses()` に `CommentQueryInterface::class` を追加し、`$commentRepo` を取得する。
+### Step 5. `run.php` で `commentQuery` を使う
+
+`run.php` の `Queries::fromClasses()` に `CommentQueryInterface::class` を追記し、`$commentQuery` を取得する。
 
 ```php
 $queries = Queries::fromClasses([
@@ -891,24 +1008,28 @@ $queries = Queries::fromClasses([
     CommentQueryInterface::class,
 ]);
 
-/** @var CommentQueryInterface $commentRepo */
-$commentRepo = $injector->getInstance(CommentQueryInterface::class);
+/** @var CommentQueryInterface $commentQuery */
+$commentQuery = $injector->getInstance(CommentQueryInterface::class);
 ```
 
-コメントを追加してから `stats()` を呼ぶ。
+コメントを追加してから、`stats()` で `commentCount` を確認し、`listFor()` で `Comment` hydration も確認する。
 
 ```php
-$commentRepo->add(1, 'Great post!', new DateTimeImmutable('2026-04-01 12:00:00'));
-$commentRepo->add(1, 'Thanks!',     new DateTimeImmutable('2026-04-01 13:00:00'));
+$commentQuery->add(1, 'Great post!', new DateTimeImmutable('2026-04-01 12:00:00'));
+$commentQuery->add(1, 'Thanks!',     new DateTimeImmutable('2026-04-01 13:00:00'));
 
-$stats = $repo->stats(new ArticleId(1));
+$stats = $articleQuery->stats(new ArticleId(1));
 printf("commentCount=%d, excerpt='%s'\n", $stats->commentCount, $stats->excerpt);
+
+$comments = $commentQuery->listFor(1);
+printf("comments=%d, first body='%s' (id=%d)\n", count($comments), $comments[0]->body, $comments[0]->id);
 ```
 
 ### 期待出力
 
 ```
 commentCount=2, excerpt='This is the first post about interface-driven SQL.'
+comments=2, first body='Great post!' (id=1)
 ```
 
 ### 解説
@@ -959,10 +1080,10 @@ public function delete(ArticleId $id): AffectedRows;
 ### Step 3. `run.php` で使う
 
 ```php
-$updated = $repo->update(new ArticleId(1), 'Hello (edited)', 'updated body');
+$updated = $articleQuery->update(new ArticleId(1), 'Hello (edited)', 'updated body');
 printf("updated count=%d, isAffected=%s\n", $updated->count, $updated->isAffected() ? 'yes' : 'no');
 
-$deleted = $repo->delete(new ArticleId(2));
+$deleted = $articleQuery->delete(new ArticleId(2));
 printf("deleted count=%d\n", $deleted->count);
 ```
 
@@ -988,7 +1109,9 @@ deleted count=1
 - Ray.MediaQuery 1.1 で追加された `InsertedRow` 戻り値で、自動採番された `id` と「フレームワークが解決して DB に渡した値」を取り出す。
 - 第3章の `AffectedRows` では足りない場面で、INSERT 専用の結果型を選ぶ判断基準を知る。
 
-### Step 1. インターフェースを書き換える
+### Step 1. インターフェースを**書き換える**
+
+第3章では `AffectedRows`、第6章では `void` だった `add()` を、ここで `InsertedRow` に書き換える。これがこの tutorial における `add()` の完成形である。
 
 ```php
 use Ray\MediaQuery\Result\InsertedRow;
@@ -1004,10 +1127,12 @@ public function add(
 ): InsertedRow;
 ```
 
-### Step 2. `run.php` で使う
+### Step 2. `run.php` を**書き換える**
+
+第6章で `$articleQuery->add(...)` (戻り値を捨てる) と書いていた箇所を、戻り値を `$inserted` で受けて id と values を見る形に置き換える。
 
 ```php
-$inserted = $repo->add(
+$inserted = $articleQuery->add(
     title: 'Hello',
     body: 'first body',
     authorName: 'Alice',
@@ -1020,10 +1145,10 @@ printf("id=%s\n", $inserted->id);
 var_dump($inserted->values);
 ```
 
-このメソッド定義では、`publishedAt` や `createdAt` を省略すると、`ParamInjector` が `DateTimeInterface` を注入し、`ParamConverter` が SQL 用の文字列に変換する。
+このメソッド定義では、`publishedAt` や `createdAt` を省略すると、`ParamInjector` が `DateTimeInterface` (現在時刻) を注入し、`ParamConverter` が SQL 用の文字列に変換する。**「省略 = NULL」ではない**点に注意 (第6章参照)。NULL を保存したい場合は `publishedAt: null` を明示的に渡す。
 
 ```php
-$draft = $repo->add(
+$draft = $articleQuery->add(
     title: 'Draft',
     body: 'createdAt is injected',
     authorName: 'Dana',
@@ -1098,7 +1223,7 @@ public function paginated(): Pages;
 
 ```php
 for ($i = 3; $i <= 32; $i++) {
-    $repo->add(
+    $articleQuery->add(
         title: "Post #{$i}",
         body: "Body for post {$i}.",
         authorName: 'Carol',
@@ -1108,7 +1233,7 @@ for ($i = 3; $i <= 32; $i++) {
     );
 }
 
-$pages = $repo->paginated();
+$pages = $articleQuery->paginated();
 $page1 = $pages[1];
 
 printf("total items=%d\n", count($pages));
@@ -1156,7 +1281,7 @@ public function statsPaginated(): Pages;
 `run.php` で確認する:
 
 ```php
-$statsPages = $repo->statsPaginated();
+$statsPages = $articleQuery->statsPaginated();
 $statsPage1 = $statsPages[1];
 $firstStats = $statsPage1->data[0];
 
@@ -1180,6 +1305,7 @@ first stats row=Tutorial\Blog\ArticleStats commentCount=2 excerpt='Updated body.
 - `$pages[1]` でページ1にアクセス → SELECT に LIMIT/OFFSET が付いて実行される (lazy)。
 - `$page->data` は Article のリスト (`@return Pages<Article>` のおかげで hydration が効く)。
 - `#[DbQuery(factory: ArticleStatsFactory::class)]` と `#[Pager]` を併用した場合、1.1 以降は `$page->data` の各行も `ArticleStatsFactory` で作られる。
+- ここでも第7章と同じく、**factory メソッドの引数は SELECT カラム順** で渡される (`PDO::FETCH_FUNC`)。`article_stats_paginated.sql` の `SELECT a.id, a.title, a.body, comment_count, a.status` の順序と `ArticleStatsFactory::factory(int $id, string $title, string $body, int $commentCount, string $status)` の引数順が一致しているから動いている。Pager を被せても契約は変わらない。
 - `$page->hasNext` / `$page->hasPrevious` / `$page->current` で UI を組める。`(string) $page` で HTML レンダリングも可能。
 - 動的ページサイズ (`perPage: 'perPage'`) など発展形は README を参照。
 
@@ -1227,10 +1353,12 @@ namespace Tutorial\Blog;
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
+use UnexpectedValueException;
 
+/** @template T of Article */
 final class ArticleSearchResult implements PostQueryInterface
 {
-    /** @param array<Article> $rows */
+    /** @param list<T> $rows */
     public function __construct(
         public readonly array $rows,
         public readonly int $matched,
@@ -1241,9 +1369,19 @@ final class ArticleSearchResult implements PostQueryInterface
     #[Override]
     public static function fromContext(PostQueryContext $context): static
     {
+        $matched = count($context->rows);
+        $rows = [];
+        foreach ($context->rows as $row) {
+            if (! $row instanceof Article) {
+                throw new UnexpectedValueException('ArticleSearchResult expects Article rows.');
+            }
+
+            $rows[] = $row;
+        }
+
         return new static(
-            rows: $context->rows,
-            matched: count($context->rows),
+            rows: $rows,
+            matched: $matched,
             sql: $context->statement->queryString,
         );
     }
@@ -1263,7 +1401,7 @@ public function search(string $keyword): ArticleSearchResult;
 ### Step 4. `run.php` で使う
 
 ```php
-$result = $repo->search('%Post%');
+$result = $articleQuery->search('%Post%');
 printf("matched=%d\n", $result->matched);
 echo "SQL: ", $result->sql, "\n";
 echo "First hit: ", $result->rows[0]->title, "\n";
@@ -1371,10 +1509,10 @@ $injector = new Injector(new class extends AbstractModule {
     }
 });
 
-/** @var ArticleQueryInterface $repo */
-$repo = $injector->getInstance(ArticleQueryInterface::class);
-$repo->add('T', 'B', 'A');
-assert($repo->item(new ArticleId(1))->title === 'T');
+/** @var ArticleQueryInterface $articleQuery */
+$articleQuery = $injector->getInstance(ArticleQueryInterface::class);
+$articleQuery->add('T', 'B', 'A');
+assert($articleQuery->item(new ArticleId(1))->title === 'T');
 ```
 
 ### 解説
@@ -1385,32 +1523,18 @@ assert($repo->item(new ArticleId(1))->title === 'T');
 
 ---
 
-## 結論: Repository Pattern との違い
+## 補章: Multi-statement DML + SELECT
 
-ここまでのチュートリアルでは、Repository 実装クラスを書かずに、interface + attribute + SQL + return type でクエリを表現してきた。
+ここまでで Ray.MediaQuery の主要機能は一通り扱った。最後にもう一つ、1.1 で SELECT 結果まで受け取れるようになった `PostQueryInterface` を使って、INSERT と直後の SELECT を **1つのメソッド契約** で表現する例を見ておく。
 
-これは Repository Pattern の単なる省コード化ではない。Repository が「永続化されたオブジェクト集合」を抽象化するのに対して、Ray.MediaQuery は「実行可能な Query 契約」を抽象化する。
+### ゴール
 
-| 観点 | Repository Pattern | Ray.MediaQuery |
-|------|--------------------|----------------|
-| 中心 | Entity / Aggregate | Query / UseCase |
-| 主な用途 | Write Model, Aggregate の保存と復元 | Read Model, Projection, CQRS の Query 側 |
-| 実装 | Repository class に手書き | Interface + Attribute + SQL |
-| 結果加工 | Repository 実装内の手続き | `factory:` / `PostQueryInterface` |
-| SQL | 実装の中に埋もれやすい | SQL ファイルとして明示される |
-| 差し替え | Repository interface を Fake / Mock に差し替える | Query interface を Fake / Mock に差し替える |
+- 同じ SQL ファイルに複数 statement (INSERT → SELECT) を書く。
+- 1.1 の `PostQueryContext::$rows` を使って、SELECT 結果を hydrate された Entity として受け取る自作 `PostQueryInterface` を作る。
 
-Repository は不要になるわけではない。Aggregate を復元し、変更し、保存する Write 側では今でも有効な抽象である。
+### Step 1. SQL
 
-一方、Read 側では必要な形の Projection を UseCase ごとに取得したいことが多い。そこに Entity 中心の Repository を広げすぎると、dashboard、search、admin、analytics などの入口が一つの Repository に集まりやすい。いわば「一つの部屋に複数のドアがある」状態になる。
-
-Ray.MediaQuery は、その Read 側を Query-first に分割する。`UserRepository` にメソッドを増やすのではなく、`UserDashboardQuery`、`ArticleSearchQuery`、`MonthlyStatsQuery` のように interaction そのものを契約にする。
-
-### Multi-statement DML + SELECT
-
-Ray.MediaQuery 1.1 の `PostQueryInterface` は、この Query-first の考え方をもう一段進める。SQL ファイルの最後の statement が SELECT なら、`PostQueryContext::$rows` にはその SELECT の hydrated 結果が入る。
-
-例えば「記事を作成し、その作成済み行を返す」という use case は、Repository 実装では INSERT、last insert id の取得、SELECT、hydrate を手書きしがちである。Ray.MediaQuery では、この一連の interaction を SQL と戻り値型で宣言できる。
+「記事を作成し、その作成済み行を返す」という use case は、Repository 実装では INSERT、last insert id の取得、SELECT、hydrate を手書きしがちである。Ray.MediaQuery では、この一連の interaction を SQL と戻り値型で宣言できる。
 
 `sql/article_create_and_get.sql`:
 
@@ -1444,9 +1568,12 @@ namespace Tutorial\Blog;
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
+use UnexpectedValueException;
 
+/** @template T of Article */
 final class CreatedArticle implements PostQueryInterface
 {
+    /** @param T $article */
     public function __construct(
         public readonly Article $article,
     ) {
@@ -1456,7 +1583,9 @@ final class CreatedArticle implements PostQueryInterface
     public static function fromContext(PostQueryContext $context): static
     {
         $article = $context->rows[0] ?? null;
-        assert($article instanceof Article);
+        if (! $article instanceof Article) {
+            throw new UnexpectedValueException('CreatedArticle expects the final SELECT to return an Article row.');
+        }
 
         return new static($article);
     }
@@ -1480,7 +1609,7 @@ public function createAndGet(
 `run.php`:
 
 ```php
-$created = $repo->createAndGet(
+$created = $articleQuery->createAndGet(
     title: 'Created and fetched',
     body: 'A multi-statement query can return the row created by its first statement.',
     authorName: 'Eve',
@@ -1500,15 +1629,55 @@ printf(
 created article id=33 title='Created and fetched' status=draft
 ```
 
-この例で重要なのは、`createAndGet()` が「ArticleRepository の便利メソッド」ではなく、「記事を作成して、その作成結果を型付きで返す Query 契約」になっている点である。
+### 解説
 
-Write 側の Aggregate 永続化には Repository。Read 側や Projection 取得、DML 後の型付き結果取得には Query-first。Ray.MediaQuery は、この後者を interface と SQL で明示するための仕組みである。
+- SQL ファイル内の statement は `;` で分解される。`createAndGet()` は INSERT → SELECT の **2 statement を1メソッドの呼び出し** で実行している。
+- `PostQueryContext::$rows` は **最後の statement が SELECT のとき**、その hydrated 結果を保持する (最後が DML なら `[]`)。
+- 自作 `CreatedArticle::fromContext()` の中で `$context->rows[0]` を `Article` インスタンスとして取り出している。`ArticleQueryInterface::createAndGet()` の docblock `@return CreatedArticle<Article>` がこの hydration のヒントになる。
+- このパターンは「INSERT して直後に SELECT する」「UPDATE 後に最新行を返す」など、DML の確定値をすぐ次に使う場面で型付きの interaction を表現できる。
+
+重要なのは、`createAndGet()` が「ArticleRepository の便利メソッド」ではなく、「記事を作成して、その作成結果を型付きで返す Query 契約」になっている点である。
+
+---
+
+## 結論: Repository Pattern との違い
+
+ここまでのチュートリアルでは、Repository 実装クラスを書かずに、interface + attribute + SQL + return type でクエリを表現してきた。
+
+これは Repository Pattern の単なる省コード化ではない。Repository が「永続化されたオブジェクト集合」を抽象化するのに対して、Ray.MediaQuery は「実行可能な Query 契約」を抽象化する。
+
+| 観点 | Repository Pattern | Ray.MediaQuery |
+|------|--------------------|----------------|
+| 中心 | Entity / Aggregate | Query / UseCase |
+| 主な用途 | Write Model, Aggregate の保存と復元 | Read Model, Projection, CQRS の Query 側 |
+| 実装 | Repository class に手書き | Interface + Attribute + SQL |
+| 結果加工 | Repository 実装内の手続き | `factory:` / `PostQueryInterface` |
+| SQL | 実装の中に埋もれやすい | SQL ファイルとして明示される |
+| 差し替え | Repository interface を Fake / Mock に差し替える | Query interface を Fake / Mock に差し替える |
+
+Repository は不要になるわけではない。Aggregate を復元し、変更し、保存する Write 側では今でも有効な抽象である。
+
+一方、Read 側では必要な形の Projection を UseCase ごとに取得したいことが多い。そこに Entity 中心の Repository を広げすぎると、dashboard、search、admin、analytics などの入口が一つの Repository に集まりやすい。いわば「一つの部屋に複数のドアがある」状態になる。
+
+Ray.MediaQuery は、その Read 側を Query-first に分割する。`UserRepository` にメソッドを増やすのではなく、`UserDashboardQuery`、`ArticleSearchQuery`、`MonthlyStatsQuery` のように interaction そのものを契約にする。
+
+> **チュートリアルでの簡略化**: このハンズオンでは説明を簡単にするため、`list` / `item` / `add` / `update` / `delete` / `paginated` / `statsPaginated` / `stats` / `search` / `createAndGet` を1つの `ArticleQueryInterface` に集めている。実プロジェクトでは `ArticleSearchQueryInterface`、`ArticleStatsQueryInterface`、`ArticleCommandInterface` のように use case 単位で分けると、Fake も小さく、責務も明確になる。
+
+補章で見た `PostQueryInterface` による DML + SELECT は、この Query-first をもう一段進めるものである。Write 側の Aggregate 永続化には Repository、Read 側や Projection 取得・DML 後の型付き結果取得には Query-first ── Ray.MediaQuery は、この後者を interface と SQL で明示するための仕組みである。
 
 ---
 
 ## 完走おめでとう
 
 ここまで読み終えると、Ray.MediaQuery の主要機能を一通り体験したことになる。
+
+このハンズオンは「interface + SQL + 戻り値型でアプリケーションの Query 契約を作る」理解を優先している。以下は本文では実装せず、Feature Reference で確認する発展機能である。
+
+- `#[Input]` Object Flattening — 入力 DTO を SQL パラメータへ平坦化する。
+- `SqlQueryInterface` 直接実行 — interface 経由ではなく、低レベル API として SQL を実行する。
+- `#[Pager(perPage: 'perPage')]` — メソッド引数でページサイズを動的に変える。
+- `MediaQuerySqlModule` — interface ディレクトリから Query interface を自動発見する簡易 module。
+- `SqlTemplate` / `MediaQuerySqlTemplateModule` — SQL 実行テンプレートを差し替える高度な設定。
 
 ### 次に読むもの
 

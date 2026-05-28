@@ -7,10 +7,12 @@ namespace Tutorial\Blog;
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
+use UnexpectedValueException;
 
+/** @template T of Article */
 final class ArticleSearchResult implements PostQueryInterface
 {
-    /** @param array<Article> $rows */
+    /** @param list<T> $rows */
     public function __construct(
         public readonly array $rows,
         public readonly int $matched,
@@ -21,9 +23,19 @@ final class ArticleSearchResult implements PostQueryInterface
     #[Override]
     public static function fromContext(PostQueryContext $context): static
     {
+        $matched = count($context->rows);
+        $rows = [];
+        foreach ($context->rows as $row) {
+            if (! $row instanceof Article) {
+                throw new UnexpectedValueException('ArticleSearchResult expects Article rows.');
+            }
+
+            $rows[] = $row;
+        }
+
         return new static(
-            rows: $context->rows,
-            matched: count($context->rows),
+            rows: $rows,
+            matched: $matched,
             sql: $context->statement->queryString,
         );
     }
