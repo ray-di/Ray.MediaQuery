@@ -17,10 +17,9 @@ class CamelCaseTraitTest extends TestCase
             public string $emailAddress = '';
         };
 
-        $nameKey = 'user_name';
-        $emailKey = 'email_address';
-        $entity->{$nameKey} = 'John Doe';
-        $entity->{$emailKey} = 'john@example.com';
+        // PDO::FETCH_CLASS hydrates snake_case columns by invoking __set().
+        $entity->__set('user_name', 'John Doe');
+        $entity->__set('email_address', 'john@example.com');
 
         $this->assertSame('John Doe', $entity->userName);
         $this->assertSame('john@example.com', $entity->emailAddress);
