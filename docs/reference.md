@@ -49,9 +49,11 @@ interface UserRepository
 interface UserRepository
 {
     #[DbQuery('user_stats', type: 'row')]
-    public function getStats(string $id): array;  // ['total' => 10, 'active' => 5]
+    public function getStats(string $id): ?array;  // ['total' => 10, 'active' => 5], or null when no row matches
 }
 ```
+
+> With `type: 'row'` the query returns a single row, and `null` when no row matches. Declare the return type as nullable (`?array`, or `?Entity` for a hydrated row) to avoid a `TypeError` on empty results.
 
 **Raw Array (multiple rows):**
 ```php
@@ -318,7 +320,7 @@ final class UserProfileFactory
 interface UserProfileQuery
 {
     #[DbQuery('user_profile', type: 'row', factory: UserProfileFactory::class)]
-    public function profile(string $id): UserProfile;
+    public function profile(string $id): ?UserProfile;  // null when no row matches
 }
 ```
 

@@ -825,7 +825,7 @@ final class ArticleStatsFactory
 
 ```php
 #[DbQuery('article_stats', type: 'row', factory: ArticleStatsFactory::class)]
-public function stats(ArticleId $id): ArticleStats;
+public function stats(ArticleId $id): ?ArticleStats;
 ```
 
 ### Step 5. `run.php` で使う
