@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS article (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    author_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'draft',
+    published_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS comment (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    article_id INTEGER NOT NULL,
+    body TEXT NOT NULL,
+    posted_at TEXT NOT NULL
+);

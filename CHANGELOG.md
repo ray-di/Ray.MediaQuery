@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Hands-on tutorial in Japanese covering Ray.MediaQuery 1.1 features end-to-end on SQLite (`docs/tutorial/README.ja.md`)
+- GitHub Pages documentation site (home, feature reference) and a slimmed README landing page
+
 ### Fixed
 - Restore `Ray\MediaQuery\CamelCaseTrait` (deprecated) for 1.x backward compatibility. It was unintentionally removed in 1.1.0, causing a hard fatal (`Trait ... not found`) for entities still importing it ([#93](https://github.com/ray-di/Ray.MediaQuery/issues/93))
 
