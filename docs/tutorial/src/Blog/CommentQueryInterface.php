@@ -14,7 +14,7 @@ interface CommentQueryInterface
     public function add(
         int $articleId,
         string $body,
-        ?DateTimeInterface $postedAt = null,
+        DateTimeInterface|null $postedAt = null,
     ): InsertedRow;
 
     /** @return array<Comment> */

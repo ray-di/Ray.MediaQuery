@@ -111,7 +111,7 @@ $todos = $todoQuery->list();
 - [Feature Reference](https://ray-di.github.io/Ray.MediaQuery/reference/) — result mapping, factories, parameter handling, pagination, and direct SQL execution. ([source](./docs/reference.md))
 - [BDR Pattern Guide](./BDR_PATTERN.md) — architectural approach behind SQL + rich domain objects.
 - [AI-Oriented Reference](https://ray-di.github.io/Ray.MediaQuery/llms-full.txt) — compact reference for coding agents. ([source](./docs/llms-full.txt))
-- [Demo Application](./demo/)
+- [Demo Application](./demo/) — a minimal runnable smoke test of the module wiring; the hands-on tutorial above is the full feature walkthrough.
 
 ## Philosophy
 

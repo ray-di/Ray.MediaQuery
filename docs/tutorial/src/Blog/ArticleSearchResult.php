@@ -7,7 +7,9 @@ namespace Tutorial\Blog;
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
-use UnexpectedValueException;
+use Tutorial\Blog\Exception\UnexpectedRowException;
+
+use function count;
 
 /** @template T of Article */
 final class ArticleSearchResult implements PostQueryInterface
@@ -27,7 +29,7 @@ final class ArticleSearchResult implements PostQueryInterface
         $rows = [];
         foreach ($context->rows as $row) {
             if (! $row instanceof Article) {
-                throw new UnexpectedValueException('ArticleSearchResult expects Article rows.');
+                throw new UnexpectedRowException('ArticleSearchResult expects Article rows.');
             }
 
             $rows[] = $row;

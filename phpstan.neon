@@ -3,6 +3,7 @@ parameters:
   paths:
     - src
     - tests
+    - docs/tutorial/src
   excludePaths:
     - tests/Fake/*
     - tests/tmp/*

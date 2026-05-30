@@ -21,7 +21,7 @@ Ray.MediaQuery automatically hydrates query results based on your return type de
 interface UserRepository
 {
     #[DbQuery('user_find')]
-    public function find(string $id): ?User;  // Returns User or null
+    public function find(string $id): User|null;  // Returns User or null
 }
 
 class User
@@ -87,7 +87,7 @@ interface TodoRepository
 
 $inserted = $todoRepo->add('Write docs');
 $inserted->values;  // array<string, mixed> — parameters as bound to the driver (UUIDs, timestamps, DateTime→string, ToScalar reductions all resolved)
-$inserted->id;      // ?string — auto-increment id, null if the driver reports none
+$inserted->id;      // string|null — auto-increment id, null if the driver reports none
 
 $deleted = $todoRepo->delete('1');
 $deleted->count;       // int — rows deleted
@@ -246,7 +246,11 @@ final class Invoice
 }
 
 // SQL: SELECT id, title, user_name, email_address FROM invoices
-// Ray.MediaQuery handles snake_case → camelCase conversion automatically
+// Hydration is positional, not name-based: each SELECT column is passed to the
+// constructor argument in the same order (PDO::FETCH_FUNC), so the snake_case
+// column names need not match the camelCase property names — the column order is
+// the contract. (Constructor-less entities use PDO::FETCH_CLASS, which matches by
+// property name and needs a SQL alias instead.)
 ```
 
 For PHP 8.4+, use readonly classes:
@@ -401,7 +405,7 @@ class UserFactory
 interface TaskRepository
 {
     #[DbQuery('task_add')]
-    public function add(string $title, DateTimeInterface $createdAt = null): void;
+    public function add(string $title, DateTimeInterface|null $createdAt = null): void;
 }
 
 // SQL: INSERT INTO tasks (title, created_at) VALUES (:title, :createdAt)
@@ -435,7 +439,7 @@ interface MemoRepository
 interface TodoRepository
 {
     #[DbQuery('todo_add')]
-    public function add(string $title, Uuid $id = null): void;
+    public function add(string $title, Uuid|null $id = null): void;
 }
 
 // null triggers DI: Uuid is generated and injected automatically
@@ -464,7 +468,7 @@ class TodoInput
     public function __construct(
         #[Input] public readonly string $title,
         #[Input] public readonly UserInput $assignee,  // Nested
-        #[Input] public readonly ?DateTimeInterface $dueDate
+        #[Input] public readonly DateTimeInterface|null $dueDate
     ) {}
 }
 
@@ -490,7 +494,8 @@ use Ray\MediaQuery\Pages;
 
 interface ProductRepository
 {
-    #[DbQuery('product_list'), Pager(perPage: 20, template: '/{?page}')]
+    #[DbQuery('product_list')]
+    #[Pager(perPage: 20, template: '/{?page}')]
     public function getProducts(): Pages;
 }
 
@@ -501,7 +506,7 @@ $page = $pages[1];       // Executes SELECT with LIMIT/OFFSET
 // Page object properties:
 // $page->data          // Items for this page
 // $page->current       // Current page number
-// $page->total         // Total pages
+// $page->total         // Total number of items (same as count($pages))
 // $page->hasNext       // Has next page?
 // $page->hasPrevious   // Has previous page?
 // (string) $page       // Pager HTML
@@ -511,7 +516,8 @@ $page = $pages[1];       // Executes SELECT with LIMIT/OFFSET
 ```php
 interface ProductRepository
 {
-    #[DbQuery('product_list'), Pager(perPage: 'perPage', template: '/{?page}')]
+    #[DbQuery('product_list')]
+    #[Pager(perPage: 'perPage', template: '/{?page}')]
     public function getProducts(int $perPage): Pages;
 }
 ```
@@ -520,7 +526,8 @@ interface ProductRepository
 ```php
 interface ProductRepository
 {
-    #[DbQuery('product_list'), Pager(perPage: 20)]
+    #[DbQuery('product_list')]
+    #[Pager(perPage: 20)]
     /** @return Pages<Product> */
     public function getProducts(): Pages;
 }

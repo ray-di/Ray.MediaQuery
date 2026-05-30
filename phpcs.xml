@@ -17,6 +17,10 @@
     <!-- Directories to be checked -->
     <file>src</file>
     <file>tests</file>
+    <!-- Tutorial "answer key" classes are held to the same standard as the library.
+         run.php is intentionally excluded: it is an executable script that mixes a
+         namespace declaration with side effects (PSR1.Files.SideEffects). -->
+    <file>docs/tutorial/src/Blog</file>
     <exclude-pattern>*/tests/tmp/*</exclude-pattern>
 
     <!-- PSR12 Coding Standard -->

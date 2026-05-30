@@ -18,7 +18,7 @@ interface ArticleQueryInterface
     public function list(): array;
 
     #[DbQuery('article_item', type: 'row')]
-    public function item(ArticleId $id): ?Article;
+    public function item(ArticleId $id): Article|null;
 
     #[DbQuery('article_add')]
     public function add(
@@ -26,8 +26,8 @@ interface ArticleQueryInterface
         string $body,
         string $authorName,
         string $status = 'draft',
-        ?DateTimeInterface $publishedAt = null,
-        ?DateTimeInterface $createdAt = null,
+        DateTimeInterface|null $publishedAt = null,
+        DateTimeInterface|null $createdAt = null,
     ): InsertedRow;
 
     #[DbQuery('article_update')]
@@ -37,11 +37,13 @@ interface ArticleQueryInterface
     public function delete(ArticleId $id): AffectedRows;
 
     /** @return Pages<Article> */
-    #[DbQuery('article_paginated'), Pager(perPage: 10)]
+    #[DbQuery('article_paginated')]
+    #[Pager(perPage: 10)]
     public function paginated(): Pages;
 
     /** @return Pages<ArticleStats> */
-    #[DbQuery('article_stats_paginated', factory: ArticleStatsFactory::class), Pager(perPage: 10)]
+    #[DbQuery('article_stats_paginated', factory: ArticleStatsFactory::class)]
+    #[Pager(perPage: 10)]
     public function statsPaginated(): Pages;
 
     #[DbQuery('article_stats', type: 'row', factory: ArticleStatsFactory::class)]
@@ -58,6 +60,6 @@ interface ArticleQueryInterface
         string $body,
         string $authorName,
         string $status = 'draft',
-        ?DateTimeInterface $createdAt = null,
+        DateTimeInterface|null $createdAt = null,
     ): CreatedArticle;
 }

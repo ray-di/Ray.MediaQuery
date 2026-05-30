@@ -7,7 +7,7 @@ namespace Tutorial\Blog;
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
-use UnexpectedValueException;
+use Tutorial\Blog\Exception\UnexpectedRowException;
 
 /** @template T of Article */
 final class CreatedArticle implements PostQueryInterface
@@ -23,7 +23,7 @@ final class CreatedArticle implements PostQueryInterface
     {
         $article = $context->rows[0] ?? null;
         if (! $article instanceof Article) {
-            throw new UnexpectedValueException('CreatedArticle expects the final SELECT to return an Article row.');
+            throw new UnexpectedRowException('CreatedArticle expects the final SELECT to return an Article row.');
         }
 
         return new static($article);

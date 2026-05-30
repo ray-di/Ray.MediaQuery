@@ -25,7 +25,7 @@ permalink: /tutorial/
 
 書き上がったコードは [`docs/tutorial/src/`](https://github.com/ray-di/Ray.MediaQuery/tree/1.x/docs/tutorial/src) 配下に「答え」として置いてある。詰まったら参照してよい。
 
-> **完成版 `run.php` について**: [`docs/tutorial/src/run.php`](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/docs/tutorial/src/run.php) は全章を通しで実行する完成形の統合デモである。各章の「期待出力」は、読者がその章まで順にコードを追記・書き換えた途中状態を想定している。そのため、完成版をそのまま実行した出力は、章ごとの期待出力とは順序や表示内容が異なる。
+> **完成版 `run.php` について**: [`docs/tutorial/src/run.php`](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/docs/tutorial/src/run.php) は全章を通しで実行する完成形の統合デモである。各章の「期待出力」は、読者がその章まで順にコードを追記・書き換えた途中状態を想定している。そのため、完成版をそのまま実行した出力は、章ごとの期待出力とは順序や表示内容が異なる。なお `run.php` が実際に実行するのは第1〜12章と補章までで、第13章（テスト戦略）は実行コードを持たない解説章である。
 
 また、このチュートリアルでは同じメソッド定義を章が進むにつれて意図的に書き換える。例えば `add()` は、第3章では `AffectedRows`、第6章では `void`、第10章以降では完成形の `InsertedRow` を返す。途中の形を体験しながら、最後に完成版へ収束する構成である。
 
@@ -114,7 +114,7 @@ docs/tutorial/src/
 | [第10章](#第10章-insert-で-id-と確定値を得る) | INSERT で id と確定値を得る | `InsertedRow` (1.1) |
 | [第11章](#第11章-ページネーション) | ページネーション | `#[Pager]` / `Pages<Article>` / `factory:` hydration (1.1) |
 | [第12章](#第12章-自作-postqueryinterface) | 自作 PostQueryInterface | SELECT 対応 `PostQueryInterface::fromContext()` (1.1) |
-| [第13章](#第13章-テスト戦略) | テスト戦略 | Fake バインディング |
+| [第13章](#第13章-テスト戦略) | テスト戦略 | Fake バインディング（run.php では非実行の解説章） |
 | [補章](#補章-multi-statement-dml--select) | Multi-statement DML + SELECT | `PostQueryInterface` で INSERT + SELECT を1メソッド (1.1) |
 | [結論](#結論-repository-pattern-との違い) | Repository Pattern との違い | Query-first / CQRS Read Model |
 
@@ -383,7 +383,7 @@ WHERE id = :id;
 
 ```php
 #[DbQuery('article_item', type: 'row')]
-public function item(int $id): ?array;
+public function item(int $id): array|null;
 ```
 
 ### Step 3. `run.php` に追記
@@ -442,7 +442,7 @@ public function add(
     string $body,
     string $authorName,
     string $status,
-    ?string $publishedAt,
+    string|null $publishedAt,
     string $createdAt,
 ): AffectedRows;
 ```
@@ -506,7 +506,7 @@ final class Article
         public readonly string $body,
         public readonly string $authorName,    // ← SELECT の 4 番目に渡る (次章で詳しく)
         public readonly string $status,
-        public readonly ?string $publishedAt,
+        public readonly string|null $publishedAt,
         public readonly string $createdAt,
     ) {
     }
@@ -515,7 +515,7 @@ final class Article
 
 ### Step 2. インターフェースの戻り値型を**書き換える**
 
-第1章の `list(): array` と第2章の `item(int $id): ?array` を、戻り値型だけ書き換える。シグネチャはそのまま。
+第1章の `list(): array` と第2章の `item(int $id): array|null` を、戻り値型だけ書き換える。シグネチャはそのまま。
 
 ```php
 /** @return array<Article> */
@@ -523,7 +523,7 @@ final class Article
 public function list(): array;
 
 #[DbQuery('article_item', type: 'row')]
-public function item(int $id): ?Article;
+public function item(int $id): Article|null;
 ```
 
 ### Step 3. `run.php` を書き換える
@@ -550,7 +550,7 @@ Hello
 
 ### 解説
 
-- 戻り値型 `?Article` (単一) や docblock `@return array<Article>` (複数) を見て、フレームワークが `Article` を組み立てる。
+- 戻り値型 `Article|null` (単一) や docblock `@return array<Article>` (複数) を見て、フレームワークが `Article` を組み立てる。
 - 今回の `Article` は constructor を持つので、`FetchNewInstance` が選ばれて `PDO::FETCH_FUNC` で組み立てられる。**SELECT カラム順が constructor 引数順にそのまま渡される**。詳細は次章。
 - Constructor Promotion のおかげで getter / setter は不要。`readonly` で意図せぬ変更を防ぐ。
 - PHP 8.4 以降なら `final readonly class Article { ... }` と書けばさらに簡潔。
@@ -584,7 +584,7 @@ final class Article
         public readonly string $body,      // ← 3 番目
         public readonly string $authorName,// ← 4 番目 (DB は author_name だが順序で渡るので名前は不問)
         public readonly string $status,
-        public readonly ?string $publishedAt,
+        public readonly string|null $publishedAt,
         public readonly string $createdAt,
     ) {}
 }
@@ -617,7 +617,7 @@ final class ArticleBag
     public string $id;
     public string $title;
     public string $author_name;     // ← カラム名と同名
-    public ?string $published_at;   // ← カラム名と同名
+    public string|null $published_at;   // ← カラム名と同名
     // ...
 }
 ```
@@ -685,7 +685,7 @@ final class ArticleId implements ToScalarInterface
 use DateTimeInterface;
 
 #[DbQuery('article_item', type: 'row')]
-public function item(ArticleId $id): ?Article;
+public function item(ArticleId $id): Article|null;
 
 #[DbQuery('article_add')]
 public function add(
@@ -693,8 +693,8 @@ public function add(
     string $body,
     string $authorName,
     string $status = 'draft',
-    ?DateTimeInterface $publishedAt = null,
-    ?DateTimeInterface $createdAt = null,
+    DateTimeInterface|null $publishedAt = null,
+    DateTimeInterface|null $createdAt = null,
 ): void;
 ```
 
@@ -731,8 +731,8 @@ string(19) "2026-04-03 11:00:00"
 
 - **DateTime → 文字列**: `ParamConverter` が `DateTimeInterface` を検出し、`'Y-m-d H:i:s'` 形式の文字列に変換してから PDO に渡す。
 - **ToScalarInterface**: `ArticleId::toScalar()` の返り値 (int) がそのまま `:id` にバインドされる。「コードの中では型安全な値オブジェクトとして扱い、SQL 境界で自動的にスカラーに変換」というパターン。
-- **`null` 既定値の罠**: `?DateTimeInterface = null` のように既定値が `null` の場合、引数を**省略**すると Ray.Di から `DateTimeInterface` 実装 (現在時刻) が注入される (`ParamInjector`)。
-  - **「省略 = DB に NULL が入る」ではない**。`?DateTimeInterface = null` は「**NULL 許容な型 + Ray.Di 用のデフォルト**」という意味で、省略時は ParamInjector が現在時刻に解決する。draft 記事のつもりで `publishedAt` を省略すると、ちゃんと `published_at` 列に値が入ってしまう。
+- **`null` 既定値の罠**: `DateTimeInterface|null = null` のように既定値が `null` の場合、引数を**省略**すると Ray.Di から `DateTimeInterface` 実装 (現在時刻) が注入される (`ParamInjector`)。
+  - **「省略 = DB に NULL が入る」ではない**。`DateTimeInterface|null = null` は「**NULL 許容な型 + Ray.Di 用のデフォルト**」という意味で、省略時は ParamInjector が現在時刻に解決する。draft 記事のつもりで `publishedAt` を省略すると、ちゃんと `published_at` 列に値が入ってしまう。
   - 本当に NULL を保存したい場合は、`publishedAt: null` を**明示的に**渡すか、別の SQL / メソッドに分ける。
   - このチュートリアルでは第10章で `InsertedRow::$values` を使って、注入後・変換後の値を観測する。
 
@@ -873,6 +873,11 @@ declare(strict_types=1);
 
 namespace Tutorial\Blog;
 
+use function mb_strlen;
+use function mb_substr;
+use function strip_tags;
+use function trim;
+
 final class MarkdownExcerpter
 {
     public function excerpt(string $body, int $length): string
@@ -989,7 +994,7 @@ interface CommentQueryInterface
     public function add(
         int $articleId,
         string $body,
-        ?DateTimeInterface $postedAt = null,
+        DateTimeInterface|null $postedAt = null,
     ): InsertedRow;
 
     /** @return array<Comment> */
@@ -1096,7 +1101,7 @@ deleted count=1
 
 ### 解説
 
-- `AffectedRows` は `final readonly class` で、`int $count` プロパティと `isAffected(): bool` メソッドだけを持つ。
+- `AffectedRows` は `final class` で、`readonly` な `int $count` プロパティと `isAffected(): bool` メソッドだけを持つ。
 - 戻り値型に `AffectedRows` と書くだけで、フレームワークが `$statement->rowCount()` を呼んで構築してくれる。
 - 第3章の INSERT と同じく、SQL の種類をフレームワークに推測させるのではなく、戻り値型で「何を知りたいか」を宣言する。
 
@@ -1122,8 +1127,8 @@ public function add(
     string $body,
     string $authorName,
     string $status = 'draft',
-    ?DateTimeInterface $publishedAt = null,
-    ?DateTimeInterface $createdAt = null,
+    DateTimeInterface|null $publishedAt = null,
+    DateTimeInterface|null $createdAt = null,
 ): InsertedRow;
 ```
 
@@ -1215,7 +1220,8 @@ use Ray\MediaQuery\Annotation\Pager;
 use Ray\MediaQuery\Pages;
 
 /** @return Pages<Article> */
-#[DbQuery('article_paginated'), Pager(perPage: 10)]
+#[DbQuery('article_paginated')]
+#[Pager(perPage: 10)]
 public function paginated(): Pages;
 ```
 
@@ -1274,7 +1280,8 @@ ORDER BY a.id;
 
 ```php
 /** @return Pages<ArticleStats> */
-#[DbQuery('article_stats_paginated', factory: ArticleStatsFactory::class), Pager(perPage: 10)]
+#[DbQuery('article_stats_paginated', factory: ArticleStatsFactory::class)]
+#[Pager(perPage: 10)]
 public function statsPaginated(): Pages;
 ```
 
@@ -1341,6 +1348,24 @@ ORDER BY id;
 
 ### Step 2. 結果クラスを書く
 
+まず、結果クラスが投げる専用例外を用意する。汎用の `UnexpectedValueException` を直接使わず、ドメイン専用の例外型にしておくと、呼び出し側が `catch` で意図を限定できる。
+
+`Blog/Exception/UnexpectedRowException.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Tutorial\Blog\Exception;
+
+use UnexpectedValueException;
+
+final class UnexpectedRowException extends UnexpectedValueException
+{
+}
+```
+
 `Blog/ArticleSearchResult.php`:
 
 ```php
@@ -1353,7 +1378,9 @@ namespace Tutorial\Blog;
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
-use UnexpectedValueException;
+use Tutorial\Blog\Exception\UnexpectedRowException;
+
+use function count;
 
 /** @template T of Article */
 final class ArticleSearchResult implements PostQueryInterface
@@ -1373,7 +1400,7 @@ final class ArticleSearchResult implements PostQueryInterface
         $rows = [];
         foreach ($context->rows as $row) {
             if (! $row instanceof Article) {
-                throw new UnexpectedValueException('ArticleSearchResult expects Article rows.');
+                throw new UnexpectedRowException('ArticleSearchResult expects Article rows.');
             }
 
             $rows[] = $row;
@@ -1452,15 +1479,35 @@ First hit: Post #3
 
 ### Step 1. Fake 実装を書く
 
+Fake が「このテストでは呼ばれない」メソッドで投げる例外も、汎用の `\LogicException` ではなくドメイン専用にしておく。
+
+`Blog/Exception/UnsupportedQueryException.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Tutorial\Blog\Exception;
+
+use LogicException;
+
+final class UnsupportedQueryException extends LogicException
+{
+}
+```
+
 ```php
 namespace Tutorial\Blog\Test;
 
+use DateTimeInterface;
 use Tutorial\Blog\Article;
 use Tutorial\Blog\ArticleId;
 use Tutorial\Blog\ArticleQueryInterface;
 use Tutorial\Blog\ArticleSearchResult;
 use Tutorial\Blog\ArticleStats;
 use Tutorial\Blog\CreatedArticle;
+use Tutorial\Blog\Exception\UnsupportedQueryException;
 use Ray\MediaQuery\Pages;
 use Ray\MediaQuery\Result\AffectedRows;
 use Ray\MediaQuery\Result\InsertedRow;
@@ -1471,9 +1518,9 @@ final class FakeArticleQuery implements ArticleQueryInterface
     private array $store = [];
 
     public function list(): array { return array_values($this->store); }
-    public function item(ArticleId $id): ?Article { return $this->store[$id->value] ?? null; }
+    public function item(ArticleId $id): Article|null { return $this->store[$id->value] ?? null; }
 
-    public function add(string $title, string $body, string $authorName, string $status = 'draft', ?\DateTimeInterface $publishedAt = null, ?\DateTimeInterface $createdAt = null): InsertedRow
+    public function add(string $title, string $body, string $authorName, string $status = 'draft', DateTimeInterface|null $publishedAt = null, DateTimeInterface|null $createdAt = null): InsertedRow
     {
         $id = count($this->store) + 1;
         $this->store[$id] = new Article($id, $title, $body, $authorName, $status, $publishedAt?->format('Y-m-d H:i:s'), $createdAt?->format('Y-m-d H:i:s') ?? '');
@@ -1486,11 +1533,11 @@ final class FakeArticleQuery implements ArticleQueryInterface
 
     public function update(ArticleId $id, string $title, string $body): AffectedRows { /* ... */ return new AffectedRows(1); }
     public function delete(ArticleId $id): AffectedRows { unset($this->store[$id->value]); return new AffectedRows(1); }
-    public function paginated(): Pages { throw new \LogicException('not used in this test'); }
-    public function statsPaginated(): Pages { throw new \LogicException('not used in this test'); }
-    public function stats(ArticleId $id): ArticleStats { throw new \LogicException('not used'); }
-    public function search(string $keyword): ArticleSearchResult { throw new \LogicException('not used'); }
-    public function createAndGet(string $title, string $body, string $authorName, string $status = 'draft', ?\DateTimeInterface $createdAt = null): CreatedArticle
+    public function paginated(): Pages { throw new UnsupportedQueryException('not used in this test'); }
+    public function statsPaginated(): Pages { throw new UnsupportedQueryException('not used in this test'); }
+    public function stats(ArticleId $id): ArticleStats { throw new UnsupportedQueryException('not used'); }
+    public function search(string $keyword): ArticleSearchResult { throw new UnsupportedQueryException('not used'); }
+    public function createAndGet(string $title, string $body, string $authorName, string $status = 'draft', DateTimeInterface|null $createdAt = null): CreatedArticle
     {
         $inserted = $this->add($title, $body, $authorName, $status, null, $createdAt);
 
@@ -1568,7 +1615,7 @@ namespace Tutorial\Blog;
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
-use UnexpectedValueException;
+use Tutorial\Blog\Exception\UnexpectedRowException;
 
 /** @template T of Article */
 final class CreatedArticle implements PostQueryInterface
@@ -1584,7 +1631,7 @@ final class CreatedArticle implements PostQueryInterface
     {
         $article = $context->rows[0] ?? null;
         if (! $article instanceof Article) {
-            throw new UnexpectedValueException('CreatedArticle expects the final SELECT to return an Article row.');
+            throw new UnexpectedRowException('CreatedArticle expects the final SELECT to return an Article row.');
         }
 
         return new static($article);
@@ -1602,7 +1649,7 @@ public function createAndGet(
     string $body,
     string $authorName,
     string $status = 'draft',
-    ?DateTimeInterface $createdAt = null,
+    DateTimeInterface|null $createdAt = null,
 ): CreatedArticle;
 ```
 

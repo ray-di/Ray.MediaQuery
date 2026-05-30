@@ -12,7 +12,7 @@ final class Article
         public readonly string $body,
         public readonly string $authorName,
         public readonly string $status,
-        public readonly ?string $publishedAt,
+        public readonly string|null $publishedAt,
         public readonly string $createdAt,
     ) {
     }
