@@ -30,7 +30,10 @@
     },
     "autoload": {
         "psr-4": {
-            "Ray\\MediaQuery\\": "src/"
+            "Ray\\MediaQuery\\": [
+                "src/",
+                "src-deprecated/"
+            ]
         }
     },
     "autoload-dev": {
