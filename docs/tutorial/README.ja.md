@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Ray.MediaQuery ハンズオンチュートリアル
-description: ブログサービスを題材に、Ray.MediaQuery 1.1.0 までの主要機能を13章で体験する入門
+description: ブログサービスを題材に、Ray.MediaQuery 1.1.0 までの主要機能を第0章から第13章＋補章で体験する入門
 lang: ja
 permalink: /tutorial/
 ---
