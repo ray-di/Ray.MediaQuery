@@ -8,7 +8,7 @@ permalink: /tutorial/
 
 # Ray.MediaQuery ハンズオンチュートリアル
 
-ブログサービスを題材に、Ray.MediaQuery 1.1.0 までの主要機能を13章で体験する入門。
+ブログサービスを題材に、Ray.MediaQuery 1.1.0 までの主要機能を第0章から第13章＋補章で体験する入門。
 
 - 前提: PHP 8.2+ / Composer / SQL の基礎 / DI の概念
 - DB: SQLite (`:memory:`) — 追加 DB サーバーは不要
@@ -25,7 +25,12 @@ permalink: /tutorial/
 
 書き上がったコードは [`docs/tutorial/src/`](https://github.com/ray-di/Ray.MediaQuery/tree/1.x/docs/tutorial/src) 配下に「答え」として置いてある。詰まったら参照してよい。
 
-> **完成版 `run.php` について**: [`docs/tutorial/src/run.php`](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/docs/tutorial/src/run.php) は全章を通しで実行する完成形の統合デモである。各章の「期待出力」は、読者がその章まで順にコードを追記・書き換えた途中状態を想定している。そのため、完成版をそのまま実行した出力は、章ごとの期待出力とは順序や表示内容が異なる。なお `run.php` が実際に実行するのは第1〜12章と補章までで、第13章（テスト戦略）は実行コードを持たない解説章である。
+> **完成版 `run.php` について**: [`docs/tutorial/src/run.php`](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/docs/tutorial/src/run.php) は全章を通しで実行する完成形の統合デモである。各章の「期待出力」には、その意味が分かりやすい参照フレームを選んで `(単独実行)` または `(統合 run.php)` のラベルを付けてある。
+>
+> - `(単独実行)` … その章のコードだけを小さな `run.php` で動かしたときの出力。前半の機能紹介ではこちらを使う。
+> - `(統合 run.php)` … 完成版 `run.php` を頭から通しで実行し、前の章のデータ投入・UPDATE / DELETE まで積み上がった状態での出力。`id` や件数が前章までの累積に依存する後半ではこちらを使う。
+>
+> 自分で写経した `run.php` は、どの章をどの順で積み上げたかによって `id` や件数が変わる。数値そのものではなく「型と構造が期待どおりか」を確認してほしい。なお `run.php` が実際に実行するのは第1〜12章と補章までで、第13章（テスト戦略）は実行コードを持たない解説章である。
 
 また、このチュートリアルでは同じメソッド定義を章が進むにつれて意図的に書き換える。例えば `add()` は、第3章では `AffectedRows`、第6章では `void`、第10章以降では完成形の `InsertedRow` を返す。途中の形を体験しながら、最後に完成版へ収束する構成である。
 
@@ -317,7 +322,7 @@ var_dump($articleQuery->list());
 php docs/tutorial/src/run.php
 ```
 
-### 期待出力
+### 期待出力 (単独実行)
 
 ```
 array(1) {
@@ -358,7 +363,7 @@ array(1) {
 ### ゴール
 
 - 1行だけ返す SQL では `type: 'row'` を指定する
-- 戻り値型 `array` のままで、連想配列1つを直接受け取る
+- 戻り値型 `?array` (= `array|null`) で、連想配列1つを直接受け取る (該当行がなければ `null`)
 
 ### Step 1. SQL を書く
 
@@ -393,7 +398,7 @@ $row = $articleQuery->item(1);
 var_dump($row);
 ```
 
-### 期待出力
+### 期待出力 (単独実行)
 
 ```
 array(7) {
@@ -462,7 +467,7 @@ printf("insert affected=%d\n", $affected->count);
 var_dump($articleQuery->list());
 ```
 
-### 期待出力
+### 期待出力 (単独実行)
 
 ```
 insert affected=1
@@ -540,7 +545,7 @@ $first = $articleQuery->item(1);
 echo $first?->title, "\n";
 ```
 
-### 期待出力
+### 期待出力 (単独実行)
 
 ```
 [1] Hello by Alice
@@ -721,7 +726,7 @@ $article = $articleQuery->item(new ArticleId(3));
 var_dump($article->publishedAt);
 ```
 
-### 期待出力
+### 期待出力 (単独実行)
 
 ```
 string(19) "2026-04-03 11:00:00"
@@ -837,7 +842,7 @@ $stats = $articleQuery->stats(new ArticleId(1));
 var_dump($stats);
 ```
 
-### 期待出力 (この時点)
+### 期待出力 (単独実行・この時点)
 
 ```
 object(Tutorial\Blog\ArticleStats)#... {
@@ -1030,7 +1035,9 @@ $comments = $commentQuery->listFor(1);
 printf("comments=%d, first body='%s' (id=%d)\n", count($comments), $comments[0]->body, $comments[0]->id);
 ```
 
-### 期待出力
+### 期待出力 (統合 run.php)
+
+> ここからは Article の本文や件数が前章までの累積に依存するため、完成版 `run.php` を通しで実行したときの値を示す。`excerpt` の本文は統合 `run.php` が最初に投入する Article のものである。
 
 ```
 commentCount=2, excerpt='This is the first post about interface-driven SQL.'
@@ -1092,7 +1099,7 @@ $deleted = $articleQuery->delete(new ArticleId(2));
 printf("deleted count=%d\n", $deleted->count);
 ```
 
-### 期待出力
+### 期待出力 (統合 run.php)
 
 ```
 updated count=1, isAffected=yes
@@ -1162,7 +1169,9 @@ $draft = $articleQuery->add(
 var_dump($draft->values['createdAt']);
 ```
 
-### 期待出力
+### 期待出力 (統合 run.php)
+
+> 統合 `run.php` ではこの `add('Hello', ...)` が最初の INSERT なので `id=1` になる。自分で写経した `run.php` で第1章以降の INSERT を積み上げている場合は、その分だけ大きい `id` が返る。
 
 ```
 id=1
@@ -1247,7 +1256,7 @@ printf("page 1 has %d items, hasNext=%s\n", count($page1->data), $page1->hasNext
 echo $page1->data[0]->title, "\n";
 ```
 
-### 期待出力
+### 期待出力 (統合 run.php)
 
 ```
 total items=31
@@ -1300,7 +1309,7 @@ printf(
 );
 ```
 
-### 期待出力
+### 期待出力 (統合 run.php)
 
 ```
 first stats row=Tutorial\Blog\ArticleStats commentCount=2 excerpt='Updated body.'
@@ -1434,7 +1443,7 @@ echo "SQL: ", $result->sql, "\n";
 echo "First hit: ", $result->rows[0]->title, "\n";
 ```
 
-### 期待出力
+### 期待出力 (統合 run.php)
 
 ```
 matched=30
@@ -1480,6 +1489,8 @@ First hit: Post #3
 ### Step 1. Fake 実装を書く
 
 Fake が「このテストでは呼ばれない」メソッドで投げる例外も、汎用の `\LogicException` ではなくドメイン専用にしておく。
+
+> この Fake は完成形の `ArticleQueryInterface` 全体を実装するため、補章で扱う `createAndGet()` も含まれている。補章をまだ読んでいない場合は、`createAndGet()` の行はいったん読み飛ばしてよい。
 
 `Blog/Exception/UnsupportedQueryException.php`:
 
@@ -1670,7 +1681,7 @@ printf(
 );
 ```
 
-### 期待出力
+### 期待出力 (統合 run.php)
 
 ```
 created article id=33 title='Created and fetched' status=draft
