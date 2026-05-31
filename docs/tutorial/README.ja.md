@@ -19,7 +19,7 @@ permalink: /tutorial/
 
 1. **ゴール** — その章で何ができるようになるか
 2. **Step** — SQL → Interface → `run.php` 追記の順にコードを書く
-3. **実行と期待出力** — 写経中の `run.php` を `php docs/tutorial/src/run.php` で動かして動作を確認
+3. **実行と期待出力** — 写経中の `run.php` を `php mywork/run.php` で動かして動作を確認
 4. **解説** — フレームワーク内部で何が起きているか
 5. **次章へ**
 
@@ -71,6 +71,8 @@ SQL は読みやすさを優先した “Holywell-lite” の表記で揃える�
 SQL プレースホルダは例外で、PHP の引数名に合わせて `:authorName` のような camelCase を使う。
 
 ## 完成形のディレクトリ構成
+
+下図は `docs/tutorial/src/` に置かれた**完成版の「答え」**（名前空間 `Tutorial\Blog\`）である。自分で写経するコードは、これとは別に `mywork/`（名前空間 `MyBlog\`）に置く（第0章参照）。答えとは名前空間が違うので、同じリポジトリ内で並行しても衝突しない。
 
 ```
 docs/tutorial/src/
@@ -146,22 +148,25 @@ composer install
 
 ### Step 2. ディレクトリ構造を作る
 
-写経しながら進めるなら、以下の空ディレクトリを作っておく (このチュートリアルの完成形は `docs/tutorial/src/` に置いてあるので、自分用に別の場所で進めたい場合は `mywork/blog/` などに作ってよい)。
+自分のコードは、答え (`docs/tutorial/src/`、名前空間 `Tutorial\Blog\`) とは**別のツリー** `mywork/` に、**別の名前空間 `MyBlog\`** で書く。こうすると、リポジトリに同梱された答えと同じ場所・同じ名前空間で衝突することがなく、「ライブラリを composer で入れて自分のコードを書く」実プロジェクトと同じ形になる。
+
+リポジトリのルートで以下を作る。
 
 ```bash
-mkdir -p docs/tutorial/src/Blog docs/tutorial/src/sql
+mkdir -p mywork/blog mywork/sql
 ```
+
+以降、本文で `Blog/Xxx.php` と書いてあるものは `mywork/blog/Xxx.php`、`sql/xxx.sql` は `mywork/sql/xxx.sql`、`run.php` は `mywork/run.php` を指す。
 
 ### Step 3. `composer.json` に autoload を追加
 
-`autoload-dev.psr-4` に `Tutorial\Blog\\` を追加する。
+自分の `MyBlog\` 名前空間を `mywork/blog/` に対応づける。`run.php` を動かすだけなら次章のブートストラップ (`$loader->addPsr4()`) で足りるので必須ではないが、IDE 補完や PHPUnit から自分のクラスを使うなら登録しておく。
 
 ```json
 {
     "autoload-dev": {
         "psr-4": {
-            "Ray\\MediaQuery\\": ["tests/", "tests/Fake"],
-            "Tutorial\\Blog\\": "docs/tutorial/src/Blog/"
+            "MyBlog\\": "mywork/blog/"
         }
     }
 }
@@ -173,11 +178,11 @@ mkdir -p docs/tutorial/src/Blog docs/tutorial/src/sql
 composer dump-autoload
 ```
 
-> このチュートリアルの完成版 `run.php` は、写経中でもすぐ動かせるように `$loader->addPsr4()` でも `Tutorial\Blog\` を登録している。そのため `run.php` を単体実行するだけなら `composer.json` の変更なしでも動く。実プロジェクト、IDE、PHPUnit から同じクラスを扱う場合は、ここで示したように `composer.json` に登録するのが基本。
+> リポジトリの実際の `composer.json` には、答え用の `"Tutorial\\Blog\\": "docs/tutorial/src/Blog/"` が既に登録されている。これはそのまま残してよい。自分のコードは `MyBlog\` という別名前空間なので、答えの登録と共存しても衝突しない。
 
 ### Step 4. スキーマ
 
-`docs/tutorial/src/schema.sql`:
+`mywork/schema.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS article (
@@ -216,7 +221,7 @@ CREATE TABLE IF NOT EXISTS comment (
 
 ### Step 1. SQL を書く
 
-`docs/tutorial/src/sql/article_list.sql`:
+`mywork/sql/article_list.sql`:
 
 ```sql
 SELECT
@@ -233,14 +238,14 @@ ORDER BY id;
 
 ### Step 2. インターフェースを書く
 
-`docs/tutorial/src/Blog/ArticleQueryInterface.php`:
+`mywork/blog/ArticleQueryInterface.php`:
 
 ```php
 <?php
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 use Ray\MediaQuery\Annotation\DbQuery;
 
@@ -253,14 +258,14 @@ interface ArticleQueryInterface
 
 ### Step 3. `run.php` を作る
 
-`docs/tutorial/src/run.php`:
+`mywork/run.php`:
 
 ```php
 <?php
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 use Aura\Sql\ExtendedPdoInterface;
 use Composer\Autoload\ClassLoader;
@@ -272,8 +277,8 @@ use Ray\MediaQuery\MediaQueryModule;
 use Ray\MediaQuery\Queries;
 
 /** @var ClassLoader $loader */
-$loader = require dirname(__DIR__, 3) . '/vendor/autoload.php';
-$loader->addPsr4('Tutorial\\Blog\\', __DIR__ . '/Blog');
+$loader = require dirname(__DIR__) . '/vendor/autoload.php'; // mywork/run.php → リポジトリの vendor
+$loader->addPsr4('MyBlog\\', __DIR__ . '/blog');             // 自分のコード（答えと別名前空間）
 
 $sqlDir = __DIR__ . '/sql';
 $dsn = 'sqlite::memory:';
@@ -319,8 +324,10 @@ var_dump($articleQuery->list());
 ### 実行
 
 ```bash
-php docs/tutorial/src/run.php
+php mywork/run.php
 ```
+
+> ブートストラップの `dirname(__DIR__)` は「`mywork/run.php` の1つ上 = リポジトリのルート」を指す前提。`mywork/` をリポジトリ外や別の階層に置く場合は、`dirname(__DIR__)` の部分をリポジトリの `vendor/autoload.php` への正しい相対・絶対パスに置き換える。
 
 ### 期待出力 (単独実行)
 
@@ -501,7 +508,7 @@ array(2) {
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 final class Article
 {
@@ -532,6 +539,8 @@ public function item(int $id): Article|null;
 ```
 
 ### Step 3. `run.php` を書き換える
+
+> **断片の組み立てについて**: 各章のスニペットは `run.php` への追記・置換の**断片**であり、それ単体で完結した `run.php` ではない。組み立てるときは「INSERT などの書き込みは、それを読み出す `list()` / `item()` より**前**に置く」ことだけ意識すればよい。完成した通し `run.php` の一例は答え [`docs/tutorial/src/run.php`](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/docs/tutorial/src/run.php) にあるが、章ごとの解説順とは構成が異なる（章番号でまとめ直してある）ので、写経中の自分の `run.php` と1行ずつ一致はしない。
 
 第1章で `var_dump($articleQuery->list())` していた箇所と、第2章で `var_dump($row)` していた箇所を、Entity を使う形に置き換える。
 
@@ -608,7 +617,7 @@ FROM article;
 ```
 
 ```
-TypeError: Tutorial\Blog\Article::__construct(): Argument #1 ($id) must be of type int, string given
+TypeError: MyBlog\Article::__construct(): Argument #1 ($id) must be of type int, string given
 ```
 
 ### constructor を持たない Entity の場合
@@ -662,7 +671,7 @@ FROM article
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 use Ray\MediaQuery\ToScalarInterface;
 
@@ -708,6 +717,7 @@ public function add(
 ここで第3章 / 第4章で書いた `run.php` の呼び出しを、新しいシグネチャに合わせて書き換える。
 
 - 第3章で書いた `$affected = $articleQuery->add(...); printf("insert affected=%d\n", $affected->count);` は、`add(): void` に変わったので、**`$affected->count` を見る行は削除**する (もしくは `$articleQuery->add(...)` だけにする)。
+- 第3章の `Second` の `add()` 呼び出しは `publishedAt: '2026-04-02 10:00:00'` のように**文字列**で日付を渡していた。`add()` の引数が `DateTimeInterface` 型になったので、`publishedAt: new DateTimeImmutable('2026-04-02 10:00:00')`（`createdAt` も同様）に変換する。**さもないと TypeError になる**。
 - 第4章で書いた `$articleQuery->item(1)` は、`item(ArticleId $id)` に変わったので、`$articleQuery->item(new ArticleId(1))` に置き換える。
 
 ```php
@@ -761,7 +771,7 @@ string(19) "2026-04-03 11:00:00"
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 final class ArticleStats
 {
@@ -801,8 +811,10 @@ WHERE a.id = :id;
 
 まずは最も単純な静的ファクトリを示す。次章で DI 版に進化させる。
 
+> 以降、`namespace MyBlog;` から始まる部分スニペットは `<?php` / `declare(strict_types=1);` のファイルヘッダを省略している。実ファイル (`mywork/blog/ArticleStatsFactory.php` など) では先頭に付けること。また、`factory:` で指定するクラスは**必ず独立した PHP ファイル**に置く。`run.php` 内にインラインで定義すると、フレームワークが生成する実装クラスがそのファイルを再度 `require` して `Cannot redeclare class` になる。
+
 ```php
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 final class ArticleStatsFactory
 {
@@ -845,7 +857,7 @@ var_dump($stats);
 ### 期待出力 (単独実行・この時点)
 
 ```
-object(Tutorial\Blog\ArticleStats)#... {
+object(MyBlog\ArticleStats)#... {
   ["id"]=> int(1)
   ["title"]=> string(5) "Hello"
   ["excerpt"]=> string(...) "..."
@@ -876,7 +888,7 @@ object(Tutorial\Blog\ArticleStats)#... {
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 use function mb_strlen;
 use function mb_substr;
@@ -900,7 +912,7 @@ final class MarkdownExcerpter
 ### Step 2. ファクトリを DI 版に書き換える
 
 ```php
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 final class ArticleStatsFactory
 {
@@ -946,7 +958,7 @@ stats を意味あるものにするためにコメントが要る。ここで C
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 final class Comment
 {
@@ -987,7 +999,7 @@ ORDER BY id;
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 use DateTimeInterface;
 use Ray\MediaQuery\Annotation\DbQuery;
@@ -1312,7 +1324,7 @@ printf(
 ### 期待出力 (統合 run.php)
 
 ```
-first stats row=Tutorial\Blog\ArticleStats commentCount=2 excerpt='Updated body.'
+first stats row=MyBlog\ArticleStats commentCount=2 excerpt='Updated body.'
 ```
 
 ### 解説
@@ -1366,7 +1378,7 @@ ORDER BY id;
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog\Exception;
+namespace MyBlog\Exception;
 
 use UnexpectedValueException;
 
@@ -1382,12 +1394,12 @@ final class UnexpectedRowException extends UnexpectedValueException
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
-use Tutorial\Blog\Exception\UnexpectedRowException;
+use MyBlog\Exception\UnexpectedRowException;
 
 use function count;
 
@@ -1438,28 +1450,16 @@ public function search(string $keyword): ArticleSearchResult;
 
 ```php
 $result = $articleQuery->search('%Post%');
-printf("matched=%d\n", $result->matched);
-echo "SQL: ", $result->sql, "\n";
+printf("matched=%d, sql contains 'LIKE'=%s\n", $result->matched, str_contains($result->sql, 'LIKE') ? 'yes' : 'no');
 echo "First hit: ", $result->rows[0]->title, "\n";
 ```
+
+> `$result->sql`（= `$context->statement->queryString`）は、実行のために書き換えられた後の SQL である。Aura.Sql は同じ名前付きプレースホルダが複数回現れると 2 つ目以降を `:keyword__1` のように別名へ書き換え、さらに multi-statement を分解する都合で末尾の `;` も落ちる。そのため SQL ファイルの文字列との**完全一致比較は避け**、ここでは `str_contains($result->sql, 'LIKE')` のような部分一致で確認している。
 
 ### 期待出力 (統合 run.php)
 
 ```
-matched=30
-SQL: SELECT
-    id,
-    title,
-    body,
-    author_name,
-    status,
-    published_at,
-    created_at
-FROM article
-WHERE
-    title LIKE :keyword
-    OR body LIKE :keyword
-ORDER BY id;
+matched=30, sql contains 'LIKE'=yes
 First hit: Post #3
 ```
 
@@ -1467,7 +1467,7 @@ First hit: Post #3
 
 - `PostQueryInterface` の唯一の契約は `static fromContext(PostQueryContext): static`。
 - `PostQueryContext` には次の情報が入る:
-  - `$context->statement` (`PDOStatement`) — `rowCount()`, `queryString` など
+  - `$context->statement` (`PDOStatement`) — `rowCount()`, `queryString` など（`queryString` は実行用に書き換えられた後の SQL で、元の SQL ファイルと完全一致するとは限らない）
   - `$context->pdo` (`ExtendedPdoInterface`) — `lastInsertId()` など
   - `$context->values` — ParamConverter / ParamInjector が解決した bound 値
   - `$context->rows` — SELECT パスでは hydrated 結果、DML パスでは `[]`
@@ -1492,6 +1492,8 @@ Fake が「このテストでは呼ばれない」メソッドで投げる例外
 
 > この Fake は完成形の `ArticleQueryInterface` 全体を実装するため、補章で扱う `createAndGet()` も含まれている。補章をまだ読んでいない場合は、`createAndGet()` の行はいったん読み飛ばしてよい。
 
+> Fake クラスは `mywork/blog/Test/FakeArticleQuery.php` に置き、名前空間は `MyBlog\Test`（PSR-4 で `mywork/blog/Test/` に対応）にする。
+
 `Blog/Exception/UnsupportedQueryException.php`:
 
 ```php
@@ -1499,7 +1501,7 @@ Fake が「このテストでは呼ばれない」メソッドで投げる例外
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog\Exception;
+namespace MyBlog\Exception;
 
 use LogicException;
 
@@ -1509,16 +1511,16 @@ final class UnsupportedQueryException extends LogicException
 ```
 
 ```php
-namespace Tutorial\Blog\Test;
+namespace MyBlog\Test;
 
 use DateTimeInterface;
-use Tutorial\Blog\Article;
-use Tutorial\Blog\ArticleId;
-use Tutorial\Blog\ArticleQueryInterface;
-use Tutorial\Blog\ArticleSearchResult;
-use Tutorial\Blog\ArticleStats;
-use Tutorial\Blog\CreatedArticle;
-use Tutorial\Blog\Exception\UnsupportedQueryException;
+use MyBlog\Article;
+use MyBlog\ArticleId;
+use MyBlog\ArticleQueryInterface;
+use MyBlog\ArticleSearchResult;
+use MyBlog\ArticleStats;
+use MyBlog\CreatedArticle;
+use MyBlog\Exception\UnsupportedQueryException;
 use Ray\MediaQuery\Pages;
 use Ray\MediaQuery\Result\AffectedRows;
 use Ray\MediaQuery\Result\InsertedRow;
@@ -1573,11 +1575,13 @@ $articleQuery->add('T', 'B', 'A');
 assert($articleQuery->item(new ArticleId(1))->title === 'T');
 ```
 
+> `assert()` は PHP CLI の既定設定 (`zend.assertions=-1`) では**コンパイル時に除去され、何も検証しない**。この場で動作確認するなら `php -d zend.assertions=1 mywork/run.php` のように有効化して実行する。実プロジェクトでは下記のとおり PHPUnit のアサーションを使うのが本筋。
+
 ### 解説
 
 - DB を使わずにロジックの単体テストができる。
 - `tests/Fake/Queries/` には Ray.MediaQuery 自身のテストで使われている Fake interface 群が大量にある。「実プロジェクトでは PHPUnit でこう書く」の参考に良い。
-- PHPUnit を使う場合は `composer require --dev phpunit/phpunit` 後、`PHPUnit\Framework\TestCase` を継承して同じ Module 差し替えパターンを使う。
+- PHPUnit を使う場合は `composer require --dev phpunit/phpunit` 後、`PHPUnit\Framework\TestCase` を継承して同じ Module 差し替えパターンを使う（`assertSame('T', ...)` のように PHPUnit のアサーションを使えば、上記の `zend.assertions` 設定に依存しない）。
 
 ---
 
@@ -1621,12 +1625,12 @@ WHERE id = last_insert_rowid();
 
 declare(strict_types=1);
 
-namespace Tutorial\Blog;
+namespace MyBlog;
 
 use Override;
 use Ray\MediaQuery\Result\PostQueryContext;
 use Ray\MediaQuery\Result\PostQueryInterface;
-use Tutorial\Blog\Exception\UnexpectedRowException;
+use MyBlog\Exception\UnexpectedRowException;
 
 /** @template T of Article */
 final class CreatedArticle implements PostQueryInterface
