@@ -74,7 +74,7 @@ SQL プレースホルダは例外で、PHP の引数名に合わせて `:author
 
 下図は `docs/tutorial/src/` に置かれた**完成版の「答え」**（名前空間 `Tutorial\Blog\`）である。自分で写経するコードは、これとは別に `mywork/`（名前空間 `MyBlog\`）に置く（第0章参照）。答えとは名前空間が違うので、同じリポジトリ内で並行しても衝突しない。
 
-```
+```text
 docs/tutorial/src/
 ├── run.php                  # 全章を順に実行するエントリーポイント
 ├── schema.sql               # テーブル定義
@@ -329,9 +329,9 @@ php mywork/run.php
 
 > ブートストラップの `dirname(__DIR__)` は「`mywork/run.php` の1つ上 = リポジトリのルート」を指す前提。`mywork/` をリポジトリ外や別の階層に置く場合は、`dirname(__DIR__)` の部分をリポジトリの `vendor/autoload.php` への正しい相対・絶対パスに置き換える。
 
-### 期待出力 (単独実行)
+### 期待出力 (第1章 / 単独実行)
 
-```
+```text
 array(1) {
   [0]=>
   array(7) {
@@ -405,9 +405,9 @@ $row = $articleQuery->item(1);
 var_dump($row);
 ```
 
-### 期待出力 (単独実行)
+### 期待出力 (第2章 / 単独実行)
 
-```
+```text
 array(7) {
   ["id"]=>
   int(1)
@@ -474,9 +474,9 @@ printf("insert affected=%d\n", $affected->count);
 var_dump($articleQuery->list());
 ```
 
-### 期待出力 (単独実行)
+### 期待出力 (第3章 / 単独実行)
 
-```
+```text
 insert affected=1
 array(2) {
   [0] => array(7) { ... "Hello" ... }
@@ -554,9 +554,9 @@ $first = $articleQuery->item(1);
 echo $first?->title, "\n";
 ```
 
-### 期待出力 (単独実行)
+### 期待出力 (第4章 / 単独実行)
 
-```
+```text
 [1] Hello by Alice
 [2] Second by Bob
 Hello
@@ -616,7 +616,7 @@ SELECT title, id, body, author_name, status, published_at, created_at
 FROM article;
 ```
 
-```
+```text
 TypeError: MyBlog\Article::__construct(): Argument #1 ($id) must be of type int, string given
 ```
 
@@ -736,9 +736,9 @@ $article = $articleQuery->item(new ArticleId(3));
 var_dump($article->publishedAt);
 ```
 
-### 期待出力 (単独実行)
+### 期待出力 (第6章 / 単独実行)
 
-```
+```text
 string(19) "2026-04-03 11:00:00"
 ```
 
@@ -854,9 +854,9 @@ $stats = $articleQuery->stats(new ArticleId(1));
 var_dump($stats);
 ```
 
-### 期待出力 (単独実行・この時点)
+### 期待出力 (第7章 / 単独実行・この時点)
 
-```
+```text
 object(MyBlog\ArticleStats)#... {
   ["id"]=> int(1)
   ["title"]=> string(5) "Hello"
@@ -1047,11 +1047,11 @@ $comments = $commentQuery->listFor(1);
 printf("comments=%d, first body='%s' (id=%d)\n", count($comments), $comments[0]->body, $comments[0]->id);
 ```
 
-### 期待出力 (統合 run.php)
+### 期待出力 (第8章 / 統合 run.php)
 
 > ここからは Article の本文や件数が前章までの累積に依存するため、完成版 `run.php` を通しで実行したときの値を示す。`excerpt` の本文は統合 `run.php` が最初に投入する Article のものである。
 
-```
+```text
 commentCount=2, excerpt='This is the first post about interface-driven SQL.'
 comments=2, first body='Great post!' (id=1)
 ```
@@ -1111,9 +1111,9 @@ $deleted = $articleQuery->delete(new ArticleId(2));
 printf("deleted count=%d\n", $deleted->count);
 ```
 
-### 期待出力 (統合 run.php)
+### 期待出力 (第9章 / 統合 run.php)
 
-```
+```text
 updated count=1, isAffected=yes
 deleted count=1
 ```
@@ -1181,11 +1181,11 @@ $draft = $articleQuery->add(
 var_dump($draft->values['createdAt']);
 ```
 
-### 期待出力 (統合 run.php)
+### 期待出力 (第10章 / 統合 run.php)
 
 > 統合 `run.php` ではこの `add('Hello', ...)` が最初の INSERT なので `id=1` になる。自分で写経した `run.php` で第1章以降の INSERT を積み上げている場合は、その分だけ大きい `id` が返る。
 
-```
+```text
 id=1
 array(6) {
   ["title"]=> string(5) "Hello"
@@ -1268,9 +1268,9 @@ printf("page 1 has %d items, hasNext=%s\n", count($page1->data), $page1->hasNext
 echo $page1->data[0]->title, "\n";
 ```
 
-### 期待出力 (統合 run.php)
+### 期待出力 (第11章 / paginated)
 
-```
+```text
 total items=31
 page 1 has 10 items, hasNext=yes
 Hello (edited)
@@ -1321,9 +1321,9 @@ printf(
 );
 ```
 
-### 期待出力 (統合 run.php)
+### 期待出力 (第11章 / statsPaginated)
 
-```
+```text
 first stats row=MyBlog\ArticleStats commentCount=2 excerpt='Updated body.'
 ```
 
@@ -1456,9 +1456,9 @@ echo "First hit: ", $result->rows[0]->title, "\n";
 
 > `$result->sql`（= `$context->statement->queryString`）は、実行のために書き換えられた後の SQL である。Aura.Sql は同じ名前付きプレースホルダが複数回現れると 2 つ目以降を `:keyword__1` のように別名へ書き換え、さらに multi-statement を分解する都合で末尾の `;` も落ちる。そのため SQL ファイルの文字列との**完全一致比較は避け**、ここでは `str_contains($result->sql, 'LIKE')` のような部分一致で確認している。
 
-### 期待出力 (統合 run.php)
+### 期待出力 (第12章 / 統合 run.php)
 
-```
+```text
 matched=30, sql contains 'LIKE'=yes
 First hit: Post #3
 ```
@@ -1685,9 +1685,9 @@ printf(
 );
 ```
 
-### 期待出力 (統合 run.php)
+### 期待出力 (補章 / 統合 run.php)
 
-```
+```text
 created article id=33 title='Created and fetched' status=draft
 ```
 
