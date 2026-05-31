@@ -146,6 +146,10 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
+      - name: Run tutorial integration check
+        shell: bash
+        run: composer tutorial
+
       - name: Run additional script
         # Run if inputs.script is not an empty string and also not null (which it can be if not provided in workflow_call)
         if: ${{ inputs.script != '' && inputs.script != null }}

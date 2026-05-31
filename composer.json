@@ -60,10 +60,12 @@
             "./vendor/bin/phpstan analyse -c phpstan.neon"
         ],
         "test": "./vendor/bin/phpunit",
+        "tutorial": "php -d zend.assertions=1 -d assert.exception=1 docs/tutorial/src/run.php",
         "tests": [
             "@cs",
             "@sa",
-            "@test"
+            "@test",
+            "@tutorial"
         ],
         "build": [
             "@clean",
@@ -75,6 +77,7 @@
     },
     "scripts-descriptions": {
         "test": "Run unit tests",
+        "tutorial": "Run the tutorial answer code end-to-end as an integration check",
         "coverage": "Generate test coverage report",
         "pcov": "Generate test coverage report (pcov)",
         "cs": "Check the coding style",
