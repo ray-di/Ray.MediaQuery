@@ -1,54 +1,154 @@
 ---
 layout: default
 title: Ray.MediaQuery Documentation
-description: Documentation links for Ray.MediaQuery, including the hands-on tutorial and AI-oriented reference.
-lang: ja
+description: Documentation links for Ray.MediaQuery, including the English tutorial, Japanese manual, and AI-oriented reference.
+lang: en
 permalink: /
+home: true
 ---
 
+<script>
+  (function () {
+    var stored = null;
+
+    try {
+      stored = localStorage.getItem('rayMediaQueryDocsLang');
+    } catch (error) {
+      stored = null;
+    }
+
+    var preferred = stored === 'ja' || stored === 'en' ? stored : 'en';
+
+    document.documentElement.lang = preferred;
+    document.documentElement.dataset.docLang = preferred;
+  }());
+</script>
+
+<nav class="language-switcher" aria-label="Language selection">
+  <span class="language-label" data-lang="en" lang="en">Language</span>
+  <span class="language-label" data-lang="ja" lang="ja">言語</span>
+  <span class="language-options" role="group" aria-label="Select language">
+    <button type="button" class="language-option" data-set-lang="en" lang="en">English</button>
+    <button type="button" class="language-option" data-set-lang="ja" lang="ja">日本語</button>
+  </span>
+</nav>
+
 <section class="hero">
-  <p class="eyebrow">Ray.MediaQuery Documentation</p>
-  <h1>Interface-Driven SQL for PHP</h1>
-  <p class="lead">
-    SQL は SQL のまま、PHP は PHP のまま。Ray.MediaQuery のチュートリアルと AI 向けリファレンスへの入口です。<br>
-    <span lang="en">Keep SQL explicit and PHP typed. Start with the tutorial, or open the compact AI-oriented reference.</span>
-  </p>
+  <img class="brand-logo" src="{{ '/assets/img/ray-media-query.png' | relative_url }}" alt="Ray.MediaQuery logo" width="220" height="220">
+
+  <div class="hero-copy">
+    <div data-lang="en" lang="en">
+      <p class="product-label">Ray.MediaQuery</p>
+      <h1>Interface-Driven SQL for PHP</h1>
+      <p class="lead">
+        SQL speaks infrastructure. Types express the domain. PHP interfaces bridge them.
+      </p>
+    </div>
+    <div data-lang="ja" lang="ja">
+      <p class="product-label">Ray.MediaQuery</p>
+      <h1>Interface-Driven SQL for PHP</h1>
+    </div>
+  </div>
 </section>
 
-<section class="cards" aria-label="Documentation links">
+<section class="cards" aria-label="Documentation links" data-lang="en" lang="en">
+  <article class="card">
+    <h2>Manual</h2>
+    <p>Japanese manual covering installation, module setup, SQL conventions, result mapping, factories, parameters, pagination, and direct SQL execution.</p>
+    <p><a class="button" href="{{ '/reference/' | relative_url }}">Open the manual</a></p>
+  </article>
+
+  <article class="card">
+    <h2>Hands-on Tutorial</h2>
+    <p>Build a SQLite-backed blog example and learn the main Ray.MediaQuery features through 1.1.0.</p>
+    <p><a class="button" href="{{ '/tutorial/' | relative_url }}">Read the tutorial</a></p>
+  </article>
+
+  <article class="card">
+    <h2>BDR Pattern</h2>
+    <p>How explicit SQL, factories, and immutable domain objects let SQL and OOP work in harmony.</p>
+    <p><a class="button" href="{{ '/bdr-pattern/' | relative_url }}">Open BDR Pattern</a></p>
+  </article>
+
+  <article class="card">
+    <h2>FAQ</h2>
+    <p>Architecture answers for writes, CQRS, and factory performance in the BDR pattern.</p>
+    <p><a class="button" href="{{ '/bdr-pattern/#faq' | relative_url }}">Open FAQ</a></p>
+  </article>
+
+  <article class="card">
+    <h2>Ecosystem</h2>
+    <p>Source code, AI-oriented reference, demo, and BEAR.Sunday integration recipes around Ray.MediaQuery.</p>
+    <p class="actions">
+      <a class="button" href="https://github.com/ray-di/Ray.MediaQuery">GitHub</a>
+      <a class="button" href="{{ '/llms-full.txt' | relative_url }}">llms-full.txt</a>
+      <a class="button" href="https://github.com/ray-di/Ray.MediaQuery/blob/1.x/BEAR_ASYNC_RECIPE.md">Async recipe</a>
+    </p>
+  </article>
+</section>
+
+<section class="cards" aria-label="ドキュメントリンク" data-lang="ja" lang="ja">
+  <article class="card">
+    <h2>マニュアル</h2>
+    <p>インストール、モジュール設定、SQL ファイル規約から、戻り値マッピング、ファクトリ、パラメータ変換、ページネーション、直接 SQL 実行までのガイド。</p>
+    <p><a class="button" href="{{ '/reference/' | relative_url }}">マニュアルを読む</a></p>
+  </article>
+
   <article class="card">
     <h2>ハンズオンチュートリアル</h2>
-    <p>ブログサービスを題材に、Ray.MediaQuery 1.1.0 までの主要機能を第0章から第13章＋補章で体験します。</p>
-    <p class="en" lang="en">Hands-on tutorial in Japanese. Build a SQLite-backed blog example end-to-end.</p>
+    <p>SQLite のブログ例を作りながら、Ray.MediaQuery 1.1.0 までの主要機能を学びます。</p>
     <p><a class="button" href="{{ '/tutorial/' | relative_url }}">チュートリアルを読む</a></p>
   </article>
 
   <article class="card">
-    <h2>Feature Reference</h2>
-    <p>戻り値マッピング、ファクトリ、パラメータ変換、ページネーション、直接 SQL 実行の詳細。</p>
-    <p class="en" lang="en">Detailed reference for result mapping, factories, parameter handling, pagination, and direct SQL execution.</p>
-    <p><a class="button" href="{{ '/reference/' | relative_url }}">Reference を読む</a></p>
+    <h2>BDR パターン</h2>
+    <p>明示的な SQL、ファクトリ、イミュータブルなドメインオブジェクトで SQL と OOP を調和させる設計ガイド。</p>
+    <p><a class="button" href="{{ '/bdr-pattern/ja/' | relative_url }}">BDR パターンを読む</a></p>
   </article>
 
   <article class="card">
-    <h2>AI-Oriented Reference</h2>
-    <p>AI coding agents 向けに圧縮した Ray.MediaQuery の仕様・使い方リファレンスです。</p>
-    <p class="en" lang="en">A concise reference for AI coding agents and quick lookup.</p>
-    <p><a class="button" href="{{ '/llms-full.txt' | relative_url }}">llms-full.txt を開く</a></p>
+    <h2>FAQ</h2>
+    <p>BDR パターンにおける書き込み、CQRS、factory performance への設計上の答え。</p>
+    <p><a class="button" href="{{ '/bdr-pattern/ja/#faq' | relative_url }}">FAQ を読む</a></p>
   </article>
 
   <article class="card">
-    <h2>GitHub Repository</h2>
-    <p>README、ソースコード、Issue、リリース情報はこちら。</p>
-    <p class="en" lang="en">Source code, README, issues, and releases.</p>
-    <p><a class="button" href="https://github.com/ray-di/Ray.MediaQuery">GitHub を開く</a></p>
+    <h2>エコシステム</h2>
+    <p>ソースコード、AI 向けリファレンス、デモ、BEAR.Sunday 連携レシピなど、周辺リソースへの導線です。</p>
+    <p class="actions">
+      <a class="button" href="https://github.com/ray-di/Ray.MediaQuery">GitHub</a>
+      <a class="button" href="{{ '/llms-full.txt' | relative_url }}">llms-full.txt</a>
+      <a class="button" href="https://github.com/ray-di/Ray.MediaQuery/blob/1.x/BEAR_ASYNC_RECIPE-ja.md">Async レシピ</a>
+    </p>
   </article>
 </section>
 
-<section class="note">
-  <h2>English / 日本語</h2>
-  <p>
-    現在の詳しいチュートリアルは日本語版です。README と AI 向けリファレンスは英語で利用できます。<br>
-    <span lang="en">The detailed tutorial is currently available in Japanese. The README and AI-oriented reference are available in English.</span>
-  </p>
-</section>
+<script>
+  (function () {
+    var buttons = document.querySelectorAll('[data-set-lang]');
+
+    function setLanguage(lang) {
+      document.documentElement.lang = lang;
+      document.documentElement.dataset.docLang = lang;
+
+      try {
+        localStorage.setItem('rayMediaQueryDocsLang', lang);
+      } catch (error) {
+        // Keep switching available even when storage is disabled.
+      }
+
+      buttons.forEach(function (button) {
+        var selected = button.dataset.setLang === lang;
+        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+    }
+
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        setLanguage(button.dataset.setLang);
+      });
+    });
+
+    setLanguage(document.documentElement.dataset.docLang || 'en');
+  }());
+</script>

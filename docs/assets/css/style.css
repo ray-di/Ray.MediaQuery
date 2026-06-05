@@ -55,6 +55,10 @@ body {
   padding: 40px 0 72px;
 }
 
+.page-home {
+  width: min(100% - 32px, 1180px);
+}
+
 h1, h2, h3 {
   line-height: 1.25;
   margin-top: 2em;
@@ -224,18 +228,93 @@ hr {
   margin: 2.5rem 0;
 }
 
+html[data-doc-lang="en"] [data-lang="ja"],
+html[data-doc-lang="ja"] [data-lang="en"] {
+  display: none !important;
+}
+
+.language-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.language-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.language-options {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--quote-bg);
+}
+
+.language-option {
+  min-width: 5rem;
+  padding: 0.45rem 0.75rem;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.language-option:first-child {
+  border-left: 0;
+}
+
+.language-option[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.language-option:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: -2px;
+}
+
 .hero {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 3rem);
   margin-bottom: 2rem;
   padding: 2rem 0 1rem;
 }
 
-.eyebrow {
-  margin: 0 0 0.5rem;
+.brand-logo {
+  display: block;
+  flex: 0 0 auto;
+  width: min(220px, 34vw);
+  height: auto;
+  aspect-ratio: 1;
+  margin: 0;
+  object-fit: contain;
+}
+
+.hero-copy {
+  min-width: 0;
+}
+
+.product-label {
+  margin: 0 0 0.45rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 1.08rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+.hero h1 {
+  margin: 0 0 0.45em;
+  font-size: clamp(2.5rem, 4.4vw, 4rem);
+  line-height: 1.08;
 }
 
 .lead {
@@ -244,9 +323,24 @@ hr {
   font-size: 1.15rem;
 }
 
+@media (max-width: 760px) {
+  .hero {
+    display: block;
+  }
+
+  .brand-logo {
+    width: min(180px, 52vw);
+    margin-bottom: 1.25rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.05rem, 8vw, 2.6rem);
+  }
+}
+
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 1rem;
   margin: 2rem 0;
 }
@@ -268,6 +362,13 @@ hr {
   color: var(--muted);
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
 .button {
   display: inline-block;
   padding: 0.55rem 0.8rem;
@@ -280,10 +381,4 @@ hr {
 
 .button:hover {
   border-color: currentColor;
-}
-
-.note {
-  margin-top: 2.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
 }

@@ -1,6 +1,14 @@
+---
+layout: default
+title: BDR Pattern Guide
+description: "Practical guide to the Business Domain Repository Pattern: explicit SQL, factories, and immutable domain objects."
+lang: en
+permalink: /bdr-pattern/
+---
+
 # Business Domain Repository Pattern (BDR Pattern) Practical Guide
 
-[日本語 (Japanese)](./BDR_PATTERN-ja.md)
+[日本語 (Japanese)]({{ '/bdr-pattern/ja/' | relative_url }})
 
 ## Introduction
 
@@ -66,15 +74,15 @@ class OrderController
     public function show(string $id): Response
     {
         $order = $this->orderRepo->findById($id); // Simple data
-        
+
         // Business logic scattered in controller - testing nightmare!
         $items = $this->inventoryService->checkStock($order->items);
         $tax = $this->taxCalculator->calculate($items, $order->region);
         $shipping = $this->shippingService->calculate($items, $order->region);
         $canFulfill = $this->validateOrder($items, $order->status);
-        
+
         // Testing this controller requires mocking 6+ dependencies!
-        
+
         return $this->render('order.html.twig', compact('order', 'tax', 'shipping', 'canFulfill'));
     }
 }
@@ -89,7 +97,7 @@ class OrderController
     {
         // Repository returns complete domain object
         $order = $this->orderRepo->getOrder($id);
-        
+
         // Controller only renders - no business logic
         return $this->render('order.html.twig', ['order' => $order]);
     }
@@ -152,7 +160,7 @@ interface OrderRepositoryInterface
 {
     #[DbQuery('order_detail', factory: OrderDomainFactory::class)]
     public function getOrder(string $id): OrderDomainObject;
-    
+
     #[DbQuery('active_orders', factory: OrderDomainFactory::class)]
     /** @return array<OrderDomainObject> */
     public function getActiveOrders(): array;
@@ -162,7 +170,7 @@ interface OrderRepositoryInterface
 ### 2. SQL Query (order_detail.sql)
 
 ```sql
-SELECT 
+SELECT
     o.id,
     o.customer_id,
     o.region,
@@ -195,7 +203,7 @@ final class OrderDomainFactory
         private InventoryService $inventoryService,
         private BusinessRuleEngine $ruleEngine,
     ) {}
-    
+
     public function factory(
         string $id,
         string $customer_id,
@@ -204,13 +212,13 @@ final class OrderDomainFactory
         string $items_json
     ): OrderDomainObject {
         $items = json_decode($items_json, true);
-        
+
         // Centralize business logic in factory
         $validatedItems = $this->inventoryService->validateStock($items);
         $subtotal = array_sum(array_map(fn($item) => $item['price'] * $item['quantity'], $items));
         $tax = $this->taxCalculator->calculate($validatedItems, $region);
         $shipping = $this->shippingService->calculate($validatedItems, $region);
-        
+
         return new OrderDomainObject(
             id: $id,
             customerId: $customer_id,
@@ -226,11 +234,11 @@ final class OrderDomainFactory
             ruleEngine: $this->ruleEngine,
         );
     }
-    
+
     private function getInsufficientStockItems(array $original, array $validated): array
     {
         // Business logic to identify items with insufficient stock
-        return array_filter($original, fn($item) => 
+        return array_filter($original, fn($item) =>
             !in_array($item['product_id'], array_column($validated, 'product_id'))
         );
     }
@@ -257,7 +265,7 @@ final readonly class OrderDomainObject
         // Injected business rule engine - impossible with ORM
         private BusinessRuleEngine $ruleEngine,
     ) {}
-    
+
     // Domain object behavior
     public function getDisplayTotal(): string
     {
@@ -330,10 +338,10 @@ class UserQueryTest extends DatabaseTestCase
     {
         // Prepare test data
         $this->insertUser('user-1', 'Alice', 'alice@example.com', 'editor');
-        
+
         // Execute query
         $result = $this->executeQuery('user_by_id.sql', ['id' => 'user-1']);
-        
+
         // Verify results
         $this->assertEquals('Alice', $result[0]['name']);
         $this->assertEquals('editor', $result[0]['role']);
@@ -351,14 +359,14 @@ class UserDomainFactoryTest extends TestCase
         // Inject fake service
         $permissionService = new FakePermissionService();
         $factory = new UserDomainFactory($permissionService);
-        
+
         // Test factory
         $user = $factory->factory('user-1', 'Alice', 'alice@example.com', 'editor');
-        
+
         // Verify object is created correctly
         $this->assertEquals('Alice', $user->name);
         $this->assertEquals('editor', $user->role);
-        
+
         // Confirm injected service works
         $document = new Document('doc-1', 'user-1');
         $this->assertTrue($user->canEdit($document));
@@ -374,12 +382,12 @@ class UserDomainObjectTest extends TestCase
     public function testCanEditWithDifferentPermissionServices(): void
     {
         $document = new Document('doc-1', 'user-2');
-        
+
         // Restrictive service
         $strictService = new StrictPermissionService();
         $user1 = new UserDomainObject('user-1', 'Alice', 'alice@example.com', 'editor', $strictService);
         $this->assertFalse($user1->canEdit($document)); // Cannot edit others' documents
-        
+
         // Permissive service
         $relaxedService = new RelaxedPermissionService();
         $user2 = new UserDomainObject('user-1', 'Alice', 'alice@example.com', 'editor', $relaxedService);
@@ -415,7 +423,7 @@ final class ProductDomainFactory
     public function __construct(
         private PriceService $priceService,  // External API
     ) {}
-    
+
     public function factory(string $id, string $name): ProductDomainObject
     {
         return new ProductDomainObject(
@@ -436,16 +444,16 @@ final class UserDomainFactory
         private CacheInterface $cache,
         private PermissionService $permissionService,
     ) {}
-    
+
     public function factory(string $id, string $name, string $role): UserDomainObject
     {
         // Cache expensive permission lookups
         $permissions = $this->cache->remember(
-            "permissions_{$role}", 
-            3600, 
+            "permissions_{$role}",
+            3600,
             fn() => $this->permissionService->getPermissions($role)
         );
-        
+
         return new UserDomainObject($id, $name, $role, $permissions);
     }
 }
@@ -462,12 +470,12 @@ class ProductController
     public function show($id)
     {
         $product = $this->repo->find($id);
-        
+
         // Identify this business logic
         $product->finalPrice = $this->calculatePrice($product);
         $product->inStock = $this->inventory->check($product->id);
         $product->reviews = $this->reviewService->get($product->id);
-        
+
         return view('product', compact('product'));
     }
 }
@@ -515,7 +523,7 @@ In the BDR Pattern, everything is explicit:
 
 ```sql
 -- order_detail.sql - AI can read and understand this
-SELECT 
+SELECT
     o.id,
     o.region,
     JSON_ARRAYAGG(
@@ -560,7 +568,7 @@ The results achieved are:
 
 In the BDR Pattern, each excels in its own domain while building something greater together.
 
-## FAQ
+<h2 id="faq">FAQ</h2>
 
 ### Q: How do I save modified objects back to the database?
 
@@ -670,7 +678,7 @@ BEAR.Sunday is a resource-oriented PHP application framework. Application operat
 
 That boundary is useful for BDR. The Repository still declares **what** SQL to run, while BEAR.Sunday and BEAR.Async decide **when** and **how** independent resource requests run. Repository interfaces and SQL files do not change.
 
-- [BDR + BEAR.Async: Parallel SQL Recipe](./BEAR_ASYNC_RECIPE.md) — wrap each Repository call in a `ResourceObject` and let `#[Embed]` parallelise them at the application boundary.
+- [BDR + BEAR.Async: Parallel SQL Recipe](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/BEAR_ASYNC_RECIPE.md) — wrap each Repository call in a `ResourceObject` and let `#[Embed]` parallelise them at the application boundary.
 
 ## References
 
