@@ -1,14 +1,112 @@
 ---
 layout: default
-title: Ray.MediaQuery Feature Reference
-description: Detailed feature reference for Ray.MediaQuery result mapping, factories, parameter handling, pagination, and direct SQL execution.
+title: Ray.MediaQuery Manual
+description: Ray.MediaQuery user manual — installation, module setup, SQL file conventions, result mapping, factories, parameter handling, pagination, and direct SQL execution.
 lang: en
 permalink: /reference/
 ---
 
-# Ray.MediaQuery Feature Reference
+# Ray.MediaQuery Manual
 
-Detailed reference for Ray.MediaQuery features. For a guided introduction, start with the [hands-on tutorial](https://ray-di.github.io/Ray.MediaQuery/tutorial/).
+The complete guide to using Ray.MediaQuery: install the package, wire the modules, learn the SQL-file conventions, then consult the feature reference. For a guided, build-along introduction, see the [hands-on tutorial](https://ray-di.github.io/Ray.MediaQuery/tutorial/) (Japanese).
+
+This manual covers:
+
+- [Installation](#installation)
+- [Setup](#setup) — wiring the DI modules and getting a query instance
+- [SQL Files](#sql-files) — location, naming, and placeholder conventions
+- [Configuration](#configuration) — connection, module choices, advanced hooks
+- [Features](#features) — result mapping, factories, parameters, pagination, direct SQL
+
+## Installation
+
+```bash
+composer require ray/media-query
+```
+
+Requirements:
+
+- **PHP 8.2+**.
+- A PDO driver for your database (e.g. `pdo_sqlite`, `pdo_mysql`).
+- Ray.MediaQuery builds on [Ray.Di](https://ray-di.github.io/) (dependency injection) and [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule) (the PDO connection). Both are installed as dependencies.
+
+## Setup
+
+Ray.MediaQuery generates the implementation of your query interfaces at runtime, so setup is just two things: install a MediaQuery module (which discovers/binds the interfaces and points at the SQL directory) and install `AuraSqlModule` (which supplies the database connection). Then resolve the interface from the injector.
+
+### Auto-discovery: `MediaQuerySqlModule` (recommended)
+
+Point the module at the directory of query interfaces and the directory of SQL files. Every interface found under `interfaceDir` is bound automatically.
+
+```php
+use Ray\AuraSqlModule\AuraSqlModule;
+use Ray\Di\AbstractModule;
+use Ray\Di\Injector;
+use Ray\MediaQuery\MediaQuerySqlModule;
+
+final class AppModule extends AbstractModule
+{
+    protected function configure(): void
+    {
+        $this->install(new MediaQuerySqlModule(
+            interfaceDir: __DIR__ . '/Query',  // directory of #[DbQuery] interfaces
+            sqlDir: __DIR__ . '/sql',          // directory of .sql files
+        ));
+        $this->install(new AuraSqlModule('sqlite::memory:'));  // PDO connection (DSN)
+    }
+}
+
+$injector = new Injector(new AppModule());
+$userQuery = $injector->getInstance(UserQueryInterface::class);  // generated implementation
+$user = $userQuery->item('user-123');
+```
+
+### Explicit list: `MediaQueryModule`
+
+When you want to name the interfaces yourself instead of scanning a directory, build a `Queries` list and pass a `DbQueryConfig` for the SQL directory.
+
+```php
+use Ray\MediaQuery\DbQueryConfig;
+use Ray\MediaQuery\MediaQueryModule;
+use Ray\MediaQuery\Queries;
+
+protected function configure(): void
+{
+    $queries = Queries::fromClasses([
+        UserQueryInterface::class,
+        OrderQueryInterface::class,
+    ]);
+    $this->install(new MediaQueryModule($queries, [new DbQueryConfig(__DIR__ . '/sql')]));
+    $this->install(new AuraSqlModule('sqlite::memory:'));
+}
+```
+
+Both modules produce the same result; `MediaQuerySqlModule` is the directory-based shortcut, `MediaQueryModule` is the explicit form. `Queries::fromDir($dir)` is also available if you want a list built from a directory.
+
+## SQL Files
+
+- Save one query per file as `{queryId}.sql` in your `sqlDir`. The id in `#[DbQuery('user_item')]` maps to `sqlDir/user_item.sql`.
+- Placeholders are **named** and bind to method arguments of the same name — `:userId` ← `string $userId`. Binding is by name, so argument order does not matter.
+- A file may hold **multiple statements** separated by `;`; they run in order and the result reflects the **last** statement (see [Result Mapping](#result-mapping--entity-hydration)).
+
+```sql
+-- sql/user_item.sql
+SELECT id, name FROM users WHERE id = :id;
+```
+
+```php
+interface UserQueryInterface
+{
+    #[DbQuery('user_item', type: 'row')]
+    public function item(string $id): User|null;
+}
+```
+
+## Configuration
+
+- **Database connection** — supplied by `AuraSqlModule`. Pass any PDO DSN: `'mysql:host=localhost;dbname=app'`, `'pgsql:host=...;dbname=...'`, `'sqlite::memory:'`, etc. See [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule) for connection pooling, primary/replica, and per-connection options.
+- **Module choice** — `MediaQuerySqlModule` (directory scan) vs `MediaQueryModule` (explicit `Queries` + `DbQueryConfig`); see [Setup](#setup).
+- **Advanced hooks** — `MediaQuerySqlTemplateModule` / `SqlTemplate` swap the SQL execution template, and `MediaQueryLoggerInterface` exposes query logging. These are optional; the two modules above cover typical applications.
 
 ## Features
 
