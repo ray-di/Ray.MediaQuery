@@ -1,8 +1,6 @@
-# Ray.MediaQuery
+<img src="docs/assets/img/ray-media-query.png" alt="Ray.MediaQuery logo" width="180">
 
-<p align="center">
-  <img src="docs/assets/img/ray-media-query.png" alt="Ray.MediaQuery logo" width="180">
-</p>
+# Ray.MediaQuery
 
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
 [![Type Coverage](https://shepherd.dev/github/ray-di/Ray.MediaQuery/coverage.svg)](https://shepherd.dev/github/ray-di/Ray.MediaQuery)
@@ -13,6 +11,7 @@
 **Ray.MediaQuery lets SQL be SQL and objects be objects.**
 
 Define a PHP interface, attach `#[DbQuery]`, write a SQL file, and Ray.MediaQuery provides the implementation through Ray.Di + AOP. Return types and docblocks drive fetching, hydration, pagination, and post-query result objects.
+
 
 ```php
 use Ray\MediaQuery\Annotation\DbQuery;
