@@ -41,14 +41,15 @@
             "Ray\\MediaQuery\\": [
                 "tests/",
                 "tests/Fake"
-            ]
+            ],
+            "Tutorial\\Blog\\": "docs/tutorial/src/Blog/"
         }
     },
     "scripts": {
         "coverage": "php -dzend_extension=xdebug.so -dxdebug.mode=coverage ./vendor/bin/phpunit --coverage-text --coverage-html=build/coverage",
         "pcov": "php -dextension=pcov.so -d pcov.enabled=1 ./vendor/bin/phpunit --coverage-text --coverage-html=build/coverage  --coverage-clover=coverage.xml",
         "cs": "./vendor/bin/phpcs",
-        "cs-fix": "./vendor/bin/phpcbf src tests",
+        "cs-fix": "./vendor/bin/phpcbf src tests docs/tutorial/src/Blog",
         "metrics": "./vendor/bin/phpmetrics --report-html=build/metrics --exclude=Exception src",
         "clean": [
             "./vendor/bin/phpstan clear-result-cache",
@@ -59,10 +60,12 @@
             "./vendor/bin/phpstan analyse -c phpstan.neon"
         ],
         "test": "./vendor/bin/phpunit",
+        "tutorial": "php -d zend.assertions=1 -d assert.exception=1 docs/tutorial/src/run.php",
         "tests": [
             "@cs",
             "@sa",
-            "@test"
+            "@test",
+            "@tutorial"
         ],
         "build": [
             "@clean",
@@ -74,6 +77,7 @@
     },
     "scripts-descriptions": {
         "test": "Run unit tests",
+        "tutorial": "Run the tutorial answer code end-to-end as an integration check",
         "coverage": "Generate test coverage report",
         "pcov": "Generate test coverage report (pcov)",
         "cs": "Check the coding style",

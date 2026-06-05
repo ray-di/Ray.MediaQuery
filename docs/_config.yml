@@ -1,0 +1,8 @@
+title: Ray.MediaQuery
+description: Interface-Driven SQL for PHP
+lang: ja
+baseurl: /Ray.MediaQuery
+markdown: kramdown
+highlighter: rouge
+exclude:
+  - tutorial/src
