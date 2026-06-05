@@ -34,7 +34,15 @@ home: true
 </nav>
 
 <section class="hero">
-  <img class="brand-logo" src="{{ '/assets/img/ray-media-query.png' | relative_url }}" alt="Ray.MediaQuery logo" width="220" height="220">
+  <img
+    class="brand-logo"
+    src="{{ '/assets/img/ray-media-query.png' | relative_url }}"
+    alt="Hand-drawn Ray.MediaQuery logo showing sky, sea, and land separated by horizon and shoreline boundaries."
+    data-alt-en="Hand-drawn Ray.MediaQuery logo showing sky, sea, and land separated by horizon and shoreline boundaries."
+    data-alt-ja="空、海、陸が水平線と渚の境界線で分かれている手描きの Ray.MediaQuery ロゴ。"
+    width="220"
+    height="220"
+  >
 
   <div class="hero-copy">
     <div data-lang="en" lang="en">
@@ -131,10 +139,15 @@ home: true
 <script>
   (function () {
     var buttons = document.querySelectorAll('[data-set-lang]');
+    var brandLogo = document.querySelector('.brand-logo');
 
     function setLanguage(lang) {
       document.documentElement.lang = lang;
       document.documentElement.dataset.docLang = lang;
+
+      if (brandLogo) {
+        brandLogo.setAttribute('alt', lang === 'ja' ? brandLogo.dataset.altJa : brandLogo.dataset.altEn);
+      }
 
       try {
         localStorage.setItem('rayMediaQueryDocsLang', lang);

@@ -1,4 +1,4 @@
-<img src="docs/assets/img/ray-media-query.png" alt="Ray.MediaQuery logo" width="180">
+<img src="docs/assets/img/ray-media-query.png" alt="Hand-drawn Ray.MediaQuery logo showing sky, sea, and land separated by horizon and shoreline boundaries." width="180">
 
 # Ray.MediaQuery
 
