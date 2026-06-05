@@ -3,10 +3,12 @@ layout: default
 title: Ray.MediaQuery ハンズオンチュートリアル
 description: ブログサービスを題材に、Ray.MediaQuery 1.1.0 までの主要機能を第0章から第13章＋補章で体験する入門
 lang: ja
-permalink: /tutorial/
+permalink: /tutorial/ja/
 ---
 
 # Ray.MediaQuery ハンズオンチュートリアル
+
+[English version](https://ray-di.github.io/Ray.MediaQuery/tutorial/)
 
 ブログサービスを題材に、Ray.MediaQuery 1.1.0 までの主要機能を第0章から第13章＋補章で体験する入門。
 
@@ -1737,7 +1739,7 @@ Ray.MediaQuery は、その Read 側を Query-first に分割する。`UserRepos
 
 ここまで読み終えると、Ray.MediaQuery の主要機能を一通り体験したことになる。
 
-このハンズオンは「interface + SQL + 戻り値型でアプリケーションの Query 契約を作る」理解を優先している。以下は本文では実装せず、Feature Reference で確認する発展機能である。
+このハンズオンは「interface + SQL + 戻り値型でアプリケーションの Query 契約を作る」理解を優先している。以下は本文では実装せず、Manual で確認する発展機能である。
 
 - `#[Input]` Object Flattening — 入力 DTO を SQL パラメータへ平坦化する。
 - `SqlQueryInterface` 直接実行 — interface 経由ではなく、低レベル API として SQL を実行する。
@@ -1748,7 +1750,7 @@ Ray.MediaQuery は、その Read 側を Query-first に分割する。`UserRepos
 ### 次に読むもの
 
 - [BDR Pattern Guide 日本語版](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/BDR_PATTERN-ja.md) — ファクトリパターンとドメインオブジェクトの設計
-- [Feature Reference](https://ray-di.github.io/Ray.MediaQuery/reference/) — 機能リファレンス (`#[Input]` Object Flattening, `SqlQueryInterface` 直接実行などの応用)
+- [Manual](https://ray-di.github.io/Ray.MediaQuery/reference/) — マニュアル (`#[Input]` Object Flattening, `SqlQueryInterface` 直接実行などの応用)
 - [llms-full.txt](../llms-full.txt) — AI エージェント向けの圧縮リファレンス
 - [`tests/Fake/`](https://github.com/ray-di/Ray.MediaQuery/tree/1.x/tests/Fake) — 実際のテストコード
 

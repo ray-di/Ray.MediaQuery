@@ -1,27 +1,127 @@
 ---
 layout: default
-title: Ray.MediaQuery Feature Reference
-description: Detailed feature reference for Ray.MediaQuery result mapping, factories, parameter handling, pagination, and direct SQL execution.
-lang: en
+title: Ray.MediaQuery マニュアル
+description: Ray.MediaQuery のインストール、モジュール設定、SQL ファイル規約、戻り値マッピング、ファクトリ、パラメータ処理、ページネーション、直接 SQL 実行のユーザーマニュアル。
+lang: ja
 permalink: /reference/
 ---
 
-# Ray.MediaQuery Feature Reference
+# Ray.MediaQuery マニュアル
 
-Detailed reference for Ray.MediaQuery features. For a guided introduction, start with the [hands-on tutorial](https://ray-di.github.io/Ray.MediaQuery/tutorial/).
+Ray.MediaQuery を使うための完全ガイドです。パッケージのインストール、モジュール配線、SQL ファイル規約を押さえた上で、各機能の詳細を確認できます。順を追って体験したい場合は、[ハンズオンチュートリアル](https://ray-di.github.io/Ray.MediaQuery/tutorial/) から始めてください。
 
-## Features
+このマニュアルで扱う内容:
 
-### Result Mapping & Entity Hydration
+- [インストール](#インストール)
+- [セットアップ](#セットアップ) — DI モジュールの配線と query instance の取得
+- [SQL ファイル](#sql-ファイル) — 配置場所、命名、placeholder 規約
+- [設定](#設定) — 接続、module の選択、高度な hook
+- [機能](#機能) — 結果マッピング、factory、parameter、pagination、直接 SQL 実行
 
-Ray.MediaQuery automatically hydrates query results based on your return type declarations:
+## インストール
 
-**Single Entity:**
+```bash
+composer require ray/media-query
+```
+
+要件:
+
+- **PHP 8.2+**。
+- 利用するデータベースの PDO driver (`pdo_sqlite`, `pdo_mysql` など)。
+- Ray.MediaQuery は [Ray.Di](https://ray-di.github.io/) (dependency injection) と [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule) (PDO connection) を基盤にします。どちらも依存として install されます。
+
+## セットアップ
+
+Ray.MediaQuery は query interface の実装を runtime に生成します。そのため setup で必要なのは 2 つです。MediaQuery module を install して interface と SQL directory を対応づけ、`AuraSqlModule` を install して database connection を供給します。その後、injector から interface を取得します。
+
+### Auto-discovery: `MediaQuerySqlModule` (推奨)
+
+Query interface の directory と SQL file の directory を module に渡します。`interfaceDir` 配下にある interface は自動で bind されます。
+
+```php
+use Ray\AuraSqlModule\AuraSqlModule;
+use Ray\Di\AbstractModule;
+use Ray\Di\Injector;
+use Ray\MediaQuery\MediaQuerySqlModule;
+
+final class AppModule extends AbstractModule
+{
+    protected function configure(): void
+    {
+        $this->install(new MediaQuerySqlModule(
+            interfaceDir: __DIR__ . '/Query',  // #[DbQuery] interface の directory
+            sqlDir: __DIR__ . '/sql',          // .sql file の directory
+        ));
+        $this->install(new AuraSqlModule('sqlite::memory:'));  // PDO connection (DSN)
+    }
+}
+
+$injector = new Injector(new AppModule());
+$userQuery = $injector->getInstance(UserQueryInterface::class);  // 生成された実装
+$user = $userQuery->item('user-123');
+```
+
+### 明示リスト: `MediaQueryModule`
+
+Directory scan ではなく interface を明示したい場合は、`Queries` list を作り、SQL directory 用の `DbQueryConfig` と一緒に渡します。
+
+```php
+use Ray\AuraSqlModule\AuraSqlModule;
+use Ray\MediaQuery\DbQueryConfig;
+use Ray\MediaQuery\MediaQueryModule;
+use Ray\MediaQuery\Queries;
+
+protected function configure(): void
+{
+    $queries = Queries::fromClasses([
+        UserQueryInterface::class,
+        OrderQueryInterface::class,
+    ]);
+    $this->install(new MediaQueryModule($queries, [new DbQueryConfig(__DIR__ . '/sql')]));
+    $this->install(new AuraSqlModule('sqlite::memory:'));
+}
+```
+
+どちらの module も同じ結果を作ります。`MediaQuerySqlModule` は directory-based の shortcut、`MediaQueryModule` は明示的な構成です。Directory から `Queries` list を作りたい場合は `Queries::fromDir($dir)` も使えます。
+
+## SQL ファイル
+
+- Query ごとに `{queryId}.sql` という名前で `sqlDir` に保存します。`#[DbQuery('user_item')]` は `sqlDir/user_item.sql` に対応します。
+- Placeholder は **named** で、同じ名前の method argument に bind されます。たとえば `:userId` は `string $userId` に対応します。名前で bind されるため、引数順は問いません。
+- 1 ファイルに複数 statement を書けます。Statement は `;` で区切られ、順に実行されます。結果は**最後の statement** を反映します。詳細は [結果マッピング](#結果マッピングと-entity-hydration) を参照してください。
+
+```sql
+-- sql/user_item.sql
+SELECT id, name FROM users WHERE id = :id;
+```
+
+```php
+interface UserQueryInterface
+{
+    #[DbQuery('user_item', type: 'row')]
+    public function item(string $id): User|null;
+}
+```
+
+## 設定
+
+- **Database connection** — `AuraSqlModule` が供給します。`'mysql:host=localhost;dbname=app'`, `'pgsql:host=...;dbname=...'`, `'sqlite::memory:'` など任意の PDO DSN を渡せます。Connection pooling、primary/replica、connection option は [Ray.AuraSqlModule](https://github.com/ray-di/Ray.AuraSqlModule) を参照してください。
+- **Module choice** — `MediaQuerySqlModule` (directory scan) と `MediaQueryModule` (明示的な `Queries` + `DbQueryConfig`) を選べます。詳細は [セットアップ](#セットアップ) を参照してください。
+- **Advanced hooks** — `MediaQuerySqlTemplateModule` / `SqlTemplate` で SQL execution template を差し替えられます。`MediaQueryLoggerInterface` は query logging の拡張点です。通常の application は上記 2 つの module で足ります。
+
+## 機能
+
+### 結果マッピングと Entity Hydration
+
+Ray.MediaQuery は、メソッドの戻り値型宣言に基づいてクエリ結果を自動的に hydrate します。
+
+**単一 Entity:**
+
 ```php
 interface UserRepository
 {
     #[DbQuery('user_find')]
-    public function find(string $id): User|null;  // Returns User or null
+    public function find(string $id): User|null;  // User または null を返す
 }
 
 class User
@@ -34,17 +134,19 @@ class User
 }
 ```
 
-**Entity Array:**
+**Entity 配列:**
+
 ```php
 interface UserRepository
 {
     #[DbQuery('user_list')]
     /** @return array<User> */
-    public function findAll(): array;  // Returns User[]
+    public function findAll(): array;  // User[] を返す
 }
 ```
 
-**Raw Array (single row):**
+**生配列 (単一行):**
+
 ```php
 interface UserRepository
 {
@@ -53,7 +155,8 @@ interface UserRepository
 }
 ```
 
-**Raw Array (multiple rows):**
+**生配列 (複数行):**
+
 ```php
 interface UserRepository
 {
@@ -62,12 +165,12 @@ interface UserRepository
 }
 ```
 
-**DML Result types — `AffectedRows` / `InsertedRow`:**
+**DML 結果型: `AffectedRows` / `InsertedRow`**
 
-Declare a result type that implements `PostQueryInterface` to receive post-execution information. The framework ships two:
+`PostQueryInterface` を実装する結果型を戻り値として宣言すると、実行後の情報を受け取れます。フレームワークには以下の 2 つが同梱されています。
 
-- `AffectedRows` — row count for `UPDATE` / `DELETE`.
-- `InsertedRow` — the resolved parameter values plus the auto-increment id for `INSERT`.
+- `AffectedRows` — `UPDATE` / `DELETE` の影響行数。
+- `InsertedRow` — 解決済みパラメータ値と、`INSERT` 後の auto-increment id。
 
 ```php
 use Ray\MediaQuery\Result\AffectedRows;
@@ -86,23 +189,23 @@ interface TodoRepository
 }
 
 $inserted = $todoRepo->add('Write docs');
-$inserted->values;  // array<string, mixed> — parameters as bound to the driver (UUIDs, timestamps, DateTime→string, ToScalar reductions all resolved)
-$inserted->id;      // string|null — auto-increment id, null if the driver reports none
+$inserted->values;  // array<string, mixed> — ドライバに bind された実際の値 (UUID、timestamp、DateTime→string、ToScalar の縮約後)
+$inserted->id;      // string|null — auto-increment id。ドライバが返さない場合は null
 
 $deleted = $todoRepo->delete('1');
-$deleted->count;       // int — rows deleted
-$deleted->isAffected();  // bool — true when count > 0
+$deleted->count;       // int — 削除行数
+$deleted->isAffected();  // bool — count > 0 なら true
 ```
 
-`InsertedRow::$values` is the result of Ray.MediaQuery's parameter resolution — injected defaults (UUIDs, timestamps), `DateTime` converted to SQL strings, and `ToScalarInterface` value objects reduced to scalars. Those are the values that actually went to the database and are not otherwise observable by the caller.
+`InsertedRow::$values` は Ray.MediaQuery のパラメータ解決結果です。注入されたデフォルト値 (UUID、timestamp)、SQL 文字列へ変換された `DateTime`、スカラーに縮約された `ToScalarInterface` 値オブジェクトなど、実際にデータベースへ渡された値が入ります。呼び出し側からは通常観測できない値です。
 
-The return type **is** the intent declaration — the framework does not sniff the SQL. Pick `InsertedRow` when you need the id or the resolved values, `AffectedRows` otherwise. Existing `void` return types keep working unchanged.
+戻り値型そのものが意図の宣言です。フレームワークは SQL を推測して判定しません。id や解決済み値が必要なら `InsertedRow`、影響行数だけでよいなら `AffectedRows` を選びます。既存の `void` 戻り値型はそのまま動作します。
 
-When a SQL file contains multiple statements (separated by `;`), the result reflects the **last executed statement only**.
+SQL ファイルに複数 statement (`;` 区切り) が含まれる場合、結果は**最後に実行された statement** だけを反映します。
 
-**Custom result types:**
+**カスタム結果型:**
 
-Any class implementing `Ray\MediaQuery\Result\PostQueryInterface` can be declared as a return type. The interface defines a single static factory that builds the result from a `PostQueryContext` carrying the executed statement, the connection, and the resolved parameter values:
+`Ray\MediaQuery\Result\PostQueryInterface` を実装する任意のクラスを戻り値型として宣言できます。このインターフェイスは、実行済み statement、接続、解決済みパラメータ値を持つ `PostQueryContext` から結果を組み立てる static factory を 1 つ定義します。
 
 ```php
 use Ray\MediaQuery\Result\PostQueryContext;
@@ -122,11 +225,11 @@ final class RowCountWithQuery implements PostQueryInterface
 }
 ```
 
-Declare it on any `#[DbQuery]` method and the interceptor dispatches to the class's own factory.
+`#[DbQuery]` メソッドの戻り値にこのクラスを宣言すると、インターセプタはそのクラス自身の factory に処理を委譲します。
 
-**SELECT collections — typed row wrappers:**
+**SELECT コレクション: 型付き row ラッパー**
 
-`PostQueryInterface` also covers SELECT. The framework pre-hydrates the result set into `PostQueryContext::$rows` (entity instances when a `factory:` attribute or `@return Wrapper<Entity>` docblock resolves an entity, associative arrays otherwise). Your wrapper class composes those rows — it never touches raw `PDOStatement` or DI:
+`PostQueryInterface` は SELECT にも対応します。フレームワークは結果セットを `PostQueryContext::$rows` に事前 hydrate します。`factory:` 属性や `@return Wrapper<Entity>` docblock から Entity が解決できる場合は Entity インスタンス、それ以外は連想配列です。ラッパークラスはそれらの row を合成するだけで、raw `PDOStatement` や DI を直接扱いません。
 
 ```php
 use ArrayIterator;
@@ -179,19 +282,19 @@ interface ArticleRepository
 }
 ```
 
-Callers get `$articles->published()->totalWordCount()` — domain logic about the result set lives on the type, not scattered across services. `IteratorAggregate` / `Countable` give the wrapper standard "feels like an array" ergonomics. To compose a richer base, wrap a Laravel / Illuminate / Doctrine `Collection` via a property the same way.
+呼び出し側は `$articles->published()->totalWordCount()` のように扱えます。結果セットに関するドメインロジックはサービス層に散らばらず、型の上に置かれます。`IteratorAggregate` / `Countable` を実装すれば、標準的な「配列らしい」操作感も得られます。よりリッチな基盤が必要なら、Laravel / Illuminate / Doctrine の `Collection` をプロパティとして包むのも同じ考え方です。
 
-`$rows` shape is determined by what the framework hands the wrapper:
+`$rows` の形はフレームワークがラッパーに渡すものによって決まります。
 
-- `@return Articles<Article>` docblock or `factory:` attribute → entity instances.
-- Neither declared → associative arrays.
-- DML statement → `[]` (no fetch happens).
+- `@return Articles<Article>` docblock または `factory:` 属性 → Entity インスタンス。
+- どちらもない → 連想配列。
+- DML statement → `[]`。fetch は行われません。
 
-`$rows === []` therefore means either "DML, didn't fetch" or "SELECT, no matches" — pick a result class scoped to one or the other rather than trying to handle both shapes.
+したがって `$rows === []` は「DML なので fetch していない」場合と「SELECT だが一致行がない」場合の両方を表せます。両方を 1 つの結果クラスで無理に扱うより、用途ごとに結果クラスを分ける方が明確です。
 
-**Generic base for reuse across repositories:**
+**再利用できる generic base:**
 
-Lift the entity out as a type variable when several repositories want the same shape with different entities. Psalm and PHPStan propagate the parameter through `foreach`, `$rows[N]`, and `iterator_to_array(...)`:
+複数の repository で同じ形を使い、Entity だけが違う場合は、Entity を型変数として抜き出します。Psalm と PHPStan は `foreach`、`$rows[N]`、`iterator_to_array(...)` まで型パラメータを伝播します。
 
 ```php
 /**
@@ -228,11 +331,11 @@ final class Articles extends TypedRows
 final class Users extends TypedRows {}
 ```
 
-`@extends TypedRows<Article>` carries `Article` through to every site that inspects the rows — `$articles->rows[0]->title`, `foreach ($articles as $a) { $a->wordCount; }`, and any derived method on the base. The framework still hands `$context->rows` as `array<mixed>`; the narrow happens at the `@var list<T>` line in `fromContext()`, and from that point on the static analyser honours the parameter. Runtime is identical to the single-type wrapper above — PHP has no native generics, so this is a static-analysis claim, not a runtime check.
+`@extends TypedRows<Article>` により、`Article` は row を調べるすべての場所へ伝わります。`$articles->rows[0]->title`、`foreach ($articles as $a) { $a->wordCount; }`、base class 上の派生メソッドも同様です。フレームワークが `$context->rows` として渡す型は実行時には `array<mixed>` のままです。`fromContext()` 内の `@var list<T>` で narrow し、その後は静的解析器が型パラメータを尊重します。PHP にはネイティブ generic がないため、これは実行時チェックではなく静的解析上の主張です。
 
-**Constructor Property Promotion (Recommended):**
+**Constructor Property Promotion (推奨):**
 
-Use constructor property promotion for type-safe, immutable entities:
+型安全で immutable な Entity には constructor property promotion を使います。
 
 ```php
 final class Invoice
@@ -253,7 +356,7 @@ final class Invoice
 // property name and needs a SQL alias instead.)
 ```
 
-For PHP 8.4+, use readonly classes:
+PHP 8.4 以降では readonly class も使えます。
 
 ```php
 final readonly class Invoice
@@ -267,13 +370,13 @@ final readonly class Invoice
 }
 ```
 
-### Factory Pattern for Complex Objects
+### 複雑なオブジェクトのための Factory Pattern
 
-Use factories when entities need computed properties or injected services:
+計算済みプロパティや注入サービスが必要な Entity には factory を使います。
 
-**Keep domain knowledge out of controllers:**
+**ドメイン知識を controller から出す:**
 
-The database may store only `birth_date`, while the object exposed to the application has `age`. The age calculation is domain knowledge — "full years as of today", timezone policy, and leap-day handling — and should not be repeated in controllers or templates.
+データベースには `birth_date` しか保存されていない一方で、アプリケーションに公開するオブジェクトには `age` が必要な場合があります。年齢計算は「今日時点の満年齢」、タイムゾーン方針、うるう日処理を含むドメイン知識であり、controller や template に繰り返し書くべきではありません。
 
 ```sql
 -- sql/user_profile.sql
@@ -291,7 +394,7 @@ final class UserProfile
     public function __construct(
         public readonly string $id,
         public readonly string $name,
-        public readonly int $age,  // not a database column
+        public readonly int $age,  // database column ではない
     ) {}
 }
 
@@ -326,7 +429,7 @@ interface UserProfileQuery
 }
 ```
 
-The controller receives a `UserProfile` that already speaks the domain language:
+controller は、すでにドメイン語彙で語れる `UserProfile` を受け取ります。
 
 ```php
 $profile = $userProfileQuery->profile($id);
@@ -337,9 +440,10 @@ return [
 ];
 ```
 
-No controller needs to know how `birth_date` becomes `age`; the transformation stays at the SQL/domain boundary.
+`birth_date` から `age` を作る方法を controller が知る必要はありません。変換は SQL / domain 境界に閉じ込められます。
 
-**Basic Factory:**
+**基本的な factory:**
+
 ```php
 interface OrderRepository
 {
@@ -354,14 +458,15 @@ class OrderFactory
         return new Order(
             id: $id,
             amount: $amount,
-            tax: $amount * 0.1,      // Computed
-            total: $amount * 1.1,    // Computed
+            tax: $amount * 0.1,      // 計算値
+            total: $amount * 1.1,    // 計算値
         );
     }
 }
 ```
 
-**Factory with Dependency Injection:**
+**依存注入を使う factory:**
+
 ```php
 class OrderFactory
 {
@@ -382,7 +487,8 @@ class OrderFactory
 }
 ```
 
-**Polymorphic Entities:**
+**ポリモーフィック Entity:**
+
 ```php
 class UserFactory
 {
@@ -396,11 +502,12 @@ class UserFactory
 }
 ```
 
-> **Architecture Pattern**: Factories enable the [**BDR Pattern**](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/BDR_PATTERN.md) - combining efficient SQL with rich domain objects through dependency injection.
+> **Architecture Pattern**: factory は [**BDR Pattern**]({{ '/bdr-pattern/ja/' | relative_url }}) を実現します。効率的な SQL と、依存注入を通じて組み立てられるリッチなドメインオブジェクトを組み合わせる設計です。
 
-### Smart Parameter Handling
+### 賢いパラメータ処理
 
-**DateTime Automatic Conversion:**
+**DateTime の自動変換:**
+
 ```php
 interface TaskRepository
 {
@@ -409,11 +516,12 @@ interface TaskRepository
 }
 
 // SQL: INSERT INTO tasks (title, created_at) VALUES (:title, :createdAt)
-// DateTime converted to: '2024-01-15 10:30:00'
-// null injects current time automatically
+// DateTime は '2024-01-15 10:30:00' に変換される
+// null は現在時刻の自動注入を起動する
 ```
 
-**Value Objects:**
+**値オブジェクト:**
+
 ```php
 class UserId implements ToScalarInterface
 {
@@ -431,10 +539,11 @@ interface MemoRepository
     public function add(string $memo, UserId $userId): void;
 }
 
-// UserId automatically converted via toScalar()
+// UserId は toScalar() を通じて自動変換される
 ```
 
-**Parameter Injection:**
+**パラメータ注入:**
+
 ```php
 interface TodoRepository
 {
@@ -442,14 +551,14 @@ interface TodoRepository
     public function add(string $title, Uuid|null $id = null): void;
 }
 
-// null triggers DI: Uuid is generated and injected automatically
+// null により DI が起動し、Uuid が生成・注入される
 ```
 
 ### Input Object Flattening
 
-Structure your input while keeping SQL simple with `Ray.InputQuery`.
+`Ray.InputQuery` を使うと、入力を構造化しながら SQL は単純に保てます。
 
-> **Note**: This feature requires the `ray/input-query` package, which is already included as a dependency.
+> **Note**: この機能には `ray/input-query` package が必要です。Ray.MediaQuery には依存として含まれています。
 
 ```php
 use Ray\InputQuery\Attribute\Input;
@@ -478,15 +587,16 @@ interface TodoRepository
     public function create(TodoInput $input): void;
 }
 
-// Input flattened automatically:
+// Input は自動的に flatten される:
 // :title, :givenName, :familyName, :email, :dueDate
 ```
 
-### Pagination
+### ページネーション
 
-Enable lazy-loaded pagination with the `#[Pager]` attribute:
+`#[Pager]` 属性で遅延ロードされるページネーションを有効にします。
 
-**Basic Pagination:**
+**基本的なページネーション:**
+
 ```php
 use Ray\MediaQuery\Annotation\DbQuery;
 use Ray\MediaQuery\Annotation\Pager;
@@ -500,19 +610,20 @@ interface ProductRepository
 }
 
 $pages = $productRepo->getProducts();
-$count = count($pages);  // Executes COUNT query
-$page = $pages[1];       // Executes SELECT with LIMIT/OFFSET
+$count = count($pages);  // COUNT query を実行
+$page = $pages[1];       // LIMIT/OFFSET 付き SELECT を実行
 
 // Page object properties:
-// $page->data          // Items for this page
-// $page->current       // Current page number
-// $page->total         // Total number of items (same as count($pages))
-// $page->hasNext       // Has next page?
-// $page->hasPrevious   // Has previous page?
+// $page->data          // このページの item
+// $page->current       // 現在ページ番号
+// $page->total         // 全 item 数 (count($pages) と同じ)
+// $page->hasNext       // 次ページがあるか
+// $page->hasPrevious   // 前ページがあるか
 // (string) $page       // Pager HTML
 ```
 
-**Dynamic Page Size:**
+**動的ページサイズ:**
+
 ```php
 interface ProductRepository
 {
@@ -522,7 +633,8 @@ interface ProductRepository
 }
 ```
 
-**With Entity Hydration:**
+**Entity Hydration との併用:**
+
 ```php
 interface ProductRepository
 {
@@ -532,12 +644,12 @@ interface ProductRepository
     public function getProducts(): Pages;
 }
 
-// Each page's data is hydrated to Product entities
+// 各 page の data は Product entity に hydrate される
 ```
 
-### Direct SQL Execution
+### 直接 SQL 実行
 
-For advanced use cases, inject `SqlQueryInterface` directly:
+高度な用途では `SqlQueryInterface` を直接注入できます。
 
 ```php
 use Ray\MediaQuery\SqlQueryInterface;
@@ -555,11 +667,12 @@ class CustomRepository
 }
 ```
 
-**Available Methods:**
-- `getRow($queryId, $params)` - Single row
-- `getRowList($queryId, $params)` - Multiple rows
-- `exec($queryId, $params)` - Execute without result
-- `execPostQuery($queryId, $params, $postQueryClass, FetchInterface|null $fetch = null)` - Execute a SQL statement (SELECT or DML) and build a typed result via a `PostQueryInterface` class (e.g. `AffectedRows`, `InsertedRow`, a typed collection wrapper, or any custom class). When `$fetch` is supplied, SELECT rows arrive on the context already hydrated to that strategy's shape.
-- `getCount($queryId, $params)` - Total row count (for pagination)
-- `getStatement()` - Get PDO statement
-- `getPages()` - Get paginated results
+**利用可能なメソッド:**
+
+- `getRow($queryId, $params)` — 単一行を取得。
+- `getRowList($queryId, $params)` — 複数行を取得。
+- `exec($queryId, $params)` — 結果を受け取らずに実行。
+- `execPostQuery($queryId, $params, $postQueryClass, FetchInterface|null $fetch = null)` — SQL statement (SELECT または DML) を実行し、`PostQueryInterface` class を通じて型付き結果を構築します。`AffectedRows`、`InsertedRow`、型付き collection wrapper、任意の custom class などに使えます。`$fetch` を指定した場合、SELECT row はその strategy の形に hydrate された状態で context に渡ります。
+- `getCount($queryId, $params)` — 総行数を取得 (ページネーション用)。
+- `getStatement()` — PDO statement を取得。
+- `getPages()` — ページング結果を取得。

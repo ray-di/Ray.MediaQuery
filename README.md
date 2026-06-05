@@ -1,3 +1,5 @@
+<img src="docs/assets/img/ray-media-query.png" alt="Ray.MediaQuery logo" width="180">
+
 # Ray.MediaQuery
 
 [![codecov](https://codecov.io/gh/ray-di/Ray.MediaQuery/branch/1.x/graph/badge.svg?token=QBOPCUPJQV)](https://codecov.io/gh/ray-di/Ray.MediaQuery)
@@ -9,6 +11,7 @@
 **Ray.MediaQuery lets SQL be SQL and objects be objects.**
 
 Define a PHP interface, attach `#[DbQuery]`, write a SQL file, and Ray.MediaQuery provides the implementation through Ray.Di + AOP. Return types and docblocks drive fetching, hydration, pagination, and post-query result objects.
+
 
 ```php
 use Ray\MediaQuery\Annotation\DbQuery;
@@ -106,12 +109,11 @@ $todos = $todoQuery->list();
 
 ## Documentation
 
-- [Documentation Home](https://ray-di.github.io/Ray.MediaQuery/) — tutorial, reference, and AI-oriented docs.
-- [Hands-on Tutorial (日本語)](https://ray-di.github.io/Ray.MediaQuery/tutorial/) — 13 chapters using SQLite. ([source](./docs/tutorial/README.ja.md))
-- [Feature Reference](https://ray-di.github.io/Ray.MediaQuery/reference/) — result mapping, factories, parameter handling, pagination, and direct SQL execution. ([source](./docs/reference.md))
-- [BDR Pattern Guide](./BDR_PATTERN.md) — architectural approach behind SQL + rich domain objects.
-- [AI-Oriented Reference](https://ray-di.github.io/Ray.MediaQuery/llms-full.txt) — compact reference for coding agents. ([source](./docs/llms-full.txt))
-- [Demo Application](./demo/) — a minimal runnable smoke test of the module wiring; the hands-on tutorial above is the full feature walkthrough.
+Start from the [Documentation Home](https://ray-di.github.io/Ray.MediaQuery/). It is the single entry point for the manual, hands-on tutorial, BDR pattern, FAQ, ecosystem links, and AI-oriented reference.
+
+## Demo Application
+
+See [demo/](./demo/) for a minimal runnable smoke test of the module wiring. The hands-on tutorial in the documentation site is the full feature walkthrough.
 
 ## Philosophy
 

@@ -1,4 +1,14 @@
+---
+layout: default
+title: BDR パターン実践ガイド
+description: 明示的な SQL、ファクトリ、イミュータブルなドメインオブジェクトを組み合わせる Business Domain Repository Pattern の実践ガイド。
+lang: ja
+permalink: /bdr-pattern/ja/
+---
+
 # Business Domain Repository Pattern（BDRパターン）実践ガイド
+
+[English]({{ '/bdr-pattern/' | relative_url }})
 
 ## はじめに
 
@@ -64,15 +74,15 @@ class OrderController
     public function show(string $id): Response
     {
         $order = $this->orderRepo->findById($id); // 単純なデータ
-        
+
         // ビジネスロジックがコントローラーに散乱 - テストの悪夢！
         $items = $this->inventoryService->checkStock($order->items);
         $tax = $this->taxCalculator->calculate($items, $order->region);
         $shipping = $this->shippingService->calculate($items, $order->region);
         $canFulfill = $this->validateOrder($items, $order->status);
-        
+
         // このコントローラーのテストには6つ以上の依存関係のモックが必要！
-        
+
         return $this->render('order.html.twig', compact('order', 'tax', 'shipping', 'canFulfill'));
     }
 }
@@ -87,7 +97,7 @@ class OrderController
     {
         // リポジトリが完全なドメインオブジェクトを返却
         $order = $this->orderRepo->getOrder($id);
-        
+
         // コントローラーはレンダリングのみ - ビジネスロジックなし
         return $this->render('order.html.twig', ['order' => $order]);
     }
@@ -150,7 +160,7 @@ interface OrderRepositoryInterface
 {
     #[DbQuery('order_detail', factory: OrderDomainFactory::class)]
     public function getOrder(string $id): OrderDomainObject;
-    
+
     #[DbQuery('active_orders', factory: OrderDomainFactory::class)]
     /** @return array<OrderDomainObject> */
     public function getActiveOrders(): array;
@@ -160,7 +170,7 @@ interface OrderRepositoryInterface
 ### 2. SQLクエリ（order_detail.sql）
 
 ```sql
-SELECT 
+SELECT
     o.id,
     o.customer_id,
     o.region,
@@ -193,7 +203,7 @@ final class OrderDomainFactory
         private InventoryService $inventoryService,
         private BusinessRuleEngine $ruleEngine,
     ) {}
-    
+
     public function factory(
         string $id,
         string $customer_id,
@@ -202,13 +212,13 @@ final class OrderDomainFactory
         string $items_json
     ): OrderDomainObject {
         $items = json_decode($items_json, true);
-        
+
         // ビジネスロジックをファクトリーに集約
         $validatedItems = $this->inventoryService->validateStock($items);
         $subtotal = array_sum(array_map(fn($item) => $item['price'] * $item['quantity'], $items));
         $tax = $this->taxCalculator->calculate($validatedItems, $region);
         $shipping = $this->shippingService->calculate($validatedItems, $region);
-        
+
         return new OrderDomainObject(
             id: $id,
             customerId: $customer_id,
@@ -224,11 +234,11 @@ final class OrderDomainFactory
             ruleEngine: $this->ruleEngine,
         );
     }
-    
+
     private function getInsufficientStockItems(array $original, array $validated): array
     {
         // 在庫不足商品を特定するビジネスロジック
-        return array_filter($original, fn($item) => 
+        return array_filter($original, fn($item) =>
             !in_array($item['product_id'], array_column($validated, 'product_id'))
         );
     }
@@ -255,33 +265,33 @@ final readonly class OrderDomainObject
         // 注入された読み取り側ルールエンジン - ORMでは困難
         private BusinessRuleEngine $ruleEngine,
     ) {}
-    
+
     // 読み取り側ドメインオブジェクトの振る舞い
     public function getDisplayTotal(): string
     {
         return '$' . number_format($this->total, 2);
     }
-    
+
     public function hasInsufficientStock(): bool
     {
         return count($this->insufficientStockItems) > 0;
     }
-    
+
     public function getTaxRate(): float
     {
         return $this->subtotal > 0 ? ($this->tax / $this->subtotal) * 100 : 0;
     }
-    
+
     public function isPending(): bool
     {
         return $this->status === 'pending';
     }
-    
+
     public function canShowProcessAction(): bool
     {
         return $this->canFulfill && $this->isPending();
     }
-    
+
     // 注入されたサービスによる読み取り側の優先度分類
     public function getBusinessPriority(): string
     {
@@ -329,10 +339,10 @@ class OrderQueryTest extends DatabaseTestCase
         // データフィクスチャーを準備
         $this->insertOrder('order-1', 'customer-1', 'tokyo', 'pending');
         $this->insertOrderItem('order-1', 'product-1', 2, 1000);
-        
+
         // クエリ実行
         $result = $this->executeQuery('order_detail.sql', ['id' => 'order-1']);
-        
+
         // 結果検証
         $this->assertEquals('order-1', $result[0]['id']);
         $this->assertJson($result[0]['items']);
@@ -352,9 +362,9 @@ class OrderDomainFactoryTest extends TestCase
         $shippingService = new FakeShippingService(['tokyo' => 500]);
         $inventoryService = new FakeInventoryService(['product-1' => 10]);
         $ruleEngine = new FakeBusinessRuleEngine();
-        
+
         $factory = new OrderDomainFactory($taxCalculator, $shippingService, $inventoryService, $ruleEngine);
-        
+
         // ファクトリーをテスト
         $order = $factory->factory(
             'order-1',
@@ -363,7 +373,7 @@ class OrderDomainFactoryTest extends TestCase
             'pending',
             '[{"product_id": "product-1", "quantity": 2, "price": 1000}]'
         );
-        
+
         // ビジネスロジック結果を検証
         $this->assertEquals(2000, $order->subtotal);
         $this->assertEquals(160, $order->tax);      // 8%
@@ -396,7 +406,7 @@ class OrderDomainObjectTest extends TestCase
             insufficientStockItems: [],
             ruleEngine: $ruleEngine,
         );
-        
+
         // 振る舞いをテスト
         $this->assertEquals('$2,660.00', $order->getDisplayTotal());
         $this->assertEquals(8.0, $order->getTaxRate());
@@ -451,13 +461,13 @@ final class ProductDomainFactory
         private ExchangeRateService $exchangeRate,  // 外部API
         private ReviewService $reviewService,       // 外部API
     ) {}
-    
+
     public function factory(string $id, string $name, float $price_usd): ProductDomainObject
     {
         // 外部サービスからのデータで充実化
         $priceJpy = $this->exchangeRate->convert($price_usd, 'USD', 'JPY');
         $reviews = $this->reviewService->getReviewSummary($id);
-        
+
         return new ProductDomainObject(
             id: $id,
             name: $name,
@@ -480,15 +490,15 @@ final class CachedUserDomainFactory
         private CacheInterface $cache,
         private PermissionService $permissionService,
     ) {}
-    
+
     public function factory(string $id, int $role_id): UserDomainObject
     {
         // 高コストな操作をキャッシュ
         $cacheKey = "permissions_role_{$role_id}";
-        $permissions = $this->cache->remember($cacheKey, 3600, 
+        $permissions = $this->cache->remember($cacheKey, 3600,
             fn() => $this->permissionService->getPermissions($role_id)
         );
-        
+
         return new UserDomainObject(
             id: $id,
             permissions: $permissions,
@@ -510,12 +520,12 @@ class ProductController
     public function show($id)
     {
         $product = $this->repo->find($id);
-        
+
         // このビジネスロジックを特定
         $product->finalPrice = $this->calculatePrice($product);
         $product->inStock = $this->inventory->check($product->id);
         $product->reviews = $this->reviewService->get($product->id);
-        
+
         return view('product', compact('product'));
     }
 }
@@ -563,7 +573,7 @@ BDRパターンでは、すべてが明示的です：
 
 ```sql
 -- order_detail.sql - AIが読み理解できる
-SELECT 
+SELECT
     o.id,
     o.region,
     JSON_ARRAYAGG(
@@ -608,7 +618,7 @@ SQL（宣言的、集合ベース）とOOP（命令的、オブジェクトベ�
 
 BDRパターンでは、それぞれが自身の領域で優秀さを発揮しながら、共により大きなものを構築します。
 
-## FAQ
+<h2 id="faq">FAQ</h2>
 
 ### Q: 変更されたオブジェクトをどうやってDBに書き戻す（保存する）のですか？
 
@@ -716,7 +726,7 @@ BEAR.Sunday は、アプリケーションの操作を URI で参照できる `R
 
 この境界は BDR と相性が良いです。Repository は **何を**問い合わせるかを宣言したまま、独立したリソースリクエストを **いつ** **どう**実行するかは BEAR.Sunday と BEAR.Async がアプリケーション境界で決めます。Repository interface と SQL file は変わりません。
 
-- [BDR + BEAR.Async: 並列 SQL レシピ](./BEAR_ASYNC_RECIPE-ja.md) — 各リポジトリ呼び出しを `ResourceObject` で包むと、`#[Embed]` がアプリケーション境界でそれらを並列実行する。
+- [BDR + BEAR.Async: 並列 SQL レシピ](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/BEAR_ASYNC_RECIPE-ja.md) — 各リポジトリ呼び出しを `ResourceObject` で包むと、`#[Embed]` がアプリケーション境界でそれらを並列実行する。
 
 ## 参考文献
 
