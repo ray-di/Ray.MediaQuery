@@ -564,10 +564,10 @@ In the BDR Pattern, each excels in its own domain while building something great
 
 ### Q: How do I save modified objects back to the database?
 
-**A: You don't save the query object itself.** Objects in the BDR Pattern are read-only Query models: projections shaped for a screen, report, API response, or use case. When state must change, model that change as a Command.
+**A: You don't save the query object itself.** Objects in the BDR Pattern are read-only Query models: projections shaped for a screen, report, API response, or use case. When state must change, model that change as a Command-side decision.
 
 1. **Name the intent** - `ProcessOrder`, `DeactivateUser`, `ChangeShippingAddress`
-2. **Let the Command side decide** - enforce invariants and make success/failure reasons explicit
+2. **Let the Command model decide** - enforce domain consistency and make success/failure reasons explicit
 3. **Persist the result** - execute the necessary UPDATE, INSERT, or DELETE in the command flow
 
 This follows the **CQRS (Command Query Responsibility Segregation)** principle:
@@ -585,18 +585,21 @@ if ($order->canShowProcessAction()) {
 ```
 
 The separation is intentional:
-- **Queries** can use JOINs, aggregations, calculations, and projection SQL to shape data for a specific use
-- **Query objects** are read-only structures for the current use and can be replaced when that use changes
-- **Commands** carry business intent and invariants; writes are the persistence result of that decision
+- **Command models** protect domain consistency and decide whether a business action may happen
+- **Query models** shape data for display or reporting and can be replaced when that use changes
+- **SQL** is naturally good at projection: JOINs, aggregations, calculations, and denormalized result shapes
 
 ### Q: Is this the CQRS pattern?
 
 **A: Yes. BDR expresses the Query side of CQRS.** But this is not mainly about placing read repositories and write repositories in different locations. It is about separating concerns and models.
 
-CQRS is often introduced as a data-source or Repository placement pattern. That is an easy shape to draw, but it is not the essence. The essence is that Command and Query optimize for different concerns, so they should not be forced into one Repository or Entity model.
+The starting point is simple: reads and writes want different models.
 
-- **Command side**: intent, behavior, invariants, and failure reasons. It answers, "May this action happen?"
-- **Query side (BDR Pattern)**: projection, structure, and arrangement for the current reader. It answers, "What shape is useful to read now?"
+The write side needs a domain model that protects consistency. It carries intent, behavior, invariants, and failure reasons. It answers, "May this business action happen?"
+
+The read side often wants denormalized, flattened data for a screen, report, or API response. It answers, "What shape is useful to display now?" Trying to satisfy both with one Repository or Entity model creates friction.
+
+CQRS is often mistaken for a physical architecture: separate databases, separate infrastructure, separate repository locations. Those may be useful implementation choices, but they are not the essence. The essence is that Command is business decision, and Query is display structure.
 
 SQL already has this Query-side character. A `SELECT` can join, aggregate, calculate, and project a result into the exact structure needed without pretending that structure is the canonical domain model. In BDR, the SQL file defines that projection, and the factory/domain object gives it a typed PHP surface.
 
