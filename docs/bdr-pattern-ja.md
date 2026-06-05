@@ -622,50 +622,43 @@ BDRパターンでは、それぞれが自身の領域で優秀さを発揮し�
 
 ### Q: 変更されたオブジェクトをどうやってDBに書き戻す（保存する）のですか？
 
-**A: 書き戻しません。** BDRパターンのオブジェクトは読み取り専用であり、データのクエリのために存在します。データを変更する必要がある場合：
+**A: BDR のクエリオブジェクト自体は保存しません。** BDR パターンのオブジェクトは読み取り専用の Query モデル、つまり画面、帳票、API レスポンス、ユースケースに合わせた projection です。状態を変更する必要がある場合は、その変更を Command として表します。
 
-1. **アプリケーション層でビジネス判断を行う**
-2. **コマンドを発行する** - 明確で明示的な書き込み操作
-3. **シンプルな書き込みクエリを実行** - UPDATE、INSERT、DELETE文
+1. **意図に名前を付ける** - `ProcessOrder`、`DeactivateUser`、`ChangeShippingAddress`
+2. **Command 側で判断する** - 不変条件を守り、成功/失敗の理由を明確にする
+3. **結果を永続化する** - 必要な UPDATE、INSERT、DELETE を Command の流れで実行する
 
 これは**CQRS（Command Query Responsibility Segregation：コマンド・クエリ責任分離）**の原則に従います：
 
 ```php
-// クエリ側（BDRパターン）
-$order = $this->orderRepo->getOrder($id);
-if ($order->canProcess()) {
-    // コマンド側（シンプルな書き込み）
-    $this->orderCommandRepo->markAsProcessed($id, new DateTime());
+// Query側（BDRパターン）: 今の用途に必要なprojection
+$order = $this->orderQuery->getOrder($id);
+if ($order->canShowProcessAction()) {
+    // アプリケーションは操作を提示できる。ただし最終判断はCommand側が行う。
+    $this->processOrder->execute($id, new DateTimeImmutable());
 }
 
-// orderCommandRepoはシンプルなSQLを使用：
+// processOrder は必要に応じて明示的な書き込みSQLを使う：
 // UPDATE orders SET status = 'processed', processed_at = :timestamp WHERE id = :id
 ```
 
 この分離は意図的です：
-- **クエリ**は複雑で、JOINや集約を含むことができる
-- **コマンド**はシンプルで、状態変更に集中すべき
-- **ドメインロジック**はクエリオブジェクトに存在し、データベース書き込みには存在しない
+- **Query** は JOIN、集約、計算、projection SQL で用途に合わせて形を作れる
+- **Query オブジェクト**は今読むための読み取り専用構造で、用途が変われば置き換えてよい
+- **Command** は業務の意図と不変条件を表し、書き込みはその判断を永続化した結果である
 
 ### Q: これはCQRSパターンですか？
 
-**A: はい、特にクエリ（読み取り）側です。** BDRパターンはCQRSのクエリ側の強力な実装です。
+**A: はい。BDR は CQRS の Query 側を表現します。** ただし、それは Read Repository と Write Repository を別の場所に置く、という話が中心ではありません。重要なのは、関心とモデルを分けることです。
 
-CQRSは読み取りと書き込みの責務を分離します：
-- **クエリ側（BDRパターン）**：ビジネスロジックを含む豊富なドメインオブジェクトによる複雑な読み取り
-- **コマンド側**：状態を変更するシンプルで焦点を絞った書き込み
+CQRS は、データソースや Repository の置き場所のパターンとして説明されることがあります。それは図にしやすい形ですが、本質ではありません。本質は、Command と Query が最適化する関心が違うため、それらを一つの Repository や Entity モデルに押し込まないことです。
 
-BDRパターンは複雑な部分（クエリ）を以下を組み合わせて処理します：
-- データ取得のためのSQLの力
-- 変換と充実化のためのファクトリー
-- ビジネスロジックのためのドメインオブジェクト
+- **Command 側**：意図、振る舞い、不変条件、失敗理由を表す。「この行為は実行してよいか？」に答える
+- **Query 側（BDR パターン）**：今の読み手に必要な projection、構造、並びを表す。「今読むにはどんな形が役に立つか？」に答える
 
-一方、コマンド側はシンプルに保たれます：
-- 直接的なUPDATE/INSERT/DELETE文
-- イベントソーシング（必要な場合）
-- 書き込み前のシンプルな検証
+SQL はそもそもこの Query 側の性質を持っています。`SELECT` は JOIN、集約、計算を使って、必要な形へ結果を projection できます。その構造を永続的な正規ドメインモデルであるかのように扱う必要はありません。BDR では、SQL ファイルがその projection を定義し、ファクトリやドメインオブジェクトが PHP の型として表面を与えます。
 
-この分離により、両側がよりシンプルで保守しやすくなります。
+Query モデルは使い捨てであってもかまいません。画面、帳票、API レスポンスが変われば、別の `SELECT` と小さな読み取りモデルを作ればよい。それは DRY 違反ではなく、CQRS の要点です。関心が違うものには、違うモデルを与えます。
 
 ### Q: ファクトリーで外部APIを呼ぶと、リスト取得時に遅くなりませんか？
 

@@ -564,50 +564,43 @@ In the BDR Pattern, each excels in its own domain while building something great
 
 ### Q: How do I save modified objects back to the database?
 
-**A: You don't.** Objects in the BDR Pattern are read-only and exist for querying data. When you need to modify data:
+**A: You don't save the query object itself.** Objects in the BDR Pattern are read-only Query models: projections shaped for a screen, report, API response, or use case. When state must change, model that change as a Command.
 
-1. **Make business decisions** in your application layer
-2. **Issue a Command** - a clear, explicit write operation
-3. **Execute simple write queries** - UPDATE, INSERT, DELETE statements
+1. **Name the intent** - `ProcessOrder`, `DeactivateUser`, `ChangeShippingAddress`
+2. **Let the Command side decide** - enforce invariants and make success/failure reasons explicit
+3. **Persist the result** - execute the necessary UPDATE, INSERT, or DELETE in the command flow
 
 This follows the **CQRS (Command Query Responsibility Segregation)** principle:
 
 ```php
-// Query side (BDR Pattern)
-$order = $this->orderRepo->getOrder($id);
-if ($order->canProcess()) {
-    // Command side (simple write)
-    $this->orderCommandRepo->markAsProcessed($id, new DateTime());
+// Query side (BDR Pattern): projection for the current use
+$order = $this->orderQuery->getOrder($id);
+if ($order->canShowProcessAction()) {
+    // The application may offer the action, but the Command owns the final decision.
+    $this->processOrder->execute($id, new DateTimeImmutable());
 }
 
-// orderCommandRepo might use simple SQL:
+// processOrder may use explicit write SQL:
 // UPDATE orders SET status = 'processed', processed_at = :timestamp WHERE id = :id
 ```
 
 The separation is intentional:
-- **Queries** can be complex, with JOINs and aggregations
-- **Commands** should be simple and focused on changing state
-- **Domain logic** lives in the query objects, not in the database writes
+- **Queries** can use JOINs, aggregations, calculations, and projection SQL to shape data for a specific use
+- **Query objects** are read-only structures for the current use and can be replaced when that use changes
+- **Commands** carry business intent and invariants; writes are the persistence result of that decision
 
 ### Q: Is this the CQRS pattern?
 
-**A: Yes, specifically the Query (read) side.** The BDR Pattern is a powerful implementation of CQRS's query side.
+**A: Yes. BDR expresses the Query side of CQRS.** But this is not mainly about placing read repositories and write repositories in different locations. It is about separating concerns and models.
 
-CQRS separates read and write responsibilities:
-- **Query side (BDR Pattern)**: Complex reads with rich domain objects containing business logic
-- **Command side**: Simple, focused writes that change state
+CQRS is often introduced as a data-source or Repository placement pattern. That is an easy shape to draw, but it is not the essence. The essence is that Command and Query optimize for different concerns, so they should not be forced into one Repository or Entity model.
 
-The BDR Pattern handles the complex part (queries) by combining:
-- SQL's power for data retrieval
-- Factories for transformation and enrichment
-- Domain objects for business logic
+- **Command side**: intent, behavior, invariants, and failure reasons. It answers, "May this action happen?"
+- **Query side (BDR Pattern)**: projection, structure, and arrangement for the current reader. It answers, "What shape is useful to read now?"
 
-Meanwhile, the command side remains straightforward:
-- Direct UPDATE/INSERT/DELETE statements
-- Event sourcing (if needed)
-- Simple validation before writes
+SQL already has this Query-side character. A `SELECT` can join, aggregate, calculate, and project a result into the exact structure needed without pretending that structure is the canonical domain model. In BDR, the SQL file defines that projection, and the factory/domain object gives it a typed PHP surface.
 
-This separation makes both sides simpler and more maintainable.
+The Query model may be disposable. If a screen, report, or API response changes, write another `SELECT` and another small read model. That is not a DRY violation; it is the point of CQRS: different concerns get different models.
 
 ### Q: Won't calling external APIs in factories slow down list retrievals?
 
