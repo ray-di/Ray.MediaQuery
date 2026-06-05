@@ -130,7 +130,7 @@ final readonly class UserDomainObject
     // Read-side business questions through injected service
     public function canEdit(Document $document): bool
     {
-        // Impossible with ORM entities - depends on external service
+        // Difficult with ORM entities - depends on external service
         // Test env: FakePermissionService (everyone can edit)
         // Production: RealPermissionService (complex permission checks)
         return $this->permissionService->canEdit($this, $document);
@@ -287,7 +287,7 @@ final readonly class OrderDomainObject
     // Read-side priority through injected service
     public function getBusinessPriority(): string
     {
-        // Impossible with ORM entities - depends on external service
+        // Difficult with ORM entities - depends on external service
         // Test environment: Relaxed thresholds (e.g., high priority at $100+)
         // Production: Strict thresholds (e.g., high priority at $10,000+)
         // Peak season: Different thresholds

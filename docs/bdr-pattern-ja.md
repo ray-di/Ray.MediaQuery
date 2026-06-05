@@ -262,7 +262,7 @@ final readonly class OrderDomainObject
         public float $total,                    // 総合計
         public bool $canFulfill,                // 読み取り側ルールの結果
         public array $insufficientStockItems,   // 在庫不足商品リスト
-        // 注入された読み取り側ルールエンジン - ORMでは不可能
+        // 注入された読み取り側ルールエンジン - ORMでは困難
         private BusinessRuleEngine $ruleEngine,
     ) {}
 
