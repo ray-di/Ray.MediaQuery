@@ -127,7 +127,7 @@ final readonly class UserDomainObject
         private PermissionService $permissionService,
     ) {}
 
-    // Dynamic business rules through injected service
+    // Read-side business questions through injected service
     public function canEdit(Document $document): bool
     {
         // Impossible with ORM entities - depends on external service
@@ -141,7 +141,7 @@ final readonly class UserDomainObject
 }
 ```
 
-In the BDR Pattern, objects are not mere data containers but domain objects containing business logic. They answer questions about the business domain but don't change the database themselves.
+In the BDR Pattern, objects are not mere data containers but read-side domain objects with behavior. They answer questions about the current projection and user experience, but Command models still make the final decision before state changes.
 
 ## Implementation Guide
 
@@ -252,13 +252,13 @@ final readonly class OrderDomainObject
         public float $tax,                      // Calculated by region
         public float $shipping,                 // Calculated shipping
         public float $total,                    // Complete total
-        public bool $canFulfill,                // Business rule applied
+        public bool $canFulfill,                // Read-side rule result
         public array $insufficientStockItems,   // List of insufficient stock items
         // Injected business rule engine - impossible with ORM
         private BusinessRuleEngine $ruleEngine,
     ) {}
     
-    // Domain object behavior
+    // Read-side domain object behavior
     public function getDisplayTotal(): string
     {
         return '$' . number_format($this->total, 2);
@@ -279,12 +279,12 @@ final readonly class OrderDomainObject
         return $this->status === 'pending';
     }
 
-    public function canProcess(): bool
+    public function canShowProcessAction(): bool
     {
         return $this->canFulfill && $this->isPending();
     }
 
-    // Dynamic business rules through injected service
+    // Read-side priority through injected service
     public function getBusinessPriority(): string
     {
         // Impossible with ORM entities - depends on external service
@@ -317,7 +317,7 @@ Because each layer is **independent**, if each is tested individually, the combi
 
 1. **SQL Query**: Does it return correct data for the input?
 2. **Factory**: Does it correctly transform data into domain objects?
-3. **Domain Object**: Does it correctly implement business rules?
+3. **Domain Object**: Does it correctly implement read-side behavior?
 
 If these are individually correct, the combination is necessarily correct. **It's a logical structure.**
 
@@ -564,17 +564,15 @@ In the BDR Pattern, each excels in its own domain while building something great
 
 ### Q: How do I save modified objects back to the database?
 
-**A: You don't save the query object itself.** Objects in the BDR Pattern are read-only Query models: projections shaped for a screen, report, API response, or use case. When state must change, model that change as a Command-side decision.
+**A: Use an explicit write path, not the BDR read object.** A BDR object is a read-side projection shaped for a screen, report, API response, or use case. It does not save itself.
 
-1. **Name the intent** - `ProcessOrder`, `DeactivateUser`, `ChangeShippingAddress`
-2. **Let the Command model decide** - enforce domain consistency and make success/failure reasons explicit
-3. **Persist the result** - execute the necessary UPDATE, INSERT, or DELETE in the command flow
-
-This follows the **CQRS (Command Query Responsibility Segregation)** principle:
+1. Read a BDR Query model when it helps present the current state or available actions.
+2. Call a Command or application write use case for the state change.
+3. In that write path, validate write-side invariants and persist the result with UPDATE, INSERT, DELETE, or another write mechanism.
 
 ```php
 // Query side (BDR Pattern): projection for the current use
-$order = $this->orderQuery->getOrder($id);
+$order = $this->orderRepo->getOrder($id);
 if ($order->canShowProcessAction()) {
     // The application may offer the action, but the Command owns the final decision.
     $this->processOrder->execute($id, new DateTimeImmutable());
@@ -584,14 +582,16 @@ if ($order->canShowProcessAction()) {
 // UPDATE orders SET status = 'processed', processed_at = :timestamp WHERE id = :id
 ```
 
-The separation is intentional:
+`canShowProcessAction()` is read-side derivation for presentation. `ProcessOrder` must still enforce the write-side invariant. BDR does not define the Command model; Ray.MediaQuery can execute DML if that is the write mechanism you choose.
+
+This follows the **CQRS (Command Query Responsibility Segregation)** distinction:
+- **Query models** shape data for display or reporting and may contain derivation/presentation behavior
 - **Command models** protect domain consistency and decide whether a business action may happen
-- **Query models** shape data for display or reporting and can be replaced when that use changes
 - **SQL** is naturally good at projection: JOINs, aggregations, calculations, and denormalized result shapes
 
 ### Q: Is this the CQRS pattern?
 
-**A: Yes. BDR expresses the Query side of CQRS.** But this is not mainly about placing read repositories and write repositories in different locations. It is about separating concerns and models.
+**A: BDR fits the Query side of CQRS, but more precisely it is a rich read-model pattern.** It is not mainly about placing read repositories and write repositories in different locations. It is about separating concerns and models.
 
 The starting point is simple: reads and writes want different models.
 
@@ -600,6 +600,8 @@ The write side needs a domain model that protects consistency. It carries intent
 The read side often wants denormalized, flattened data for a screen, report, or API response. It answers, "What shape is useful to display now?" Trying to satisfy both with one Repository or Entity model creates friction.
 
 CQRS is often mistaken for a physical architecture: separate databases, separate infrastructure, separate repository locations. Those may be useful implementation choices, but they are not the essence. The essence is that Command is business decision, and Query is display structure.
+
+BDR is not limited to a thin DTO. Its read model can expose behavior, as long as that behavior is derivation or presentation logic: totals, labels, visibility, read-side priority, or other answers about the current projection. State-changing invariants stay on the Command side.
 
 SQL already has this Query-side character. A `SELECT` can join, aggregate, calculate, and project a result into the exact structure needed without pretending that structure is the canonical domain model. In BDR, the SQL file defines that projection, and the factory/domain object gives it a typed PHP surface.
 

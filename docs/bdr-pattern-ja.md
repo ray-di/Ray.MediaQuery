@@ -124,7 +124,7 @@ BDRパターンは重要なことを達成します：**SQL基盤による真の
 - **明確な意図** - クエリ（データ読み取り）とコマンド（データ変更）の分離
 
 ```php
-// ドメインオブジェクトでのDIの力を活用
+// 読み取り側の問いにDIの力を活用
 final readonly class UserDomainObject
 {
     public function __construct(
@@ -135,7 +135,7 @@ final readonly class UserDomainObject
         private PermissionService $permissionService,
     ) {}
 
-    // 注入されたサービスによる動的なビジネスルール
+    // 注入されたサービスによる読み取り側の問い
     public function canEdit(Document $document): bool
     {
         // ORMエンティティでは不可能 - 外部サービスに依存
@@ -149,7 +149,7 @@ final readonly class UserDomainObject
 }
 ```
 
-BDRパターンでは、オブジェクトは単なるデータコンテナではなく、ビジネスロジックを含むドメインオブジェクトです。これらはビジネスドメインに関する質問に答えますが、データベース自体を変更することはありません。
+BDRパターンでは、オブジェクトは単なるデータコンテナではなく、振る舞いを持つ読み取り側のドメインオブジェクトです。現在の projection やユーザー体験に関する問いに答えますが、状態変更前の最終判断は Command モデルが行います。
 
 ## 実装ガイド
 
@@ -260,13 +260,13 @@ final readonly class OrderDomainObject
         public float $tax,                      // 地域別計算済み税額
         public float $shipping,                 // 計算済み送料
         public float $total,                    // 総合計
-        public bool $canFulfill,                // 適用済みビジネスルール
+        public bool $canFulfill,                // 読み取り側ルールの結果
         public array $insufficientStockItems,   // 在庫不足商品リスト
-        // 注入されたビジネスルールエンジン - ORMでは不可能
+        // 注入された読み取り側ルールエンジン - ORMでは不可能
         private BusinessRuleEngine $ruleEngine,
     ) {}
 
-    // ドメインオブジェクトの振る舞い
+    // 読み取り側ドメインオブジェクトの振る舞い
     public function getDisplayTotal(): string
     {
         return '$' . number_format($this->total, 2);
@@ -287,12 +287,12 @@ final readonly class OrderDomainObject
         return $this->status === 'pending';
     }
 
-    public function canProcess(): bool
+    public function canShowProcessAction(): bool
     {
         return $this->canFulfill && $this->isPending();
     }
 
-    // 注入されたサービスによる動的なビジネスルール
+    // 注入されたサービスによる読み取り側の優先度分類
     public function getBusinessPriority(): string
     {
         // ORMエンティティでは不可能 - 外部サービスに依存
@@ -325,7 +325,7 @@ BDRパターンの重要な利点の一つは、**テストがシンプルで信
 
 1. **SQLクエリ**：入力に対して正しいデータを返すか？
 2. **ファクトリー**：データを正しくドメインオブジェクトに変換するか？
-3. **ドメインオブジェクト**：ビジネスルールを正しく実装しているか？
+3. **ドメインオブジェクト**：読み取り側の振る舞いを正しく実装しているか？
 
 これらが個別に正しければ、組み合わせは必然的に正しくなります。**論理的構造です。**
 
@@ -410,7 +410,7 @@ class OrderDomainObjectTest extends TestCase
         // 振る舞いをテスト
         $this->assertEquals('$2,660.00', $order->getDisplayTotal());
         $this->assertEquals(8.0, $order->getTaxRate());
-        $this->assertTrue($order->canProcess());
+        $this->assertTrue($order->canShowProcessAction());
         $this->assertFalse($order->hasInsufficientStock());
     }
 }
@@ -622,17 +622,15 @@ BDRパターンでは、それぞれが自身の領域で優秀さを発揮し�
 
 ### Q: 変更されたオブジェクトをどうやってDBに書き戻す（保存する）のですか？
 
-**A: BDR のクエリオブジェクト自体は保存しません。** BDR パターンのオブジェクトは読み取り専用の Query モデル、つまり画面、帳票、API レスポンス、ユースケースに合わせた projection です。状態を変更する必要がある場合は、その変更を Command 側の意思決定として表します。
+**A: BDR の読み取りオブジェクトを保存するのではなく、明示的な書き込み経路を使います。** BDRパターンのオブジェクトは、画面、帳票、API レスポンス、ユースケースに合わせた読み取り側の projection です。オブジェクト自身は保存しません。
 
-1. **意図に名前を付ける** - `ProcessOrder`、`DeactivateUser`、`ChangeShippingAddress`
-2. **Command モデルで判断する** - ドメインの整合性を守り、成功/失敗の理由を明確にする
-3. **結果を永続化する** - 必要な UPDATE、INSERT、DELETE を Command の流れで実行する
-
-これは**CQRS（Command Query Responsibility Segregation：コマンド・クエリ責任分離）**の原則に従います：
+1. 現在の状態や表示可能な操作を示すために、必要なら BDR の Query モデルを読む
+2. 状態変更には Command またはアプリケーションの書き込みユースケースを呼ぶ
+3. その書き込み経路で書き込み側の不変条件を検証し、UPDATE、INSERT、DELETE、または別の書き込み手段で結果を永続化する
 
 ```php
 // Query側（BDRパターン）: 今の用途に必要なprojection
-$order = $this->orderQuery->getOrder($id);
+$order = $this->orderRepo->getOrder($id);
 if ($order->canShowProcessAction()) {
     // アプリケーションは操作を提示できる。ただし最終判断はCommand側が行う。
     $this->processOrder->execute($id, new DateTimeImmutable());
@@ -642,14 +640,16 @@ if ($order->canShowProcessAction()) {
 // UPDATE orders SET status = 'processed', processed_at = :timestamp WHERE id = :id
 ```
 
-この分離は意図的です：
+`canShowProcessAction()` は表示のための読み取り側の派生判断です。`ProcessOrder` は書き込み側の不変条件をあらためて検証しなければなりません。BDR は Command モデルを定義しません。Ray.MediaQuery は DML を実行できますが、それを書き込み手段として選ぶかどうかはアプリケーション側の設計です。
+
+これは**CQRS（Command Query Responsibility Segregation：コマンド・クエリ責任分離）**の区別に従います：
+- **Query モデル**は画面や帳票に合わせてデータを形作り、派生・表示の振る舞いを持つことができる
 - **Command モデル**はドメインの整合性を守り、業務上の行為を実行してよいかを判断する
-- **Query モデル**は画面や帳票に合わせてデータを形作り、用途が変われば置き換えてよい
 - **SQL** は projection に向いている。JOIN、集約、計算、非正規化された結果の形を自然に表せる
 
 ### Q: これはCQRSパターンですか？
 
-**A: はい。BDR は CQRS の Query 側を表現します。** ただし、それは Read Repository と Write Repository を別の場所に置く、という話が中心ではありません。重要なのは、関心とモデルを分けることです。
+**A: BDRパターンは CQRS の Query 側に適用できます。ただし、より正確には rich read model のパターンです。** Read Repository と Write Repository を別の場所に置く、という話が中心ではありません。重要なのは、関心とモデルを分けることです。
 
 出発点は単純です。読み取りと書き込みでは、最適なモデルが違います。
 
@@ -658,6 +658,8 @@ if ($order->canShowProcessAction()) {
 読み取り側では、画面、帳票、API レスポンスのために、非正規化されたフラットなデータが欲しいことがよくあります。「今表示するにはどんな形が役に立つか？」に答えるモデルです。同じ Repository や Entity モデルで両方を満たそうとするから無理が生じます。
 
 CQRS はしばしば、データベースを分ける、インフラを分ける、Repository の置き場所を分ける、といった物理的なアーキテクチャとして誤解されます。それらは有用な実装上の選択肢になることはありますが、本質ではありません。本質は、Command は業務の意思決定であり、Query は表示のための構造である、という分離です。
+
+BDR は薄い DTO に限定されません。読み取りモデルは、派生・表示のロジックである限り、振る舞いを持てます。合計、ラベル、表示可否、読み取り側の優先度分類など、現在の projection に関する問いに答える振る舞いです。状態変更の不変条件は Command 側に置きます。
 
 SQL はそもそもこの Query 側の性質を持っています。`SELECT` は JOIN、集約、計算を使って、必要な形へ結果を projection できます。その構造を永続的な正規ドメインモデルであるかのように扱う必要はありません。BDR では、SQL ファイルがその projection を定義し、ファクトリやドメインオブジェクトが PHP の型として表面を与えます。
 
