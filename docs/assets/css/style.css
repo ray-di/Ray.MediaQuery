@@ -7,6 +7,15 @@
   --border: #e5e7eb;
   --code-bg: #f6f8fa;
   --quote-bg: #f8fafc;
+  --syntax-default: #0b3da6;
+  --syntax-keyword: #1a7f37;
+  --syntax-string: #c62828;
+  --syntax-comment: #bb5200;
+  --syntax-punctuation: #24292f;
+  --syntax-number: #0a7a7a;
+  --syntax-generic: #6b7280;
+  --syntax-delete-bg: #ffdddd;
+  --syntax-insert-bg: #ddffdd;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,6 +27,15 @@
     --border: #334155;
     --code-bg: #111827;
     --quote-bg: #111827;
+    --syntax-default: #93c5fd;
+    --syntax-keyword: #86efac;
+    --syntax-string: #fca5a5;
+    --syntax-comment: #fdba74;
+    --syntax-punctuation: #e5e7eb;
+    --syntax-number: #67e8f9;
+    --syntax-generic: #9ca3af;
+    --syntax-delete-bg: #4c1d1d;
+    --syntax-insert-bg: #14532d;
   }
 }
 
@@ -65,6 +83,117 @@ pre {
 }
 
 pre code { padding: 0; background: transparent; }
+
+.highlight {
+  color: var(--syntax-default);
+  background: var(--code-bg);
+  border-radius: 6px;
+}
+
+.highlight pre {
+  margin: 0;
+}
+
+.highlight,
+.highlight pre,
+.highlight code {
+  font-variant-ligatures: none;
+}
+
+.highlight .c,
+.highlight .c1,
+.highlight .cm,
+.highlight .cs,
+.highlight .cp {
+  color: var(--syntax-comment);
+  font-style: normal;
+}
+
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .sr {
+  color: var(--syntax-string);
+}
+
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt {
+  color: var(--syntax-keyword);
+  font-weight: normal;
+}
+
+.highlight .m,
+.highlight .mi,
+.highlight .mf,
+.highlight .mh,
+.highlight .mo,
+.highlight .il {
+  color: var(--syntax-number);
+}
+
+.highlight .n,
+.highlight .na,
+.highlight .nb,
+.highlight .bp,
+.highlight .nc,
+.highlight .no,
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi,
+.highlight .nn,
+.highlight .nx,
+.highlight .nt,
+.highlight .o,
+.highlight .w {
+  color: var(--syntax-default);
+}
+
+.highlight .p {
+  color: var(--syntax-punctuation);
+}
+
+.highlight .gd {
+  color: var(--fg);
+  background: var(--syntax-delete-bg);
+}
+
+.highlight .gi {
+  color: var(--fg);
+  background: var(--syntax-insert-bg);
+}
+
+.highlight .gr,
+.highlight .gt {
+  color: var(--syntax-string);
+}
+
+.highlight .gh,
+.highlight .gu,
+.highlight .go,
+.highlight .gp {
+  color: var(--syntax-generic);
+}
+
+.highlight .gs {
+  font-weight: bold;
+}
+
+.highlight .ge {
+  font-style: italic;
+}
 
 blockquote {
   margin-left: 0;
