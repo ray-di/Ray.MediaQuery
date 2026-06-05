@@ -88,7 +88,9 @@ docs/tutorial/src/
 │   ├── ArticleStatsFactory.php      # DI ファクトリ
 │   ├── MarkdownExcerpter.php        # ファクトリへの注入対象
 │   ├── ArticleSearchResult.php      # SELECT 用 PostQueryInterface
-│   └── CreatedArticle.php           # DML + SELECT 用 PostQueryInterface
+│   ├── CreatedArticle.php           # DML + SELECT 用 PostQueryInterface
+│   └── Exception/
+│       └── UnexpectedRowException.php  # 結果クラスが投げるドメイン例外
 └── sql/
     ├── article_add.sql
     ├── article_create_and_get.sql
@@ -1485,6 +1487,8 @@ First hit: Post #3
 ### 考え方
 
 `ArticleQueryInterface` は契約。プロダクションでは Ray.MediaQuery が SQLite/MySQL を叩く実装を自動生成するが、テストでは「Fake 実装」を bind すれば DB なしでロジックを検証できる。
+
+> この章は `run.php` から実行しない解説章なので、ここで書く `UnsupportedQueryException` と `FakeArticleQuery` は答えコード (`docs/tutorial/src/`) には含めていない（統合 `run.php` が使わないため）。自分の `mywork/` 配下に写経して動かしてほしい。答えに収録されているドメイン例外は、第12章・補章の結果クラスが実際に使う `Blog/Exception/UnexpectedRowException.php` のみである。
 
 ### Step 1. Fake 実装を書く
 
