@@ -6,7 +6,9 @@ namespace Ray\MediaQuery;
 
 use PHPUnit\Framework\TestCase;
 use Ray\MediaQuery\FromDir\TodoAddInterface;
+use Ray\MediaQuery\FromDir\TodoClass;
 use Ray\MediaQuery\FromDir\TodoItemInterface;
+use ReflectionMethod;
 
 use function sort;
 
@@ -14,7 +16,7 @@ class QueriesTest extends TestCase
 {
     public function testFromClasses(): void
     {
-        $classes = [TodoAddInterface::class, TodoItemInterface::class];
+        $classes = [TodoAddInterface::class, TodoClass::class, TodoItemInterface::class];
         $mediaQueries = Queries::fromClasses($classes);
         $this->assertSame($classes, $mediaQueries->classes);
     }
@@ -26,6 +28,7 @@ class QueriesTest extends TestCase
         sort($classes);
         $this->assertSame([
             TodoAddInterface::class,
+            TodoClass::class,
             TodoItemInterface::class,
         ], $classes);
     }
@@ -37,6 +40,7 @@ class QueriesTest extends TestCase
         sort($classes);
         $this->assertSame([
             TodoAddInterface::class,
+            TodoClass::class,
             TodoItemInterface::class,
         ], $classes);
     }
@@ -45,5 +49,13 @@ class QueriesTest extends TestCase
     {
         $mediaQueries = Queries::fromDir(__DIR__ . '/Fake/FromDirInvalidCase');
         $this->assertEmpty($mediaQueries->classes);
+    }
+
+    public function testTokenListsWithoutClassHaveNoClass(): void
+    {
+        $method = new ReflectionMethod(ClassesInDirectories::class, 'extractClassName');
+
+        $this->assertNull($method->invoke(null, []));
+        $this->assertNull($method->invoke(null, ['']));
     }
 }
