@@ -42,6 +42,7 @@
                 "tests/",
                 "tests/Fake"
             ],
+            "Ray\\MediaQuery\\PHPStan\\": "tools/phpstan/src/",
             "Tutorial\\Blog\\": "docs/tutorial/src/Blog/"
         }
     },

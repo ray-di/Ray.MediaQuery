@@ -1,0 +1,33 @@
+{
+    "name": "ray/media-query-phpstan",
+    "description": "PHPStan rules that statically verify Ray.MediaQuery #[DbQuery] contracts",
+    "license": "MIT",
+    "type": "phpstan-extension",
+    "require": {
+        "php": "^8.2",
+        "phpstan/phpstan": "^2.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ray\\MediaQuery\\PHPStan\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ray\\MediaQuery\\PHPStan\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "phpstan": {
+            "includes": [
+                "extension.neon"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
