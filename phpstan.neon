@@ -1,10 +1,22 @@
+includes:
+  - src-sa/extension.neon
+
 parameters:
   level: max
+  parallel:
+    maximumNumberOfProcesses: 1
   paths:
     - src
+    - src-sa/src
     - tests
     - docs/tutorial/src
   excludePaths:
     - tests/Fake/*
     - tests/tmp/*
     - src/MediaQueryModule.php
+  rayMediaQuery:
+    sqlDirectories:
+      - docs/tutorial/src/sql
+    factoryMethod: factory
+    strict: false
+    strictPlaceholderCheck: false

@@ -1,0 +1,4 @@
+parameters:
+  scanFiles:
+    - %currentWorkingDirectory%/src-sa/tests/Rules/Data/valid.php
+    - %currentWorkingDirectory%/src-sa/tests/Rules/Data/invalid.php

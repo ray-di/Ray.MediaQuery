@@ -8,6 +8,7 @@
 /coverage.xml
 /tests/tmp/*
 /.phpunit.cache/
+/src-sa/.phpunit.cache/
 /.claude/
 /.qodo/
 /web-query/

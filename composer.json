@@ -26,10 +26,12 @@
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.8",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5"
     },
     "autoload": {
         "psr-4": {
+            "Ray\\MediaQuery\\PHPStan\\": "src-sa/src/",
             "Ray\\MediaQuery\\": [
                 "src/",
                 "src-deprecated/"
@@ -38,6 +40,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Ray\\MediaQuery\\PHPStan\\Tests\\": "src-sa/tests/",
             "Ray\\MediaQuery\\": [
                 "tests/",
                 "tests/Fake"
@@ -48,21 +51,23 @@
     "scripts": {
         "coverage": "php -dzend_extension=xdebug.so -dxdebug.mode=coverage ./vendor/bin/phpunit --coverage-text --coverage-html=build/coverage",
         "pcov": "php -dextension=pcov.so -d pcov.enabled=1 ./vendor/bin/phpunit --coverage-text --coverage-html=build/coverage  --coverage-clover=coverage.xml",
-        "cs": "./vendor/bin/phpcs",
-        "cs-fix": "./vendor/bin/phpcbf src tests docs/tutorial/src/Blog",
-        "metrics": "./vendor/bin/phpmetrics --report-html=build/metrics --exclude=Exception src",
+        "cs": "vendor-bin/tools/vendor/bin/phpcs",
+        "cs-fix": "vendor-bin/tools/vendor/bin/phpcbf src tests docs/tutorial/src/Blog src-sa/src src-sa/tests",
+        "metrics": "vendor-bin/tools/vendor/bin/phpmetrics --report-html=build/metrics --exclude=Exception src",
         "clean": [
-            "./vendor/bin/phpstan clear-result-cache",
-            "./vendor/bin/psalm --clear-cache"
+            "vendor/bin/phpstan clear-result-cache",
+            "php -d error_reporting=8191 vendor-bin/tools/vendor/bin/psalm --clear-cache"
         ],
         "sa": [
-            "./vendor/bin/psalm --monochrome --show-info=true",
-            "./vendor/bin/phpstan analyse -c phpstan.neon"
+            "php -d error_reporting=8191 vendor-bin/tools/vendor/bin/psalm --monochrome --show-info=true --no-cache",
+            "vendor/bin/phpstan analyse -c phpstan.neon --memory-limit=1G"
         ],
+        "test:phpstan": "vendor/bin/phpunit -c src-sa/phpunit.xml.dist",
         "test": "./vendor/bin/phpunit",
         "tutorial": "php -d zend.assertions=1 -d assert.exception=1 docs/tutorial/src/run.php",
         "tests": [
             "@cs",
+            "@test:phpstan",
             "@sa",
             "@test",
             "@tutorial"
@@ -78,6 +83,7 @@
     "scripts-descriptions": {
         "test": "Run unit tests",
         "tutorial": "Run the tutorial answer code end-to-end as an integration check",
+        "test:phpstan": "Run PHPStan extension rule tests",
         "coverage": "Generate test coverage report",
         "pcov": "Generate test coverage report (pcov)",
         "cs": "Check the coding style",
@@ -103,6 +109,7 @@
     },
     "suggest": {
         "koriym/csv-entities": "Provides one-to-many entity relation",
+        "phpstan/phpstan": "Required to use the optional Ray.MediaQuery PHPStan extension.",
         "ray/web-query": "For Web API query support"
     },
     "extra": {
