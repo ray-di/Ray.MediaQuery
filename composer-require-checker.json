@@ -5,7 +5,22 @@
     "array", "string", "int", "float", "bool", "iterable", "callable", "void", "object", "mixed", "never",
     "Roave\\BetterReflection\\Reflector\\DefaultReflector",
     "Roave\\BetterReflection\\Reflector\\ClassReflector",
-    "json_decode", "json_encode", "JSON_THROW_ON_ERROR"
+    "json_decode", "json_encode", "JSON_THROW_ON_ERROR",
+    "ctype_alnum",
+    "ctype_alpha",
+    "PhpParser\\Node",
+    "PhpParser\\Node\\Attribute",
+    "PhpParser\\Node\\Expr",
+    "PhpParser\\Node\\Expr\\ClassConstFetch",
+    "PhpParser\\Node\\Identifier",
+    "PhpParser\\Node\\Name",
+    "PhpParser\\Node\\Scalar\\String_",
+    "PhpParser\\Node\\Stmt\\ClassMethod",
+    "PHPStan\\Analyser\\Scope",
+    "PHPStan\\Reflection\\ReflectionProvider",
+    "PHPStan\\Rules\\Rule",
+    "PHPStan\\Rules\\RuleErrorBuilder",
+    "PHPStan\\Type\\ObjectType"
   ],
   "php-core-extensions" : [
     "Core",
