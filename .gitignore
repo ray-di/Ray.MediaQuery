@@ -1,8 +1,6 @@
 /vendor/
 /vendor-bin/*/vendor/
-/tools/phpstan/vendor/
-/tools/phpstan/composer.lock
-/tools/phpstan/.phpunit.cache/
+/vendor-bin/*/.phpunit.cache/
 /build/
 /composer.lock
 /phpunit.xml

@@ -4,9 +4,11 @@ PHPStan rules that statically verify the `#[DbQuery]` contract of
 Ray.MediaQuery interfaces — the cross-artifact invariants that PHPStan core
 cannot see on its own (SQL files, `#[Pager]` coherence, factory existence).
 
-This currently lives in-repo as a development tool under `tools/phpstan/`. It is
-structured as a self-contained Composer package so it can later be extracted to
-a standalone `ray/media-query-phpstan` distribution unchanged.
+This currently lives in-repo under `vendor-bin/media-query-phpstan/`, installed as
+its own isolated dependency set via `bamarni/composer-bin-plugin` (the same
+convention the repo uses for `vendor-bin/tools/`). It is structured as a
+self-contained Composer package so it can later be extracted to a standalone
+`ray/media-query-phpstan` distribution unchanged.
 
 ## What it checks (MVP)
 
@@ -34,7 +36,7 @@ Add the extension to your `phpstan.neon` and point it at your SQL directories:
 
 ```neon
 includes:
-    - tools/phpstan/extension.neon
+    - vendor-bin/media-query-phpstan/extension.neon
 
 parameters:
     rayMediaQuery:
@@ -63,27 +65,28 @@ composer clean   # clears PHPStan + Psalm caches
 
 ## Developing / testing the rules
 
-The package carries its own `phpstan` + `phpunit` so `PHPStan\Testing\RuleTestCase`
-has both available (the repo's `vendor-bin/tools` has phpstan but no phpunit, and
-the root has phpunit but no phpstan — neither can run rule tests alone).
+This bin carries its own `phpstan` + `phpunit` so `PHPStan\Testing\RuleTestCase`
+has both available in one vendor (the repo's `vendor-bin/tools` has phpstan but no
+phpunit, and the root has phpunit but no phpstan — neither can run rule tests
+alone). Install it with the bamarni forward command, then run the tests; the
+package `bootstrap.php` makes both the rule code and the parent project types
+available, so the root binaries can drive the extension's configs:
 
 ```bash
-cd tools/phpstan
-composer install
-composer test     # or: ./vendor/bin/phpunit
+composer bin media-query-phpstan install
+./vendor/bin/phpunit -c vendor-bin/media-query-phpstan
 ```
 
 Self-analyse the rule code at level max:
 
 ```bash
-cd tools/phpstan
-./vendor/bin/phpstan analyse -c phpstan.neon.dist
+./vendor/bin/phpstan analyse -c vendor-bin/media-query-phpstan/phpstan.neon.dist
 ```
 
 ## Layout
 
-```
-tools/phpstan/
+```text
+vendor-bin/media-query-phpstan/
   extension.neon              # parameters schema + service registration
   phpstan.neon.dist           # self-analysis of the rule code
   src/

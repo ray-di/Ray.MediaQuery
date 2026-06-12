@@ -1,5 +1,5 @@
 includes:
-  - tools/phpstan/extension.neon
+  - vendor-bin/media-query-phpstan/extension.neon
 
 parameters:
   level: max
