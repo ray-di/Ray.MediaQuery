@@ -132,7 +132,7 @@ final class Product
 | `type`       | JSON レスポンス        | 結果            |
 |--------------|------------------------|-----------------|
 | `'row'`      | オブジェクト `{...}`   | 単一オブジェクト |
-| `'row_list'` | 配列 `[{...}, {...}]`  | `array<Object>` |
+| `'row_list'` | 配列 `[{...}, {...}]`  | `array<object>` |
 
 `type` のデフォルトは `'row_list'` です。`'row'` のメソッドでレスポンスがリストの場合は先頭要素を取り、`'row_list'` のメソッドでレスポンスが単一オブジェクトの場合は 1 要素の配列に包みます。
 
@@ -202,7 +202,7 @@ public function listAggregate(string $status): ProductList;
 
 ## 後方互換性
 
-生レスポンスの経路は変わりません。`factory:` がなく、戻り値型が `array` / `string` / PSR-7 `MessageInterface` の場合の挙動は、通常の HTTP 呼び出しと同一です。
+`factory:` がない場合、既存の生レスポンスの経路は変わりません。戻り値型が `array` なら JSON デコード済みのボディ、`string` なら生のボディ、PSR-7 `MessageInterface` なら HTTP メッセージが返ります。
 
 ## 関連項目
 

@@ -132,7 +132,7 @@ The decoded JSON is passed to the factory method as **named arguments**: each JS
 | `type`       | JSON response          | Result          |
 |--------------|------------------------|-----------------|
 | `'row'`      | object `{...}`         | one object      |
-| `'row_list'` | array `[{...}, {...}]` | `array<Object>` |
+| `'row_list'` | array `[{...}, {...}]` | `array<object>` |
 
 `type` defaults to `'row_list'`. A `'row'` method whose response is a list takes the first element; a `'row_list'` method whose response is a single object wraps it into a one-element list.
 
@@ -202,7 +202,7 @@ All exceptions live under `Ray\MediaQuery\Exception`:
 
 ## Backward compatibility
 
-The raw-response paths are unchanged: with no `factory:` and a return type of `array`, `string`, or PSR-7 `MessageInterface`, the behaviour is identical to a plain HTTP call.
+With no `factory:`, the existing raw-response paths are unchanged: a return type of `array` still yields the JSON-decoded body, `string` the raw body, and PSR-7 `MessageInterface` the HTTP message.
 
 ## See also
 
