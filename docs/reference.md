@@ -151,7 +151,7 @@ interface UserRepository
 interface UserRepository
 {
     #[DbQuery('user_stats', type: 'row')]
-    public function getStats(string $id): array;  // ['total' => 10, 'active' => 5]
+    public function getStats(string $id): ?array;  // ['total' => 10, 'active' => 5], or null when no row matches
 }
 ```
 
