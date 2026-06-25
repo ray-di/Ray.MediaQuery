@@ -1,3 +1,6 @@
+includes:
+  - vendor-bin/media-query-phpstan/extension.neon
+
 parameters:
   level: max
   paths:
@@ -8,3 +11,7 @@ parameters:
     - tests/Fake/*
     - tests/tmp/*
     - src/MediaQueryModule.php
+  rayMediaQuery:
+    sqlDirectories:
+      - %currentWorkingDirectory%/docs/tutorial/src/sql
+    factoryMethod: factory

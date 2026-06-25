@@ -1,0 +1,26 @@
+parameters:
+    rayMediaQuery:
+        sqlDirectories: []
+        factoryMethod: factory
+        strict: false
+        strictPlaceholderCheck: false
+
+parametersSchema:
+    rayMediaQuery: structure([
+        sqlDirectories: listOf(string())
+        factoryMethod: string()
+        strict: bool()
+        strictPlaceholderCheck: bool()
+    ])
+
+services:
+    -
+        class: Ray\MediaQuery\PHPStan\Support\SqlFileResolver
+        arguments:
+            directories: %rayMediaQuery.sqlDirectories%
+    -
+        class: Ray\MediaQuery\PHPStan\Rules\DbQueryContractRule
+        arguments:
+            factoryMethod: %rayMediaQuery.factoryMethod%
+        tags:
+            - phpstan.rules.rule

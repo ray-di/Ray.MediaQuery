@@ -42,6 +42,7 @@
                 "tests/",
                 "tests/Fake"
             ],
+            "Ray\\MediaQuery\\PHPStan\\": "vendor-bin/media-query-phpstan/src/",
             "Tutorial\\Blog\\": "docs/tutorial/src/Blog/"
         }
     },
@@ -61,11 +62,16 @@
         ],
         "test": "./vendor/bin/phpunit",
         "tutorial": "php -d zend.assertions=1 -d assert.exception=1 docs/tutorial/src/run.php",
+        "phpstan-ext": [
+            "./vendor/bin/phpstan analyse -c vendor-bin/media-query-phpstan/phpstan.neon.dist",
+            "./vendor/bin/phpunit -c vendor-bin/media-query-phpstan"
+        ],
         "tests": [
             "@cs",
             "@sa",
             "@test",
-            "@tutorial"
+            "@tutorial",
+            "@phpstan-ext"
         ],
         "build": [
             "@clean",
@@ -84,6 +90,7 @@
         "cs-fix": "Fix the coding style",
         "clean": "Delete tmp files",
         "sa": "Run static analysis",
+        "phpstan-ext": "Self-analyse and test the bundled media-query-phpstan extension",
         "metrics": "Build metrics report",
         "tests": "Run tests and quality checks",
         "build": "Build project"
