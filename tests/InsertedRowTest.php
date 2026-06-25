@@ -13,9 +13,6 @@ use Ray\MediaQuery\Result\PostQueryContext;
 
 final class InsertedRowTest extends TestCase
 {
-    /**
-     * @param string|false $lastInsertId
-     */
     #[DataProvider('emptyLastInsertIds')]
     public function testFromContextNormalizesEmptyLastInsertId(string|false $lastInsertId): void
     {
@@ -32,9 +29,7 @@ final class InsertedRowTest extends TestCase
         $this->assertNull($result->id);
     }
 
-    /**
-     * @return array<string, array{string|false}>
-     */
+    /** @return array<string, array{string|false}> */
     public static function emptyLastInsertIds(): array
     {
         return [
