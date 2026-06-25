@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ray\MediaQuery;
 
 use phpDocumentor\Reflection\DocBlockFactory;
+use phpDocumentor\Reflection\PseudoTypes\Generic;
 use PHPUnit\Framework\TestCase;
 use Ray\MediaQuery\Entity\FakeEntity;
 use ReflectionMethod;
@@ -96,5 +97,12 @@ class ReturnTypeTest extends TestCase
         $entity = ($this->returnEntity)($method);
 
         $this->assertSame(null, $entity);
+    }
+
+    public function testEmptyGenericTypeHasNoValueType(): void
+    {
+        $method = new ReflectionMethod($this->returnEntity, 'extractValueType');
+
+        $this->assertNull($method->invoke($this->returnEntity, new Generic(null, [])));
     }
 }
