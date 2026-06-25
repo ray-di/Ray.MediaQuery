@@ -571,7 +571,7 @@ Hello
 - 戻り値型 `Article|null` (単一) や docblock `@return array<Article>` (複数) を見て、フレームワークが `Article` を組み立てる。
 - 今回の `Article` は constructor を持つので、`FetchNewInstance` が選ばれて `PDO::FETCH_FUNC` で組み立てられる。**SELECT カラム順が constructor 引数順にそのまま渡される**。詳細は次章。
 - Constructor Promotion のおかげで getter / setter は不要。`readonly` で意図せぬ変更を防ぐ。
-- PHP 8.4 以降なら `final readonly class Article { ... }` と書けばさらに簡潔。
+- PHP 8.2 以降なら `final readonly class Article { ... }` と書けばさらに簡潔。
 
 ---
 
