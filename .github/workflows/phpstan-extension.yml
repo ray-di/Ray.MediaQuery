@@ -1,0 +1,31 @@
+name: PHPStan Extension
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'  # Skip workflow on documentation changes only
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  phpstan-extension:
+    name: DbQuery contract rule
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          extensions: pdo, pdo_sqlite, mbstring, tokenizer
+
+      - name: Install dependencies
+        # bamarni forward-command installs the vendor-bin/media-query-phpstan
+        # package (its own phpstan + phpunit) alongside the root dependencies.
+        run: composer install --ansi --no-interaction --no-progress
+
+      - name: Self-analyse rule code and run rule tests
+        run: composer phpstan-ext
