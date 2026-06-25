@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Ray.WebQuery — Web レスポンスマッピング
-description: Ray.WebQuery のマニュアル。#[WebQuery] で HTTP API レスポンスを、#[DbQuery] と同じファクトリと PostFetch の仕組みで型付き・イミュータブルなドメインオブジェクトにマッピングします。
+description: "Ray.WebQuery のマニュアル。#[WebQuery] で HTTP API レスポンスを、#[DbQuery] と同じファクトリと PostFetch の仕組みで型付き・イミュータブルなドメインオブジェクトにマッピングします。"
 lang: ja
 permalink: /web-query/ja/
 ---
