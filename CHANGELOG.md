@@ -5,15 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## 1.1.1 - 2026-06-25
 
 ### Added
 - English hands-on tutorial covering Ray.MediaQuery 1.1 features end-to-end on SQLite (`docs/tutorial/README.md`), with the Japanese edition preserved at `/tutorial/ja/`
-- Japanese manual covering installation, module setup, SQL conventions, result mapping, factories, parameter handling, pagination, and direct SQL execution (`docs/reference.md`)
-- GitHub Pages documentation site (home, manual) and a slimmed README landing page
+- Manual covering installation, module setup, SQL conventions, result mapping, factories, parameter handling, pagination, and direct SQL execution (`docs/reference.md`)
+- GitHub Pages documentation site (home, manual, FAQ) and a slimmed README landing page
+- Ray.WebQuery manual on the documentation site ([#107](https://github.com/ray-di/Ray.MediaQuery/pull/107))
+- Optional, dev-only PHPStan extension under `vendor-bin/media-query-phpstan/` that statically verifies `#[DbQuery]` contracts: SQL file existence, `#[Pager]` / `PagesInterface` coherence, and factory class/method validation ([#105](https://github.com/ray-di/Ray.MediaQuery/pull/105))
+
+### Changed
+- Document that `StringCase` is unused internally ([#92](https://github.com/ray-di/Ray.MediaQuery/pull/92))
 
 ### Fixed
-- Restore `Ray\MediaQuery\CamelCaseTrait` (deprecated) for 1.x backward compatibility. It was unintentionally removed in 1.1.0, causing a hard fatal (`Trait ... not found`) for entities still importing it ([#93](https://github.com/ray-di/Ray.MediaQuery/issues/93))
+- Restore `Ray\MediaQuery\CamelCaseTrait` (deprecated) for 1.x backward compatibility. It was unintentionally removed in 1.1.0, causing a hard fatal (`Trait ... not found`) for entities still importing it ([#93](https://github.com/ray-di/Ray.MediaQuery/issues/93), [#96](https://github.com/ray-di/Ray.MediaQuery/pull/96))
+- Correct the manual's `#[DbQuery(type: 'row')]` example return type to `?array` (a single-row query returns `null` when no row matches) and the tutorial's `readonly` class PHP version (8.2, not 8.4) ([#102](https://github.com/ray-di/Ray.MediaQuery/pull/102))
 
 ## 1.1.0 - 2026-05-06
 
