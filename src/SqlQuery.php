@@ -236,7 +236,7 @@ final class SqlQuery implements SqlQueryInterface
         $pager = $this->pagerFactory->newInstance($this->pdo, $this->getSql($sqlId), $values, $perPage, $queryTemplate, $entity);
 
         /** @var array<string, mixed> $values */
-        return new Pages($pager, $this->pdo, $this->getSql($sqlId), $values);
+        return new Pages($pager, $this->pdo, $this->getSql($sqlId), $values, $perPage);
     }
 
     private function getSql(string $sqlId): string

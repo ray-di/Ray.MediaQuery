@@ -20,6 +20,7 @@ final class PagesTest extends TestCase
             $this->createStub(ExtendedPdoInterface::class),
             'SELECT 1',
             [],
+            10,
         );
 
         $this->assertFalse(isset($pages[3]));

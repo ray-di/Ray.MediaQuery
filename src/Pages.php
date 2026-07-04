@@ -11,6 +11,7 @@ use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\MediaQuery\Exception\LogicException;
 
+use function ceil;
 use function is_array;
 
 /** @template T of class-string|mixed */
@@ -28,6 +29,7 @@ final class Pages implements PagesInterface
         private ExtendedPdoInterface $pdo,
         private string $sql,
         private array $params,
+        private int $perPage,
         callable|null $rowMapper = null,
     ) {
         $this->rowMapper = $rowMapper;
@@ -94,5 +96,11 @@ final class Pages implements PagesInterface
     public function count(): int
     {
         return (new ExtendedPdoAdapter($this->pdo, $this->sql, $this->params))->getNbResults();
+    }
+
+    #[Override]
+    public function getNbPages(): int
+    {
+        return (int) ceil($this->count() / $this->perPage);
     }
 }

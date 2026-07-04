@@ -30,4 +30,10 @@ class FakePages implements PagesInterface
     {
         // TODO: Implement count() method.
     }
+
+    public function getNbPages(): int
+    {
+        // TODO: Implement getNbPages() method.
+        return 0;
+    }
 }

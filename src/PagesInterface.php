@@ -10,4 +10,8 @@ use Countable;
 /** @extends ArrayAccess<int, mixed> */
 interface PagesInterface extends ArrayAccess, Countable
 {
+    /**
+     * Returns the total number of pages (ceil of result count / perPage).
+     */
+    public function getNbPages(): int;
 }

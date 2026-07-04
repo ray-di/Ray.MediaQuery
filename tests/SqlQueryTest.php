@@ -108,6 +108,13 @@ class SqlQueryTest extends TestCase
         $this->assertSame(2, count($pages));
     }
 
+    /** @param Pages<mixed> $pages */
+    #[Depends('testPager')]
+    public function testPagerNbPages(Pages $pages): void
+    {
+        $this->assertSame(2, $pages->getNbPages());
+    }
+
     public function testCount(): void
     {
         $this->sqlQuery->exec('todo_add', ['id' => '2', 'title' => 'walk']);

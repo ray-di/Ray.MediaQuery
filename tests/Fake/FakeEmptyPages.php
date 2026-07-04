@@ -40,4 +40,9 @@ final class FakeEmptyPages implements PagesInterface
     {
         return $this->iter->count();
     }
+
+    public function getNbPages(): int
+    {
+        return 0;
+    }
 }
