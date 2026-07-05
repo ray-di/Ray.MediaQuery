@@ -62,6 +62,17 @@ final class MappedPagesTest extends TestCase
         $this->assertSame(1, $pages->count());
     }
 
+    public function testDelegatesGetNbPages(): void
+    {
+        $delegate = $this->pages($this->page([]));
+        $pages = new MappedPages(
+            $delegate,
+            static fn (array $row): array => $row,
+        );
+
+        $this->assertSame(1, $pages->getNbPages());
+    }
+
     private function page(mixed $data): Page
     {
         $reflection = new ReflectionClass(Page::class);
