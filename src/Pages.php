@@ -9,6 +9,7 @@ use Override;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\Exception\InvalidPerPageException;
 use Ray\MediaQuery\Exception\LogicException;
 
 use function ceil;
@@ -32,6 +33,10 @@ final class Pages implements PagesInterface
         private int $perPage,
         callable|null $rowMapper = null,
     ) {
+        if ($this->perPage < 1) {
+            throw new InvalidPerPageException((string) $this->perPage);
+        }
+
         $this->rowMapper = $rowMapper;
     }
 

@@ -7,6 +7,7 @@ namespace Ray\MediaQuery;
 use Aura\Sql\ExtendedPdoInterface;
 use PHPUnit\Framework\TestCase;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
+use Ray\MediaQuery\Exception\InvalidPerPageException;
 
 final class PagesTest extends TestCase
 {
@@ -25,5 +26,31 @@ final class PagesTest extends TestCase
 
         $this->assertFalse(isset($pages[3]));
         $this->assertNull($pages[3]);
+    }
+
+    public function testConstructorRejectsZeroPerPage(): void
+    {
+        $this->expectException(InvalidPerPageException::class);
+
+        new Pages(
+            $this->createStub(AuraSqlPagerInterface::class),
+            $this->createStub(ExtendedPdoInterface::class),
+            'SELECT 1',
+            [],
+            0,
+        );
+    }
+
+    public function testConstructorRejectsNegativePerPage(): void
+    {
+        $this->expectException(InvalidPerPageException::class);
+
+        new Pages(
+            $this->createStub(AuraSqlPagerInterface::class),
+            $this->createStub(ExtendedPdoInterface::class),
+            'SELECT 1',
+            [],
+            -1,
+        );
     }
 }
