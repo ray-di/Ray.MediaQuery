@@ -53,4 +53,39 @@ final class PagesTest extends TestCase
             -1,
         );
     }
+
+    public function testGetNbPagesReturnsOneWhenEmpty(): void
+    {
+        $pdo = $this->createStub(ExtendedPdoInterface::class);
+        $pdo->method('fetchValue')->willReturn('0');
+
+        $pages = new Pages(
+            $this->createStub(AuraSqlPagerInterface::class),
+            $pdo,
+            'SELECT * FROM todo',
+            [],
+            10,
+        );
+
+        $this->assertSame(0, $pages->count());
+        $this->assertSame(1, $pages->getNbPages());
+    }
+
+    public function testCountQueryRunsOnlyOnce(): void
+    {
+        $pdo = $this->createMock(ExtendedPdoInterface::class);
+        $pdo->expects($this->once())->method('fetchValue')->willReturn('3');
+
+        $pages = new Pages(
+            $this->createStub(AuraSqlPagerInterface::class),
+            $pdo,
+            'SELECT * FROM todo',
+            [],
+            2,
+        );
+
+        $this->assertSame(3, $pages->count());
+        $this->assertSame(2, $pages->getNbPages());
+        $this->assertSame(2, $pages->getNbPages());
+    }
 }

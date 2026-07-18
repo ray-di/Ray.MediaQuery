@@ -14,12 +14,16 @@ use Ray\MediaQuery\Exception\LogicException;
 
 use function ceil;
 use function is_array;
+use function max;
 
 /** @template T of class-string|mixed */
 final class Pages implements PagesInterface
 {
     /** @var (callable(array<array-key, mixed>): mixed)|null */
     private $rowMapper;
+
+    /** Memoized result count, shared by count() and getNbPages() as in Pagerfanta */
+    private int|null $nbResults = null;
 
     /**
      * @param array<string, mixed>                            $params
@@ -100,12 +104,12 @@ final class Pages implements PagesInterface
     #[Override]
     public function count(): int
     {
-        return (new ExtendedPdoAdapter($this->pdo, $this->sql, $this->params))->getNbResults();
+        return $this->nbResults ??= (new ExtendedPdoAdapter($this->pdo, $this->sql, $this->params))->getNbResults();
     }
 
     #[Override]
     public function getNbPages(): int
     {
-        return (int) ceil($this->count() / $this->perPage);
+        return max(1, (int) ceil($this->count() / $this->perPage));
     }
 }

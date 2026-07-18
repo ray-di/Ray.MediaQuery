@@ -132,6 +132,14 @@ class SqlQueryTest extends TestCase
         $this->assertSame(2, $pages->getNbPages());
     }
 
+    public function testPagerNbPagesMinimumOneWhenEmpty(): void
+    {
+        $pages = $this->sqlQuery->getPages('todo_item', ['id' => '__none__'], 10);
+
+        $this->assertSame(0, count($pages));
+        $this->assertSame(1, $pages->getNbPages());
+    }
+
     public function testCount(): void
     {
         $this->sqlQuery->exec('todo_add', ['id' => '2', 'title' => 'walk']);

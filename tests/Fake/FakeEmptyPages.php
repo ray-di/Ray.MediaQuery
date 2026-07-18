@@ -43,6 +43,7 @@ final class FakeEmptyPages implements PagesInterface
 
     public function getNbPages(): int
     {
-        return 0;
+        // Empty result set is still one (empty) page, as in Pagerfanta
+        return 1;
     }
 }

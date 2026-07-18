@@ -11,7 +11,7 @@ use Countable;
 interface PagesInterface extends ArrayAccess, Countable
 {
     /**
-     * Returns the total number of pages (ceil of result count / perPage).
+     * Returns the total number of pages (ceil of result count / perPage, minimum 1 as in Pagerfanta).
      */
     public function getNbPages(): int;
 }
