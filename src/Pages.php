@@ -22,7 +22,11 @@ final class Pages implements PagesInterface
     /** @var (callable(array<array-key, mixed>): mixed)|null */
     private $rowMapper;
 
-    /** Memoized result count, shared by count() and getNbPages() as in Pagerfanta */
+    /**
+     * Memoized result count, shared by count() and getNbPages() as in Pagerfanta
+     *
+     * @var int<0, max>|null
+     */
     private int|null $nbResults = null;
 
     /**
