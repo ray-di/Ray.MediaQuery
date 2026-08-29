@@ -9,15 +9,25 @@ use Override;
 use Ray\AuraSqlModule\Pagerfanta\AuraSqlPagerInterface;
 use Ray\AuraSqlModule\Pagerfanta\ExtendedPdoAdapter;
 use Ray\AuraSqlModule\Pagerfanta\Page;
+use Ray\MediaQuery\Exception\InvalidPerPageException;
 use Ray\MediaQuery\Exception\LogicException;
 
+use function ceil;
 use function is_array;
+use function max;
 
 /** @template T of class-string|mixed */
 final class Pages implements PagesInterface
 {
     /** @var (callable(array<array-key, mixed>): mixed)|null */
     private $rowMapper;
+
+    /**
+     * Memoized result count, shared by count() and getNbPages() as in Pagerfanta
+     *
+     * @var int<0, max>|null
+     */
+    private int|null $nbResults = null;
 
     /**
      * @param array<string, mixed>                            $params
@@ -28,8 +38,13 @@ final class Pages implements PagesInterface
         private ExtendedPdoInterface $pdo,
         private string $sql,
         private array $params,
+        private int $perPage,
         callable|null $rowMapper = null,
     ) {
+        if ($this->perPage < 1) {
+            throw new InvalidPerPageException((string) $this->perPage);
+        }
+
         $this->rowMapper = $rowMapper;
     }
 
@@ -93,6 +108,12 @@ final class Pages implements PagesInterface
     #[Override]
     public function count(): int
     {
-        return (new ExtendedPdoAdapter($this->pdo, $this->sql, $this->params))->getNbResults();
+        return $this->nbResults ??= (new ExtendedPdoAdapter($this->pdo, $this->sql, $this->params))->getNbResults();
+    }
+
+    #[Override]
+    public function getNbPages(): int
+    {
+        return max(1, (int) ceil($this->count() / $this->perPage));
     }
 }

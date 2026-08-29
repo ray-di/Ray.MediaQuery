@@ -40,4 +40,10 @@ final class FakeEmptyPages implements PagesInterface
     {
         return $this->iter->count();
     }
+
+    public function getNbPages(): int
+    {
+        // Empty result set is still one (empty) page, as in Pagerfanta
+        return 1;
+    }
 }

@@ -108,6 +108,38 @@ class SqlQueryTest extends TestCase
         $this->assertSame(2, count($pages));
     }
 
+    /** @param Pages<mixed> $pages */
+    #[Depends('testPager')]
+    public function testPagerNbPages(Pages $pages): void
+    {
+        $this->assertSame(2, $pages->getNbPages());
+    }
+
+    public function testPagerNbPagesWithPerPage2(): void
+    {
+        $this->sqlQuery->exec('todo_add', ['id' => '2', 'title' => 'walk']);
+        $pages = $this->sqlQuery->getPages('todo_list', [], 2);
+
+        $this->assertSame(1, $pages->getNbPages());
+    }
+
+    public function testPagerNbPagesRoundsUp(): void
+    {
+        $this->sqlQuery->exec('todo_add', ['id' => '2', 'title' => 'walk']);
+        $this->sqlQuery->exec('todo_add', ['id' => '3', 'title' => 'sleep']);
+        $pages = $this->sqlQuery->getPages('todo_list', [], 2);
+
+        $this->assertSame(2, $pages->getNbPages());
+    }
+
+    public function testPagerNbPagesMinimumOneWhenEmpty(): void
+    {
+        $pages = $this->sqlQuery->getPages('todo_item', ['id' => '__none__'], 10);
+
+        $this->assertSame(0, count($pages));
+        $this->assertSame(1, $pages->getNbPages());
+    }
+
     public function testCount(): void
     {
         $this->sqlQuery->exec('todo_add', ['id' => '2', 'title' => 'walk']);

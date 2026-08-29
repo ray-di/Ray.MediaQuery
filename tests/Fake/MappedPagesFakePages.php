@@ -46,4 +46,9 @@ final class MappedPagesFakePages implements PagesInterface
     {
         return 1;
     }
+
+    public function getNbPages(): int
+    {
+        return 1;
+    }
 }

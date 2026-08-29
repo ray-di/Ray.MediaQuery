@@ -61,4 +61,10 @@ final class MappedPages implements PagesInterface
     {
         return $this->pages->count();
     }
+
+    #[Override]
+    public function getNbPages(): int
+    {
+        return $this->pages->getNbPages();
+    }
 }

@@ -107,11 +107,12 @@ interface UserListInterface
 }
 ```
 
-実行結果の`Pages`は、配列アクセスでページを取得したり`count()`で全体の件数を取得することができます。
+実行結果の`Pages`は、配列アクセスでページを、`count()`で全体の件数を、`getNbPages()`で総ページ数を取得できます。
 
 ```php
 $userList = $injector->getInstance(UserListInterface::class);
 $pages = $userList();
 $page = $pages[1];
 $total = count($pages);
+$nbPages = $pages->getNbPages();
 ```
