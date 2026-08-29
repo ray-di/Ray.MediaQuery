@@ -1331,7 +1331,7 @@ first stats row=MyBlog\ArticleStats commentCount=2 excerpt='Updated body.'
 
 ### Explanation
 
-- `count($pages)` returns the **total item count** from the COUNT query, not the number of pages.
+- `count($pages)` returns the **total item count** from the COUNT query, not the number of pages. For the page count call `$pages->getNbPages()`, which reuses the same COUNT.
 - `$pages[1]` accesses page 1 and lazily executes SELECT with LIMIT/OFFSET.
 - `$page->data` contains a list of `Article` objects because of `@return Pages<Article>`.
 - With `#[DbQuery(factory: ArticleStatsFactory::class)]` and `#[Pager]` together, Ray.MediaQuery 1.1+ builds each row in `$page->data` through `ArticleStatsFactory`.

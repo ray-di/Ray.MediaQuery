@@ -84,7 +84,7 @@ Every row of this table is a valid return type on a `#[DbQuery]` method.
 | `AffectedRows`                    | UPDATE/DELETE | Exposes `->count` (int) and `->isAffected(): bool`.                   |
 | `InsertedRow`                     | INSERT    | Exposes `->values` (resolved params) and `->id` (?string lastInsertId).   |
 | custom `X implements PostQueryInterface` | SELECT or DML | Polymorphic dispatch — framework calls `X::fromContext($context)`. SELECT pre-hydrates rows on `$context->rows`; DML leaves `$context->rows = []`. |
-| `Pages` (with `#[Pager]`)         | SELECT    | Lazy paginator. Index access executes `LIMIT`/`OFFSET`; `count()` does `COUNT`. |
+| `Pages` (with `#[Pager]`)         | SELECT    | Lazy paginator. Index access executes `LIMIT`/`OFFSET`; `count()` does `COUNT`, and `getNbPages()` divides it by `perPage`. |
 
 How dispatch is decided:
 
@@ -400,10 +400,11 @@ interface ProductRepository
 
 $pages = $repo->list();
 count($pages);         // → COUNT query
+$pages->getNbPages();  // → number of pages, from the same COUNT (memoized)
 $page = $pages[1];     // → SELECT with LIMIT/OFFSET, rows hydrated to Product
 $page->data;           // items
 $page->current;        // int
-$page->total;          // int (total pages)
+$page->total;          // int (total item count)
 $page->hasNext;        // bool
 $page->hasPrevious;    // bool
 (string) $page;        // rendered pager HTML

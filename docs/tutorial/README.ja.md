@@ -1333,7 +1333,7 @@ first stats row=MyBlog\ArticleStats commentCount=2 excerpt='Updated body.'
 
 ### 解説
 
-- `count($pages)` は **総アイテム数** (= COUNT クエリの結果)。総ページ数ではないので注意。
+- `count($pages)` は **総アイテム数** (= COUNT クエリの結果)。総ページ数は `$pages->getNbPages()` で取る (同じ COUNT を使い回す)。
 - `$pages[1]` でページ1にアクセス → SELECT に LIMIT/OFFSET が付いて実行される (lazy)。
 - `$page->data` は Article のリスト (`@return Pages<Article>` のおかげで hydration が効く)。
 - `#[DbQuery(factory: ArticleStatsFactory::class)]` と `#[Pager]` を併用した場合、1.1 以降は `$page->data` の各行も `ArticleStatsFactory` で作られる。

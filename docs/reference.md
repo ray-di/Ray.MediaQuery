@@ -610,8 +610,9 @@ interface ProductRepository
 }
 
 $pages = $productRepo->getProducts();
-$count = count($pages);  // COUNT query を実行
-$page = $pages[1];       // LIMIT/OFFSET 付き SELECT を実行
+$count = count($pages);          // COUNT query を実行
+$nbPages = $pages->getNbPages(); // 総ページ数。件数を取ってceilする必要はない
+$page = $pages[1];               // LIMIT/OFFSET 付き SELECT を実行
 
 // Page object properties:
 // $page->data          // このページの item
