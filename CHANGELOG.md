@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.2.0 - 2026-08-30
+
+### Added
+- `PagesInterface::getNbPages()` for the total number of pages, implemented in `Pages` and `MappedPages` ([#108](https://github.com/ray-di/Ray.MediaQuery/pull/108))
+- `InvalidPerPageException`, thrown when `perPage` is less than 1 ([#108](https://github.com/ray-di/Ray.MediaQuery/pull/108))
+
+### Changed
+- `PagesInterface` gains a method: implementations outside this package must add `getNbPages()` ([#108](https://github.com/ray-di/Ray.MediaQuery/pull/108))
+- `Pages::__construct()` requires `perPage`; `SqlQuery::getPages()` forwards the value it already receives ([#108](https://github.com/ray-di/Ray.MediaQuery/pull/108))
+- `Pages::count()` memoizes the COUNT query, so it runs once per instance ([#108](https://github.com/ray-di/Ray.MediaQuery/pull/108))
+
+### Fixed
+- `docs/llms-full.txt` called `$page->total` the page count; it is the item count ([#108](https://github.com/ray-di/Ray.MediaQuery/pull/108))
+
 ## 1.1.1 - 2026-06-25
 
 ### Added
