@@ -949,6 +949,120 @@ Add this to the Module's `configure()` method in `run.php`.
 $this->bind(MarkdownExcerpter::class);
 ```
 
+### BDR focus: why DI is necessary
+
+`age` is not a database column. It is computed from `birth_date` and the current time — the current time must be injected as `DateTimeInterface`.
+
+`age` is not a database column. It requires two inputs: the stored `birth_date` and the current time. The current time must come from outside the factory — injected as `DateTimeInterface`.
+
+Add an `author` table to `mywork/schema.sql`:
+
+```sql
+CREATE TABLE IF NOT EXISTS author (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    birth_date TEXT NOT NULL
+);
+```
+
+`sql/author_profile.sql`:
+
+```sql
+SELECT
+    id,
+    name,
+    birth_date
+FROM author
+WHERE id = :id;
+```
+
+`Blog/AuthorProfile.php`:
+
+```php
+final class AuthorProfile
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly string $name,
+        public readonly string $birthDate,
+        public readonly int $age,        // not a column — computed by the factory
+    ) {}
+}
+```
+
+`Blog/AuthorProfileFactory.php`:
+
+```php
+use DateTimeImmutable;
+use DateTimeInterface;
+
+final class AuthorProfileFactory
+{
+    public function __construct(
+        private readonly DateTimeInterface $now,
+    ) {}
+
+    public function factory(int $id, string $name, string $birthDate): AuthorProfile
+    {
+        $age = (new DateTimeImmutable($birthDate))->diff($this->now)->y;
+
+        return new AuthorProfile(
+            id: $id,
+            name: $name,
+            birthDate: $birthDate,
+            age: $age,
+        );
+    }
+}
+```
+
+`Blog/AuthorQueryInterface.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace MyBlog;
+
+use Ray\MediaQuery\Annotation\DbQuery;
+
+interface AuthorQueryInterface
+{
+    #[DbQuery('author_profile', type: 'row', factory: AuthorProfileFactory::class)]
+    public function profile(int $id): AuthorProfile|null;
+}
+```
+
+Add `AuthorQueryInterface::class` to `Queries::fromClasses()`, and add `MarkdownExcerpter` to the Module:
+
+```php
+$this->bind(MarkdownExcerpter::class);
+```
+
+`DateTimeInterface` is already bound to `DateTimeImmutable` inside `MediaQueryModule` — no extra binding is needed.
+
+Seed an author and call `profile()` in `run.php`:
+
+```php
+$pdo->perform('INSERT INTO author (name, birth_date) VALUES (?, ?)', ['Alice', '1990-06-15']);
+
+/** @var AuthorQueryInterface $authorQuery */
+$authorQuery = $injector->getInstance(AuthorQueryInterface::class);
+$profile = $authorQuery->profile(1);
+printf("name=%s birth_date=%s age=%d\n", $profile->name, $profile->birthDate, $profile->age);
+```
+
+### Expected Output (chapter 8 / BDR focus / standalone)
+
+```text
+name=Alice birth_date=1990-06-15 age=35
+```
+
+> `age` is computed at the query boundary from `birth_date` and `DateTimeInterface $now`. The value above is based on `birth_date = '1990-06-15'` and a run date of 2026-06-06; it advances each year. `MediaQueryModule` already binds `DateTimeInterface` to `DateTimeImmutable` (resolved at inject time, not compile time). In tests, override that binding with a fixed instance to make `age` deterministic.
+
+The controller and template write `$profile->age` and receive a ready value — no calculation outside the query boundary. This is BDR: the entity arrives complete.
+
 ### Step 4. Add comment-related files
 
 To make `stats()` meaningful, add comments. This also revisits Entity hydration through an `array<Comment>` return type.
@@ -1275,7 +1389,7 @@ echo $page1->data[0]->title, "\n";
 ```text
 total items=31
 page 1 has 10 items, hasNext=yes
-Hello (edited)
+Hello, Ray.MediaQuery (edited)
 ```
 
 ### Step 4. Ray.MediaQuery 1.1: Combine Pager and Factory
@@ -1745,6 +1859,7 @@ This hands-on tutorial focuses on understanding application Query contracts buil
 
 ### Next Reading
 
+- [BDR Pattern Cookbook](bdr-patterns.md) - per-row enrichment (`factory:`) vs. whole-result-set shaping (`PostQueryInterface`): badges, enums, JOIN grouping, sorting, SPL iterators, Null Object
 - [BDR Pattern Guide](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/BDR_PATTERN.md) - factory pattern and domain object design
 - [Manual 日本語版](https://ray-di.github.io/Ray.MediaQuery/reference/) - advanced feature reference, including `#[Input]` Object Flattening and direct `SqlQueryInterface` execution
 - [llms-full.txt](../llms-full.txt) - compact reference for AI agents

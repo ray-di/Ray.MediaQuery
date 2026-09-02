@@ -951,6 +951,120 @@ final class ArticleStatsFactory
 $this->bind(MarkdownExcerpter::class);
 ```
 
+### BDR の核心: DI が不可欠な例
+
+`age`（年齢）はデータベースのカラムではない。`birth_date` と現在時刻から計算する — 現在時刻はファクトリの外から `DateTimeInterface` として注入するしかない。
+
+`age`（年齢）はデータベースのカラムではない。`birth_date` と「現在時刻」の2つから計算する。現在時刻はファクトリの外から注入するしかない — `DateTimeInterface` として DI で受け取る。
+
+`mywork/schema.sql` に `author` テーブルを追加:
+
+```sql
+CREATE TABLE IF NOT EXISTS author (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    birth_date TEXT NOT NULL
+);
+```
+
+`sql/author_profile.sql`:
+
+```sql
+SELECT
+    id,
+    name,
+    birth_date
+FROM author
+WHERE id = :id;
+```
+
+`Blog/AuthorProfile.php`:
+
+```php
+final class AuthorProfile
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly string $name,
+        public readonly string $birthDate,
+        public readonly int $age,        // カラムではない — ファクトリが計算する
+    ) {}
+}
+```
+
+`Blog/AuthorProfileFactory.php`:
+
+```php
+use DateTimeImmutable;
+use DateTimeInterface;
+
+final class AuthorProfileFactory
+{
+    public function __construct(
+        private readonly DateTimeInterface $now,
+    ) {}
+
+    public function factory(int $id, string $name, string $birthDate): AuthorProfile
+    {
+        $age = (new DateTimeImmutable($birthDate))->diff($this->now)->y;
+
+        return new AuthorProfile(
+            id: $id,
+            name: $name,
+            birthDate: $birthDate,
+            age: $age,
+        );
+    }
+}
+```
+
+`Blog/AuthorQueryInterface.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace MyBlog;
+
+use Ray\MediaQuery\Annotation\DbQuery;
+
+interface AuthorQueryInterface
+{
+    #[DbQuery('author_profile', type: 'row', factory: AuthorProfileFactory::class)]
+    public function profile(int $id): AuthorProfile|null;
+}
+```
+
+`Queries::fromClasses()` に `AuthorQueryInterface::class` を追加し、Module に `MarkdownExcerpter` の bind を加える:
+
+```php
+$this->bind(MarkdownExcerpter::class);
+```
+
+`DateTimeInterface` は `MediaQueryModule` 内部で既に `DateTimeImmutable` に bind されているため、追加の bind は不要。
+
+`run.php` でデータを挿入して呼び出す:
+
+```php
+$pdo->perform('INSERT INTO author (name, birth_date) VALUES (?, ?)', ['Alice', '1990-06-15']);
+
+/** @var AuthorQueryInterface $authorQuery */
+$authorQuery = $injector->getInstance(AuthorQueryInterface::class);
+$profile = $authorQuery->profile(1);
+printf("name=%s birth_date=%s age=%d\n", $profile->name, $profile->birthDate, $profile->age);
+```
+
+### 期待出力 (第8章 / BDR フォーカス / 単独実行)
+
+```text
+name=Alice birth_date=1990-06-15 age=35
+```
+
+> `age` はクエリ境界でファクトリが `birth_date` と `DateTimeInterface $now` から計算する。35 という値は `birth_date = '1990-06-15'` と実行日 2026-06-06 の組み合わせで、毎年変わる。`MediaQueryModule` が `DateTimeInterface` を `DateTimeImmutable` に bind しているため追加設定は不要（注入のたびに `new DateTimeImmutable()` が生成され、常に現在時刻が渡る）。テストでは固定インスタンスで上書き bind すれば `age` を決定的にできる。
+
+コントローラーとテンプレートは `$profile->age` と書くだけで値が手に入る — クエリ境界の外での計算はゼロ。これが BDR の本質: **エンティティは受け取った時点で完成している**。
+
 ### Step 4. Comment 関連のファイルを足す
 
 stats を意味あるものにするためにコメントが要る。ここで Comment Entity と CommentQueryInterface を作って、`add()` / `listFor()` の2メソッドで運用する。`listFor()` は第1章の `list()` と同じ `array<Comment>` 型を返すので、Entity hydration の復習にもなる。
@@ -1277,7 +1391,7 @@ echo $page1->data[0]->title, "\n";
 ```text
 total items=31
 page 1 has 10 items, hasNext=yes
-Hello (edited)
+Hello, Ray.MediaQuery (edited)
 ```
 
 ### Step 4. Ray.MediaQuery 1.1: Pager と factory を組み合わせる
@@ -1749,6 +1863,7 @@ Ray.MediaQuery は、その Read 側を Query-first に分割する。`UserRepos
 
 ### 次に読むもの
 
+- [BDR パターン集](bdr-patterns.ja.md) — 行ごとの加工（`factory:`）と結果セット全体の成形（`PostQueryInterface`）: バッジ・enum・JOINグルーピング・ソート・SPLイテレータ・Null Object
 - [BDR Pattern Guide 日本語版](https://github.com/ray-di/Ray.MediaQuery/blob/1.x/BDR_PATTERN-ja.md) — ファクトリパターンとドメインオブジェクトの設計
 - [Manual](https://ray-di.github.io/Ray.MediaQuery/reference/) — マニュアル (`#[Input]` Object Flattening, `SqlQueryInterface` 直接実行などの応用)
 - [llms-full.txt](../llms-full.txt) — AI エージェント向けの圧縮リファレンス
