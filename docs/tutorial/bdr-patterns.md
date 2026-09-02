@@ -115,7 +115,7 @@ final class ArticleFactory
         return new Article(
             id: $id,
             isOwn: $authorId === $this->currentUser->id(),
-            isNew: (new DateTimeImmutable($publishedAt)) > $this->now->modify('-7 days'),
+            isNew: (new DateTimeImmutable($publishedAt)) > DateTimeImmutable::createFromInterface($this->now)->modify('-7 days'),
         );
     }
 }

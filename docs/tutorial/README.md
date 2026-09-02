@@ -1038,7 +1038,11 @@ Add `AuthorQueryInterface::class` to `Queries::fromClasses()`, and add `Markdown
 $this->bind(MarkdownExcerpter::class);
 ```
 
-`DateTimeInterface` is already bound to `DateTimeImmutable` inside `MediaQueryModule` — no extra binding is needed.
+`DateTimeInterface` is already bound to `DateTimeImmutable` inside `MediaQueryModule`, so it resolves to the current time. To keep this sample's `age` reproducible, the tutorial pins the clock in the Module:
+
+```php
+$this->bind(DateTimeInterface::class)->toInstance(new DateTimeImmutable('2026-06-06'));
+```
 
 Seed an author and call `profile()` in `run.php`:
 
@@ -1057,7 +1061,7 @@ printf("name=%s birth_date=%s age=%d\n", $profile->name, $profile->birthDate, $p
 name=Alice birth_date=1990-06-15 age=35
 ```
 
-> `age` is computed at the query boundary from `birth_date` and `DateTimeInterface $now`. The value above is based on `birth_date = '1990-06-15'` and a run date of 2026-06-06; it advances each year. `MediaQueryModule` already binds `DateTimeInterface` to `DateTimeImmutable` (resolved at inject time, not compile time). In tests, override that binding with a fixed instance to make `age` deterministic.
+> `age` is computed at the query boundary from `birth_date` and the injected `DateTimeInterface $now`. Because the Module pins the clock to `2026-06-06`, `age` is a reproducible `35` (the June 15 birthday has not yet passed that year). Remove the pin and `MediaQueryModule`'s default `DateTimeImmutable` binding resolves to the real current time, so `age` tracks today's date.
 
 The controller and template write `$profile->age` and receive a ready value — no calculation outside the query boundary. This is BDR: the entity arrives complete.
 

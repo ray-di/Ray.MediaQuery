@@ -953,8 +953,6 @@ $this->bind(MarkdownExcerpter::class);
 
 ### BDR の核心: DI が不可欠な例
 
-`age`（年齢）はデータベースのカラムではない。`birth_date` と現在時刻から計算する — 現在時刻はファクトリの外から `DateTimeInterface` として注入するしかない。
-
 `age`（年齢）はデータベースのカラムではない。`birth_date` と「現在時刻」の2つから計算する。現在時刻はファクトリの外から注入するしかない — `DateTimeInterface` として DI で受け取る。
 
 `mywork/schema.sql` に `author` テーブルを追加:
@@ -1042,7 +1040,11 @@ interface AuthorQueryInterface
 $this->bind(MarkdownExcerpter::class);
 ```
 
-`DateTimeInterface` は `MediaQueryModule` 内部で既に `DateTimeImmutable` に bind されているため、追加の bind は不要。
+`DateTimeInterface` は `MediaQueryModule` 内部で既に `DateTimeImmutable` に bind されており、現在時刻に解決される。このサンプルの `age` を再現可能にするため、チュートリアルでは Module でクロックを固定する:
+
+```php
+$this->bind(DateTimeInterface::class)->toInstance(new DateTimeImmutable('2026-06-06'));
+```
 
 `run.php` でデータを挿入して呼び出す:
 
@@ -1061,7 +1063,7 @@ printf("name=%s birth_date=%s age=%d\n", $profile->name, $profile->birthDate, $p
 name=Alice birth_date=1990-06-15 age=35
 ```
 
-> `age` はクエリ境界でファクトリが `birth_date` と `DateTimeInterface $now` から計算する。35 という値は `birth_date = '1990-06-15'` と実行日 2026-06-06 の組み合わせで、毎年変わる。`MediaQueryModule` が `DateTimeInterface` を `DateTimeImmutable` に bind しているため追加設定は不要（注入のたびに `new DateTimeImmutable()` が生成され、常に現在時刻が渡る）。テストでは固定インスタンスで上書き bind すれば `age` を決定的にできる。
+> `age` はクエリ境界でファクトリが `birth_date` と注入された `DateTimeInterface $now` から計算する。Module でクロックを `2026-06-06` に固定しているため `age` は再現可能な `35`（その年の6月15日の誕生日をまだ迎えていない）。固定を外せば `MediaQueryModule` の既定の `DateTimeImmutable` bind が実際の現在時刻に解決され、`age` は今日の日付を反映する。
 
 コントローラーとテンプレートは `$profile->age` と書くだけで値が手に入る — クエリ境界の外での計算はゼロ。これが BDR の本質: **エンティティは受け取った時点で完成している**。
 

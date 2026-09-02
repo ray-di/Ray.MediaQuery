@@ -7,6 +7,7 @@ namespace Tutorial\Blog;
 use Aura\Sql\ExtendedPdoInterface;
 use Composer\Autoload\ClassLoader;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
@@ -40,6 +41,9 @@ $injector = new Injector(new class ($sqlDir, $dsn) extends AbstractModule {
         $this->install(new MediaQueryModule($queries, [new DbQueryConfig($this->sqlDir)]));
         $this->install(new AuraSqlModule($this->dsn));
         $this->bind(MarkdownExcerpter::class);
+        // Pin the clock so the BDR `age` output is reproducible. In production,
+        // MediaQueryModule's DateTimeImmutable binding resolves to the real time.
+        $this->bind(DateTimeInterface::class)->toInstance(new DateTimeImmutable('2026-06-06'));
     }
 });
 
