@@ -1,4 +1,14 @@
+---
+layout: default
+title: BDR パターン集
+description: 行ごとの加工（factory 属性）と結果セット全体の成形（PostQueryInterface）の使い分け。バッジ、enum、JOIN グルーピング、ソート、SPL イテレータ、Null Object。
+lang: ja
+permalink: /tutorial/bdr-patterns/ja/
+---
+
 # BDR パターン集
+
+[English]({{ '/tutorial/bdr-patterns/' | relative_url }}) | [ハンズオンチュートリアル]({{ '/tutorial/ja/' | relative_url }})
 
 Ray.MediaQuery には、SQL の結果をオブジェクトに変える機構が2つある。どちらを使うかで「できること」が変わる。
 
@@ -11,9 +21,11 @@ Ray.MediaQuery には、SQL の結果をオブジェクトに変える機構が2
 
 ---
 
-# 第1部 — `factory:` 行ごとの加工
+## 第1部 — `factory:` 行ごとの加工
 
 ファクトリは**1行につき1回**呼ばれ、SELECT のカラムが順番に引数で渡る。戻り値が行の数だけ並ぶ。チュートリアル第7章の `ArticleStatsFactory` がこれ。
+
+> 対応づけは**名前ではなく位置**（`PDO::FETCH_FUNC`）。ファクトリのシグネチャは SELECT のカラム列と順序・個数を 1:1 で合わせる必要がある。引数を減らしても「その名前のカラムが選ばれる」わけではなく、先頭から順に詰められるだけ。以下の各例は、SELECT がそのファクトリの宣言どおりのカラムを返す前提。
 
 ```php
 interface ArticleQueryInterface
@@ -24,7 +36,7 @@ interface ArticleQueryInterface
 }
 ```
 
-## テンプレートの `if` が消える
+### テンプレートの `if` が消える
 
 ```twig
 {# よくある光景 #}
@@ -58,7 +70,7 @@ final class ArticleFactory
 <span class="{{ article.badge }}">{{ article.status }}</span>
 ```
 
-## 文字列カラムを enum で受け取る
+### 文字列カラムを enum で受け取る
 
 DB の `status` は文字列。ファクトリで PHP の enum に変換すれば、型安全な比較になる。
 
@@ -76,7 +88,7 @@ public function factory(int $id, string $status): Article
 
 タイプミスは `Status::from()` の時点で例外になる。テンプレートに生の文字列が散らばらない。
 
-## 表示用の値をエンティティに乗せる
+### 表示用の値をエンティティに乗せる
 
 「本文の文字数から読了時間を出したい」「価格をカンマ区切りで表示したい」。ファクトリで計算して乗せる。
 
@@ -98,7 +110,7 @@ public function factory(int $id, string $body, int $priceYen): Article
 
 テンプレートに計算式がない。テストもファクトリ単体で書ける。
 
-## 現在時刻・現在ユーザーを注入する
+### 現在時刻・現在ユーザーを注入する
 
 ファクトリはコンストラクタで DI を受け取れる（第8章の `age` と同じ）。SQL のカラムにない値を、外から注入した依存で組み立てる。
 
@@ -130,7 +142,7 @@ final class ArticleFactory
 
 ---
 
-# 第2部 — `PostQueryInterface` 結果セット全体の成形
+## 第2部 — `PostQueryInterface` 結果セット全体の成形
 
 行をまたぐ処理（グルーピング、ソート、絞り込み、空判定）は `factory:` ではできない。`factory:` は1行ずつしか見ないからだ。結果セット全体が要るときは `PostQueryInterface` を使う。クラスは戻り値型として宣言し、`fromContext()` に `$context->rows`（全行）が渡る。チュートリアル第12章の `ArticleSearchResult` がこれ。
 
@@ -142,7 +154,7 @@ interface ArticleQueryInterface
 }
 ```
 
-## フラットな JOIN 結果を親子に組み立てる
+### フラットな JOIN 結果を親子に組み立てる
 
 JOIN の結果は平らな行で返る。コメントを記事ごとにまとめるのは、テンプレートでもコントローラーでも面倒。`fromContext()` でまとめる。
 
@@ -190,7 +202,7 @@ final class Articles implements PostQueryInterface
 
 1クエリでネストしたオブジェクトが返る。N+1 も、コントローラーでの手動グルーピングもない。
 
-## ソートは `fromContext()` で
+### ソートは `fromContext()` で
 
 SQL の `ORDER BY` では届かない並びがある。`ORDER BY name` は辞書順なので `item1, item10, item2` になる。全行が揃ってから並べ替える。
 
@@ -220,7 +232,7 @@ final class FileList implements PostQueryInterface
 
 業務固有の優先順位（`news → feature → opinion`）も同じ場所に書ける。`usort()` に `['news' => 0, 'feature' => 1, 'opinion' => 2]` を引かせるだけ。テンプレートは並び順を意識しない。
 
-## SPL イテレータでフィルタ・制限する
+### SPL イテレータでフィルタ・制限する
 
 `PostQueryInterface` と `IteratorAggregate` を一緒に実装すると、「公開済みだけ、最大20件」のような絞り込みをコレクション自身に閉じ込められる。テンプレートで毎回 `{% if %}` を書かなくて済む。
 
@@ -263,7 +275,7 @@ final class Posts implements PostQueryInterface, IteratorAggregate
 
 `SplPriorityQueue` を使えば「ピン留めを先頭に、残りは日付順」も同じ場所に書ける。
 
-## Null Object — クエリは常に完成したエンティティを返す
+### Null Object — クエリは常に完成したエンティティを返す
 
 行が見つからないと、`type: 'row'` のクエリは `null` を返す。テンプレートに `{% if profile %}` が増える原因。`fromContext()` で空を判定し、常に完成したエンティティを返す。
 

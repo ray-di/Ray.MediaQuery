@@ -1,4 +1,14 @@
+---
+layout: default
+title: BDR Pattern Cookbook
+description: "Per-row enrichment with the factory attribute vs. whole-result-set shaping with PostQueryInterface: badges, enums, JOIN grouping, sorting, SPL iterators, and Null Object."
+lang: en
+permalink: /tutorial/bdr-patterns/
+---
+
 # BDR Pattern Cookbook
+
+[日本語 (Japanese)]({{ '/tutorial/bdr-patterns/ja/' | relative_url }}) | [Hands-on Tutorial]({{ '/tutorial/' | relative_url }})
 
 Ray.MediaQuery has two mechanisms for turning SQL results into objects. Which one you pick changes what you can do.
 
@@ -11,9 +21,11 @@ Part 1 uses `factory:`, Part 2 uses `PostQueryInterface`. Confuse them and the c
 
 ---
 
-# Part 1 — `factory:` per-row enrichment
+## Part 1 — `factory:` per-row enrichment
 
 The factory is called **once per row**, with the SELECT columns passed as positional arguments. The return values line up, one per row. Chapter 7's `ArticleStatsFactory` is this.
+
+> The mapping is by **position, not by name** (`PDO::FETCH_FUNC`). The factory signature must line up with the SELECT column list one-to-one, in the same order. A signature shorter than the column list does not "pick" the columns it names — it silently receives the leading ones. Each snippet below therefore assumes the SELECT returns exactly the columns its factory declares.
 
 ```php
 interface ArticleQueryInterface
@@ -24,7 +36,7 @@ interface ArticleQueryInterface
 }
 ```
 
-## The `if` vanishes from templates
+### The `if` vanishes from templates
 
 ```twig
 {# a familiar sight #}
@@ -58,7 +70,7 @@ final class ArticleFactory
 <span class="{{ article.badge }}">{{ article.status }}</span>
 ```
 
-## Receive a string column as an enum
+### Receive a string column as an enum
 
 The `status` column is a string. Convert it to a PHP enum in the factory for type-safe comparisons.
 
@@ -76,7 +88,7 @@ public function factory(int $id, string $status): Article
 
 A typo throws at `Status::from()` instead of silently failing in a template. No raw strings scattered around.
 
-## Put display values on the entity
+### Put display values on the entity
 
 "Show reading time from body length." "Format the price with commas." Compute it in the factory.
 
@@ -98,7 +110,7 @@ public function factory(int $id, string $body, int $priceYen): Article
 
 No calculation in the template. The factory is also easy to unit-test in isolation.
 
-## Inject the current time and current user
+### Inject the current time and current user
 
 A factory can receive dependencies through its constructor (same as `age` in chapter 8). Build values that are not in any column from injected services.
 
@@ -130,7 +142,7 @@ Bind `CurrentUserInterface` in Ray.Di; swap in `FakeCurrentUser` for tests. `Dat
 
 ---
 
-# Part 2 — `PostQueryInterface` shaping the whole result set
+## Part 2 — `PostQueryInterface` shaping the whole result set
 
 Anything that spans rows — grouping, sorting, filtering, emptiness checks — cannot be done in `factory:`, because `factory:` only ever sees one row at a time. When you need the whole result set, use `PostQueryInterface`. Declare the class as the return type; its `fromContext()` receives `$context->rows` (every row). Chapter 12's `ArticleSearchResult` is this.
 
@@ -142,7 +154,7 @@ interface ArticleQueryInterface
 }
 ```
 
-## Assemble flat JOIN rows into a parent-child shape
+### Assemble flat JOIN rows into a parent-child shape
 
 A JOIN returns flat rows. Grouping comments under each article is tedious in both the template and the controller. Do it in `fromContext()`.
 
@@ -190,7 +202,7 @@ final class Articles implements PostQueryInterface
 
 One query, nested objects. No N+1, no manual grouping in the controller.
 
-## Sort in `fromContext()`
+### Sort in `fromContext()`
 
 Some orderings are out of `ORDER BY`'s reach. `ORDER BY name` is lexicographic, so it gives `item1, item10, item2`. Reorder once all rows are in hand.
 
@@ -220,7 +232,7 @@ final class FileList implements PostQueryInterface
 
 Business-specific priority (`news → feature → opinion`) lives in the same place — feed `usort()` a `['news' => 0, 'feature' => 1, 'opinion' => 2]` map. The template never thinks about order.
 
-## Filter and limit with SPL iterators
+### Filter and limit with SPL iterators
 
 Implementing both `PostQueryInterface` and `IteratorAggregate` lets a collection own a rule like "published only, up to 20." No `{% if %}` repeated in the template.
 
@@ -263,7 +275,7 @@ final class Posts implements PostQueryInterface, IteratorAggregate
 
 `SplPriorityQueue` lets you pin featured posts first, then fall back to date order — same place.
 
-## Null Object — the query always returns a complete entity
+### Null Object — the query always returns a complete entity
 
 When no row is found, a `type: 'row'` query returns `null` — the source of every `{% if profile %}` in a template. Check for emptiness in `fromContext()` and always return a complete entity.
 
