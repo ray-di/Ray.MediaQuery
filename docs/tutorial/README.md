@@ -951,8 +951,6 @@ $this->bind(MarkdownExcerpter::class);
 
 ### BDR focus: why DI is necessary
 
-`age` is not a database column. It is computed from `birth_date` and the current time — the current time must be injected as `DateTimeInterface`.
-
 `age` is not a database column. It requires two inputs: the stored `birth_date` and the current time. The current time must come from outside the factory — injected as `DateTimeInterface`.
 
 Add an `author` table to `mywork/schema.sql`:
