@@ -7,6 +7,7 @@ namespace Tutorial\Blog;
 use Aura\Sql\ExtendedPdoInterface;
 use Composer\Autoload\ClassLoader;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Ray\AuraSqlModule\AuraSqlModule;
 use Ray\AuraSqlModule\Pagerfanta\Page;
 use Ray\Di\AbstractModule;
@@ -35,10 +36,14 @@ $injector = new Injector(new class ($sqlDir, $dsn) extends AbstractModule {
         $queries = Queries::fromClasses([
             ArticleQueryInterface::class,
             CommentQueryInterface::class,
+            AuthorQueryInterface::class,
         ]);
         $this->install(new MediaQueryModule($queries, [new DbQueryConfig($this->sqlDir)]));
         $this->install(new AuraSqlModule($this->dsn));
         $this->bind(MarkdownExcerpter::class);
+        // Pin the clock so the BDR `age` output is reproducible. In production,
+        // MediaQueryModule's DateTimeImmutable binding resolves to the real time.
+        $this->bind(DateTimeInterface::class)->toInstance(new DateTimeImmutable('2026-06-06'));
     }
 });
 
@@ -66,7 +71,7 @@ $first = $articleQuery->add(
 );
 $firstStatus = $first->values['status'] ?? null;
 assert(is_string($firstStatus));
-printf("inserted id=%s, status=%s\n", (string) $first->id, $firstStatus);
+printf("inserted id=%s, status=%s\n", $first->id, $firstStatus);
 
 $second = $articleQuery->add(
     title: 'Second Post',
@@ -76,7 +81,7 @@ $second = $articleQuery->add(
     publishedAt: new DateTimeImmutable('2026-04-02 10:00:00'),
     createdAt: new DateTimeImmutable('2026-04-02 10:00:00'),
 );
-printf("inserted id=%s\n\n", (string) $second->id);
+printf("inserted id=%s\n\n", $second->id);
 
 echo "=== Ch.1 / Ch.4 / Ch.5: SELECT list as Article entities ===\n";
 $articles = $articleQuery->list();
@@ -86,28 +91,35 @@ printf("First: id=%d title='%s' authorName='%s'\n\n", $articles[0]->id, $article
 echo "=== Ch.2 / Ch.6: SELECT row + ArticleId (ToScalarInterface) ===\n";
 $article = $articleQuery->item(new ArticleId(1));
 assert($article !== null);
-printf("item(ArticleId(1)) -> '%s' published_at=%s\n\n", $article->title, (string) $article->publishedAt);
+printf("item(ArticleId(1)) -> '%s' published_at=%s\n\n", $article->title, $article->publishedAt);
 
 echo "=== Ch.7 / Ch.8: factory with DI (ArticleStats) + Comment hydration ===\n";
 $commentQuery->add(1, 'Great post!', new DateTimeImmutable('2026-04-01 12:00:00'));
 $commentQuery->add(1, 'Thanks for sharing.', new DateTimeImmutable('2026-04-01 13:00:00'));
 $stats = $articleQuery->stats(new ArticleId(1));
-printf("stats: title='%s' commentCount=%d published=%s\n", $stats->title, $stats->commentCount, $stats->published ? 'true' : 'false');
-printf("excerpt='%s'\n", $stats->excerpt);
+printf("commentCount=%d, excerpt='%s'\n", $stats->commentCount, $stats->excerpt);
 $comments = $commentQuery->listFor(1);
 printf("comments=%d, first body='%s' (id=%d)\n\n", count($comments), $comments[0]->body, $comments[0]->id);
 
+echo "=== Ch.8 / BDR: age from birth_date ===\n";
+$pdo->perform('INSERT INTO author (name, birth_date) VALUES (?, ?)', ['Alice', '1990-06-15']);
+/** @var AuthorQueryInterface $authorQuery */
+$authorQuery = $injector->getInstance(AuthorQueryInterface::class);
+$profile = $authorQuery->profile(1);
+assert($profile !== null);
+printf("name=%s birth_date=%s age=%d\n\n", $profile->name, $profile->birthDate, $profile->age);
+
 echo "=== Ch.9: AffectedRows ===\n";
 $updated = $articleQuery->update(new ArticleId(1), 'Hello, Ray.MediaQuery (edited)', 'Updated body.');
-printf("update affected=%d isAffected=%s\n", $updated->count, $updated->isAffected() ? 'true' : 'false');
+printf("updated count=%d, isAffected=%s\n", $updated->count, $updated->isAffected() ? 'yes' : 'no');
 $deleted = $articleQuery->delete(new ArticleId(2));
-printf("delete affected=%d isAffected=%s\n\n", $deleted->count, $deleted->isAffected() ? 'true' : 'false');
+printf("deleted count=%d\n\n", $deleted->count);
 
 echo "=== Ch.11: Pager (Pages<Article>) ===\n";
 for ($i = 3; $i <= 32; $i++) {
     $articleQuery->add(
-        title: "Post #{$i}",
-        body: "Body for post {$i}.",
+        title: "Post #$i",
+        body: "Body for post $i.",
         authorName: 'Carol',
         status: 'published',
         publishedAt: new DateTimeImmutable('2026-04-03 00:00:00'),
@@ -120,8 +132,9 @@ assert($page1 instanceof Page);
 assert(is_array($page1->data));
 $firstPageArticle = $page1->data[0] ?? null;
 assert($firstPageArticle instanceof Article);
-printf("total items=%d, current=%d, hasNext=%s\n", count($pages), $page1->current, $page1->hasNext ? 'true' : 'false');
-printf("page 1 has %d items, first title='%s'\n\n", count($page1->data), $firstPageArticle->title);
+printf("total items=%d\n", count($pages));
+printf("page 1 has %d items, hasNext=%s\n", count($page1->data), $page1->hasNext ? 'yes' : 'no');
+echo $firstPageArticle->title, "\n\n";
 
 echo "=== Ch.11 / Ray.MediaQuery 1.1: Pager + factory hydration ===\n";
 $statsPages = $articleQuery->statsPaginated();
@@ -135,7 +148,7 @@ printf("first stats row=%s commentCount=%d excerpt='%s'\n\n", $firstStats::class
 echo "=== Ch.12: custom PostQueryInterface (ArticleSearchResult) ===\n";
 $result = $articleQuery->search('%Post%');
 printf("matched=%d, sql contains 'LIKE'=%s\n", $result->matched, str_contains($result->sql, 'LIKE') ? 'yes' : 'no');
-printf("first hit: id=%d title='%s'\n\n", $result->rows[0]->id, $result->rows[0]->title);
+echo "First hit: ", $result->rows[0]->title, "\n\n";
 
 echo "=== Appendix: Multi-statement DML + SELECT PostQuery ===\n";
 $created = $articleQuery->createAndGet(

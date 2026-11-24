@@ -14,3 +14,9 @@ CREATE TABLE IF NOT EXISTS comment (
     body TEXT NOT NULL,
     posted_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS author (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    birth_date TEXT NOT NULL
+);
